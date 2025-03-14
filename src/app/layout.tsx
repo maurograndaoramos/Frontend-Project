@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Layout from '../components/Layouts';
+import { ThemeProvider } from "@/components/Theme-Provider";
 import "./globals.scss";
 
 export const metadata: Metadata = {
@@ -13,12 +14,19 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <body>
-        <Layout>
-          {children}
-        </Layout>
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="system"
+          enableSystem
+          disableTransitionOnChange
+        >
+          <Layout>
+            {children}
+          </Layout>
+        </ThemeProvider>
       </body>
     </html>
   );
-} 
+}
