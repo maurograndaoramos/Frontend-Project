@@ -13,6 +13,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { ThemeToggle } from "@/components/ui/theme-toggle";
 
 const Navbar: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState("");
@@ -126,6 +127,9 @@ const Navbar: React.FC = () => {
             <Button size="sm">Sign up</Button>
             </Link>
         </div>
+          
+          {/* Theme Toggle */}
+          <ThemeToggle />
 
         {/* Mobile Auth Menu */}
         <DropdownMenu>

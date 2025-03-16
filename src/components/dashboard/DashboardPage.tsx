@@ -64,7 +64,7 @@ export default function DashboardPage() {
               </div>
             </div>
             <Button variant="outline" className="w-full" asChild>
-              <Link href="/orders">View All Orders</Link>
+              <Link href={`/dashboard/${user.name.toLowerCase().replace(/\s+/g, '-')}/orders`}>View All Orders</Link>
             </Button>
           </CardContent>
         </Card>
@@ -84,7 +84,7 @@ export default function DashboardPage() {
               </div>
             </div>
             <Button variant="outline" className="w-full" asChild>
-              <Link href="/wishlist">View Wishlist</Link>
+              <Link href={`/dashboard/${user.name.toLowerCase().replace(/\s+/g, '-')}/wishlist`}>View Wishlist</Link>
             </Button>
           </CardContent>
         </Card>

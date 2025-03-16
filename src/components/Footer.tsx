@@ -8,24 +8,21 @@ const Footer: React.FC = () => {
                     <div>
                         <h3 className="font-semibold text-lg mb-3">Company</h3>
                         <ul className="space-y-2">
-                            <li><a href="/about" className="hover:underline">About Us</a></li>
-                            <li><a href="/contact" className="hover:underline">Contact</a></li>
-                            <li><a href="/careers" className="hover:underline">Careers</a></li>
+                            <li><a href="/company/about" className="hover:underline">About Us</a></li>
+                            <li><a href="/company/contact" className="hover:underline">Contact</a></li>
                         </ul>
                     </div>
                     <div>
                         <h3 className="font-semibold text-lg mb-3">Resources</h3>
                         <ul className="space-y-2">
-                            <li><a href="/blog" className="hover:underline">Blog</a></li>
-                            <li><a href="/faq" className="hover:underline">FAQ</a></li>
-                            <li><a href="/support" className="hover:underline">Support</a></li>
+                            <li><a href="/resources//blog" className="hover:underline">Blog</a></li>
+                            <li><a href="/resources/faq" className="hover:underline">FAQ</a></li>
                         </ul>
                     </div>
                     <div>
                         <h3 className="font-semibold text-lg mb-3">Connect</h3>
                         <ul className="space-y-2">
-                            <li><a href="https://twitter.com" className="hover:underline">Twitter</a></li>
-                            <li><a href="https://linkedin.com" className="hover:underline">LinkedIn</a></li>
+                            <li><a href="https://instagram.com" className="hover:underline">Instagram</a></li>
                             <li><a href="https://facebook.com" className="hover:underline">Facebook</a></li>
                         </ul>
                     </div>
