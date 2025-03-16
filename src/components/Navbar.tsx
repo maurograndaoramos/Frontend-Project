@@ -1,12 +1,48 @@
+"use client"
+
 import Link from "next/link";
 import Image from "next/image";
+import { useState } from "react";
+import { Search, ShoppingCart, Menu, User } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 const Navbar: React.FC = () => {
+  const [searchQuery, setSearchQuery] = useState("");
+
   return (
-    <header className="w-full py-4 px-6 flex items-center justify-between">
-      {/* Logo and Navigation Links */}
-      <div className="flex items-center space-x-8">
-        {/* Logo */}
+    <header className="w-full py-4 px-6 flex items-center justify-between border-b">
+      {/* Mobile menu */}
+      <Sheet>
+        <SheetTrigger asChild className="md:hidden">
+          <Button variant="ghost" size="icon" aria-label="Menu">
+            <Menu />
+          </Button>
+        </SheetTrigger>
+        <SheetContent side="left" className="w-[240px] sm:w-[300px]">
+          <nav className="flex flex-col space-y-4 mt-8">
+            <Link href="/" className="hover:text-gray-600 transition-colors text-lg">
+              Home
+            </Link>
+            <Link href="/shop" className="hover:text-gray-600 transition-colors text-lg">
+              Shop
+            </Link>
+            <Link href="/featured" className="hover:text-gray-600 transition-colors text-lg">
+              Featured
+            </Link>
+          </nav>
+        </SheetContent>
+      </Sheet>
+
+      {/* Logo */}
+      <div className="flex items-center">
         <Link href="/" className="flex items-center">
           <Image 
             src="/vercel.svg" 
@@ -15,64 +51,98 @@ const Navbar: React.FC = () => {
             height={40} 
             className="mr-2"
           />
-          <span className="text-xl font-bold">Home</span>
+          <span className="text-xl font-bold hidden sm:inline">Mrs. Pots</span>
         </Link>
-        
-        {/* Navigation Links */}
-        <nav className="hidden md:flex space-x-6">
-          <Link href="/" className="hover:text-gray-600 transition-colors">
-            Home
-          </Link>
-          <Link href="/shop" className="hover:text-gray-600 transition-colors">
-            Shop
-          </Link>
-          <Link href="/featured" className="hover:text-gray-600 transition-colors">
-            Featured
-          </Link>
-        </nav>
       </div>
+      
+      {/* Navigation Links - Desktop */}
+      <nav className="hidden md:flex space-x-6 ml-8">
+        <Link href="/" className="hover:text-gray-600 transition-colors">
+          Home
+        </Link>
+        <Link href="/shop" className="hover:text-gray-600 transition-colors">
+          Shop
+        </Link>
+        <Link href="/featured" className="hover:text-gray-600 transition-colors">
+          Featured
+        </Link>
+      </nav>
 
       {/* Search Bar */}
       <div className="hidden md:flex items-center justify-center flex-1 max-w-md mx-4">
         <div className="relative w-full">
-          <input
+          <Input
             type="text"
             placeholder="Search for products..."
-            className="w-full py-2 px-4 border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-gray-200"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="pr-10"
           />
-          <button className="absolute right-3 top-1/2 transform -translate-y-1/2">
-            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <circle cx="11" cy="11" r="8"></circle>
-              <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-            </svg>
-          </button>
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            className="absolute right-0 top-0 h-full"
+            aria-label="Search"
+          >
+            <Search className="h-4 w-4" />
+          </Button>
         </div>
       </div>
 
-      {/* Cart and Auth Buttons */}
-      <div className="flex items-center space-x-4">
+      {/* Cart and Auth */}
+      <div className="flex items-center space-x-2">
+        {/* Mobile Search */}
+        <Sheet>
+          <SheetTrigger asChild className="md:hidden">
+            <Button variant="ghost" size="icon" aria-label="Search">
+              <Search />
+            </Button>
+          </SheetTrigger>
+          <SheetContent side="top">
+            <div className="mt-6">
+              <Input
+                type="text"
+                placeholder="Search for products..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="mb-2"
+              />
+              <Button className="w-full">Search</Button>
+            </div>
+          </SheetContent>
+        </Sheet>
+
         {/* Shopping Cart */}
-        <button className="p-2">
-          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <circle cx="9" cy="21" r="1"></circle>
-            <circle cx="20" cy="21" r="1"></circle>
-            <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
-          </svg>
-        </button>
+        <Button variant="ghost" size="icon" aria-label="Shopping Cart">
+          <ShoppingCart />
+        </Button>
         
         {/* Auth Buttons */}
-        <Link 
-          href="/signup" 
-          className="bg-black text-white py-2 px-4 rounded-md hover:bg-gray-800 transition-colors"
-        >
-          Sign up
-        </Link>
-        <Link 
-          href="/signin" 
-          className="border border-black py-2 px-4 rounded-md hover:bg-gray-100 transition-colors"
-        >
-          Sign in
-        </Link>
+        <div className="hidden sm:block">
+          <Link href="/signin" legacyBehavior>
+            <Button variant="outline" size="sm" className="mr-2">Sign in</Button>
+          </Link>
+            <Link href="/register" legacyBehavior>
+            <Button size="sm">Sign up</Button>
+            </Link>
+        </div>
+
+        {/* Mobile Auth Menu */}
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild className="sm:hidden">
+            <Button variant="ghost" size="icon">
+              <User />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem asChild>
+              <Link href="/signin">Sign in</Link>
+            </DropdownMenuItem>
+            <DropdownMenuItem asChild>
+              <Link href="/signup">Sign up</Link>
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
     </header>
   );
