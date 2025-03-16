@@ -119,7 +119,7 @@ const Navbar: React.FC = () => {
         
         {/* Auth Buttons */}
         <div className="hidden sm:block">
-          <Link href="/signin" legacyBehavior>
+          <Link href="/login" legacyBehavior>
             <Button variant="outline" size="sm" className="mr-2">Sign in</Button>
           </Link>
             <Link href="/register" legacyBehavior>
