@@ -11,9 +11,9 @@ export default function DashboardLayout({
   return (
     <div className="container mx-auto py-8 px-4">
       {/* Dashboard header */}
-      <div className="mb-8">
-        <h1 className="text-2xl font-bold">Dashboard</h1>
-        <p className="text-muted-foreground">Welcome back, Jane Doe</p>
+      <div className="mb-8 p-4 bg-primary/10 rounded-lg border border-primary/20">
+        <h2 className="font-medium text-primary">Valentine's Day Promotion</h2>
+        <p className="text-sm text-muted-foreground">Order by February 7th for guaranteed delivery before Valentine's Day!</p>
       </div>
       
       {/* Dashboard content */}
