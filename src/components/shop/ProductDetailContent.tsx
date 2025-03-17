@@ -19,10 +19,9 @@ const products: Record<string, Product> = {
     isNew: true,
     rating: 4.5,
   },
-  // More products...
 };
 
-export default function ProductDetailPageContent() {
+export default function ProductDetailContent() {
   const params = useParams();
   const productId = params.id as string;
   

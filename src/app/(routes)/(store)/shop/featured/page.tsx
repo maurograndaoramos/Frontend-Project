@@ -1,6 +1,6 @@
 "use client";
 
-import FeaturedProductPageContent from "@/components/shop/FeaturedProductPageContent"
+import FeaturedProductPageContent from "@/components/shop/FeaturedCollectionsContent"
 
 export default function FeaturedPage() {
     return <FeaturedProductPageContent />

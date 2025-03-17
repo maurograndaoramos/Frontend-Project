@@ -10,7 +10,7 @@ const products: Product[] = [
   // All products
 ];
 
-export default function SearchResultsPageContent() {
+export default function SearchResultsContent() {
   const searchParams = useSearchParams();
   const query = searchParams.get('q') || '';
   

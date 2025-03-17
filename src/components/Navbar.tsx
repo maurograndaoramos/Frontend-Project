@@ -36,7 +36,7 @@ const Navbar: React.FC = () => {
             <Link href="/shop" className="hover:text-gray-600 transition-colors text-lg">
               Shop
             </Link>
-            <Link href="/featured" className="hover:text-gray-600 transition-colors text-lg">
+            <Link href="/shop/featured" className="hover:text-gray-600 transition-colors text-lg">
               Featured
             </Link>
           </nav>
@@ -65,7 +65,7 @@ const Navbar: React.FC = () => {
         <Link href="/shop" className="hover:text-gray-600 transition-colors">
           Shop
         </Link>
-        <Link href="/featured" className="hover:text-gray-600 transition-colors">
+        <Link href="/shop/featured" className="hover:text-gray-600 transition-colors">
           Featured
         </Link>
       </nav>
@@ -81,7 +81,7 @@ const Navbar: React.FC = () => {
         className="pr-10"
         onKeyDown={(e) => {
           if (e.key === "Enter") {
-            router.push(`/search?q=${encodeURIComponent(searchQuery)}`);
+            router.push(`/shop/search?q=${encodeURIComponent(searchQuery)}`);
           }
         }}
           />
@@ -91,7 +91,7 @@ const Navbar: React.FC = () => {
         className="absolute right-0 top-0 h-full"
         aria-label="Search"
         onClick={() =>
-          router.push(`/search?q=${encodeURIComponent(searchQuery)}`)
+          router.push(`/shop/search?q=${encodeURIComponent(searchQuery)}`)
         }
           >
         <Search className="h-4 w-4" />

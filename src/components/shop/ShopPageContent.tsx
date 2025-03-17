@@ -18,7 +18,18 @@ const products: Product[] = [
     isNew: true,
     rating: 4.5,
   },
-  // Add more products...
+  {
+    id: "2",
+    name: "Flower arrangement",
+    description: "A beautiful handcrafted vase perfect for any home décor.",
+    price: 45.99,
+    originalPrice: 59.99,
+    image: "/api/placeholder/400/500",
+    inStock: true,
+    category: "Home Decor",
+    isNew: true,
+    rating: 4.5,
+  },
 ];
 
 export default function ShopPageContent() {

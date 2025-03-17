@@ -23,7 +23,7 @@ const collections = {
   // More collections
 };
 
-export default function FeaturedProductPageContent() {
+export default function FeaturedCollectionsContent() {
   const params = useParams();
   const collectionId = params.collection as string;
   
