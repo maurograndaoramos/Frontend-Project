@@ -8,15 +8,15 @@ const Footer: React.FC = () => {
                     <div>
                         <h3 className="font-semibold text-lg mb-3">Company</h3>
                         <ul className="space-y-2">
-                            <li><a href="/company/about" className="hover:underline">About Us</a></li>
-                            <li><a href="/company/contact" className="hover:underline">Contact</a></li>
+                            <li><a href="/about" className="hover:underline">About Us</a></li>
+                            <li><a href="/contact" className="hover:underline">Contact</a></li>
                         </ul>
                     </div>
                     <div>
                         <h3 className="font-semibold text-lg mb-3">Resources</h3>
                         <ul className="space-y-2">
-                            <li><a href="/resources//blog" className="hover:underline">Blog</a></li>
-                            <li><a href="/resources/faq" className="hover:underline">FAQ</a></li>
+                            <li><a href="/blog" className="hover:underline">Blog</a></li>
+                            <li><a href="/faq" className="hover:underline">FAQ</a></li>
                         </ul>
                     </div>
                     <div>
@@ -30,6 +30,7 @@ const Footer: React.FC = () => {
                 <Separator className="my-6" />
                 <div className="flex flex-col md:flex-row justify-between items-center">
                     <p className="text-sm text-muted-foreground">© {new Date().getFullYear()} Mrs. Pots. All rights reserved.</p>
+                    <p className="text-sm text-muted-foreground">A ETICAlgarve meteu aqui o dedinho.</p>
                     <div className="flex space-x-4 mt-4 md:mt-0">
                         <a href="/terms" className="text-sm text-muted-foreground hover:underline">Terms</a>
                         <a href="/privacy" className="text-sm text-muted-foreground hover:underline">Privacy</a>
