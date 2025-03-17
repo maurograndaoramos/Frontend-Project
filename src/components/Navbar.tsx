@@ -3,6 +3,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { Search, ShoppingCart, Menu, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -14,9 +15,9 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
-
 const Navbar: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState("");
+  const router = useRouter();
 
   return (
     <header className="w-full py-4 px-6 flex items-center justify-between border-b">
@@ -73,19 +74,27 @@ const Navbar: React.FC = () => {
       <div className="hidden md:flex items-center justify-center flex-1 max-w-md mx-4">
         <div className="relative w-full">
           <Input
-            type="text"
-            placeholder="Search for products..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="pr-10"
+        type="text"
+        placeholder="Search for products..."
+        value={searchQuery}
+        onChange={(e) => setSearchQuery(e.target.value)}
+        className="pr-10"
+        onKeyDown={(e) => {
+          if (e.key === "Enter") {
+            router.push(`/search?q=${encodeURIComponent(searchQuery)}`);
+          }
+        }}
           />
           <Button 
-            variant="ghost" 
-            size="icon" 
-            className="absolute right-0 top-0 h-full"
-            aria-label="Search"
+        variant="ghost" 
+        size="icon" 
+        className="absolute right-0 top-0 h-full"
+        aria-label="Search"
+        onClick={() =>
+          router.push(`/search?q=${encodeURIComponent(searchQuery)}`)
+        }
           >
-            <Search className="h-4 w-4" />
+        <Search className="h-4 w-4" />
           </Button>
         </div>
       </div>
