@@ -17,7 +17,6 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Separator } from "@/components/ui/separator";
 import { Checkbox } from "@/components/ui/checkbox";
 import Link from "next/link";
 import { useToast } from "@/lib/hooks/useToast";
@@ -36,7 +35,7 @@ export default function LoginForm() {
     const router = useRouter();
     const [isLoading, setIsLoading] = useState(false);
     const { toast } = useToast();
-    
+
     const form = useForm<z.infer<typeof loginSchema>>({
         resolver: zodResolver(loginSchema),
         defaultValues: {
@@ -48,14 +47,14 @@ export default function LoginForm() {
 
     async function onSubmit(values: z.infer<typeof loginSchema>) {
         setIsLoading(true);
-        
+
         try {
             const result = await signIn("credentials", {
                 email: values.email,
                 password: values.password,
                 redirect: false,
             });
-            
+
             if (result?.error) {
                 toast({
                     variant: "destructive",
@@ -64,12 +63,12 @@ export default function LoginForm() {
                 });
                 return;
             }
-            
+
             toast({
                 title: "Login successful",
                 description: "Welcome back to Mrs. Pots!",
             });
-            
+
             router.push("/dashboard");
             router.refresh();
         } catch (error) {
@@ -118,9 +117,9 @@ export default function LoginForm() {
 
             {/* Social login buttons */}
             <div className="grid grid-cols-2 gap-3 mb-6">
-                <Button 
-                    variant="outline" 
-                    type="button" 
+                <Button
+                    variant="outline"
+                    type="button"
                     onClick={signInWithGoogle}
                     className="w-full"
                     disabled={isLoading}
@@ -145,9 +144,9 @@ export default function LoginForm() {
                     </svg>
                     Google
                 </Button>
-                <Button 
-                    variant="outline" 
-                    type="button" 
+                <Button
+                    variant="outline"
+                    type="button"
                     onClick={signInWithFacebook}
                     className="w-full"
                     disabled={isLoading}
@@ -191,8 +190,8 @@ export default function LoginForm() {
                             <FormItem>
                                 <div className="flex items-center justify-between">
                                     <FormLabel>Password</FormLabel>
-                                    <Link 
-                                        href="/forgot-password" 
+                                    <Link
+                                        href="/forgot-password"
                                         className="text-xs text-primary hover:underline"
                                     >
                                         Forgot password?

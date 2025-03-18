@@ -1,0 +1,22 @@
+// src/app/Providers.tsx
+"use client";
+
+import { ThemeProvider } from "@/components/Theme-Provider";
+import { SessionProvider } from "next-auth/react";
+import { Toaster } from "@/components/ui/toaster";
+
+export default function Providers({ children }: { children: React.ReactNode }) {
+  return (
+    <SessionProvider>
+      <ThemeProvider
+        attribute="class"
+        defaultTheme="system"
+        enableSystem
+        disableTransitionOnChange
+      >
+        <Toaster />
+        {children}
+      </ThemeProvider>
+    </SessionProvider>
+  );
+}

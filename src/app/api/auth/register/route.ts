@@ -1,19 +1,18 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import bcrypt from "bcrypt";
-import { z } from "zod";
-
-const userSchema = z.object({
-  name: z.string().min(2),
-  email: z.string().email(),
-  password: z.string().min(8),
-});
 
 export async function POST(req: Request) {
   try {
     const body = await req.json();
+    const { name, email, password } = body;
     
-    const { name, email, password } = userSchema.parse(body);
+    if (!name || !email || !password) {
+      return NextResponse.json(
+        { message: "Missing required fields" },
+        { status: 400 }
+      );
+    }
     
     // Check if user already exists
     const userExists = await prisma.user.findUnique({
@@ -35,12 +34,12 @@ export async function POST(req: Request) {
       data: {
         name,
         email,
-        password: hashedPassword,
+        hashedPassword: hashedPassword,
       },
     });
     
     // Remove password from response
-    const { password: _, ...userWithoutPassword } = user;
+    const { hashedPassword: _, ...userWithoutPassword } = user;
     
     return NextResponse.json(
       { 
@@ -50,13 +49,6 @@ export async function POST(req: Request) {
       { status: 201 }
     );
   } catch (error) {
-    if (error instanceof z.ZodError) {
-      return NextResponse.json(
-        { message: "Invalid input data", errors: error.errors },
-        { status: 400 }
-      );
-    }
-    
     console.error("Registration error:", error);
     
     return NextResponse.json(

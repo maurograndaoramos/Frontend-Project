@@ -13,7 +13,7 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { Button } from "@/components/ui/button"
 import { Separator } from "@/components/ui/separator"
 import Link from "next/link"
-import { Toast } from "@/components/ui/use-toast";
+import { useToast } from "@/lib/hooks/useToast";
 
 const formSchema = z.object({
     name: z.string().min(2, {
@@ -37,6 +37,7 @@ const formSchema = z.object({
 export default function RegisterForm() {
     const router = useRouter();
     const [isLoading, setIsLoading] = useState(false);
+    const { toast } = useToast();
     
     const form = useForm<z.infer<typeof formSchema>>({
         resolver: zodResolver(formSchema),
@@ -53,53 +54,43 @@ export default function RegisterForm() {
         setIsLoading(true);
         
         try {
-            const response = await fetch('/api/register', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    name: values.name,
-                    email: values.email,
-                    password: values.password,
-                }),
-            });
-            
-            const data = await response.json();
-            
-            if (!response.ok) {
-                throw new Error(data.message || 'Something went wrong');
-            }
-            
-            Toast({
-                title: "Account created!",
-                description: "You've successfully registered. Please sign in.",
-            });
-            
-            // Sign in the user after successful registration
-            const result = await signIn('credentials', {
-                email: values.email,
-                password: values.password,
-                redirect: false,
-            });
-            
-            if (result?.error) {
-                router.push('/login');
-                return;
-            }
-            
-            router.push('/dashboard');
-            router.refresh();
+          // Make sure the URL is correct
+          const response = await fetch('/api/auth/register', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              name: values.name,
+              email: values.email,
+              password: values.password,
+            }),
+          });
+          
+          // Check if the response is ok first
+          if (!response.ok) {
+            const errorData = await response.json().catch(() => null);
+            throw new Error(errorData?.message || 'Registration failed');
+          }
+          
+          const data = await response.json();
+          
+          toast({
+            title: "Account created!",
+            description: "You've successfully registered. Please sign in.",
+          });
+          
+          router.push('/login');
         } catch (error) {
-            Toast({
-                variant: "destructive",
-                title: "Registration failed",
-                description: error instanceof Error ? error.message : "Please try again later.",
-            });
+          toast({
+            variant: "destructive",
+            title: "Registration failed",
+            description: error instanceof Error ? error.message : "Please try again later.",
+          });
         } finally {
-            setIsLoading(false);
+          setIsLoading(false);
         }
-    }
+      }
 
     // OAuth sign up functions
     const signUpWithGoogle = async () => {
@@ -107,7 +98,7 @@ export default function RegisterForm() {
         try {
             await signIn("google", { callbackUrl: "/dashboard" });
         } catch (error) {
-            Toast({
+            toast({
                 variant: "destructive",
                 title: "Something went wrong",
                 description: "Please try again later.",
@@ -119,7 +110,7 @@ export default function RegisterForm() {
 
     const signUpWithFacebook = () => {
         // Implement Facebook login if you add a Facebook provider
-        Toast({
+        toast({
             title: "Coming soon",
             description: "Facebook signup will be available soon.",
         });
