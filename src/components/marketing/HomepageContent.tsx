@@ -10,11 +10,11 @@ import NewsletterSignup from "./NewsletterSignup";
 export default function HomePage() {
   return (
     <>
-      {/* <HeroSection />
+      <HeroSection />
       <FeaturedProductsCarousel />
       <CategoriesShowcase />
       <TestimonialsSection />
-      <NewsletterSignup /> */}
+      <NewsletterSignup />
     </>
   );
 }
