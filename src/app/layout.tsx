@@ -1,6 +1,6 @@
-// src/app/layout.tsx
 import type { Metadata } from "next";
-import Layout from '../components/Layouts';
+import Layout from '../components/layout/Layouts';
+import AuthStatus from "@/components/layout/AuthStatus";
 import Providers from "./providers";
 import "./globals.scss";
 
@@ -19,6 +19,7 @@ export default function RootLayout({
       <body>
         <Providers>
           <Layout>
+            <AuthStatus />
             {children}
           </Layout>
         </Providers>

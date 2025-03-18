@@ -7,9 +7,17 @@ export async function POST(req: Request) {
     const body = await req.json();
     const { name, email, password } = body;
     
+    // Validation
     if (!name || !email || !password) {
       return NextResponse.json(
         { message: "Missing required fields" },
+        { status: 400 }
+      );
+    }
+    
+    if (password.length < 8) {
+      return NextResponse.json(
+        { message: "Password must be at least 8 characters" },
         { status: 400 }
       );
     }
@@ -21,7 +29,7 @@ export async function POST(req: Request) {
     
     if (userExists) {
       return NextResponse.json(
-        { message: "User with this email already exists" },
+        { message: "An account with this email already exists" },
         { status: 409 }
       );
     }
@@ -52,7 +60,7 @@ export async function POST(req: Request) {
     console.error("Registration error:", error);
     
     return NextResponse.json(
-      { message: "Something went wrong" },
+      { message: "An error occurred during registration" },
       { status: 500 }
     );
   }

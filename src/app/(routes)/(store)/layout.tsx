@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
+import { usePathname, useSearchParams } from "next/navigation";
 import { ChevronRight, FilterIcon, SlidersHorizontal } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
@@ -12,60 +13,55 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import { Separator } from "@/components/ui/separator";
+import CategoryFilter from "@/components/shop/shop-components/CategoryFilter";
+import PriceRangeFilter from "@/components/shop/shop-components/PriceRangeFilter";
+import SearchBar from "@/components/shop/shop-components/SearchBar";
+import { getCategories } from "@/lib/services/productService";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Checkbox } from "@/components/ui/checkbox";
-
-// Mock categories data
-const categories = [
-  { id: "pots", name: "Pots & Planters", count: 24 },
-  { id: "tableware", name: "Tableware", count: 16 },
-  { id: "vases", name: "Vases", count: 12 },
-  { id: "decor", name: "Home Decor", count: 8 },
-];
-
-// Price ranges
-const priceRanges = [
-  { id: "under-25", label: "Under $25", min: 0, max: 25 },
-  { id: "25-50", label: "$25 to $50", min: 25, max: 50 },
-  { id: "50-100", label: "$50 to $100", min: 50, max: 100 },
-  { id: "over-100", label: "Over $100", min: 100, max: null },
-];
 
 export default function ShopLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
-  const [selectedPriceRanges, setSelectedPriceRanges] = useState<string[]>([]);
-  const [inStockOnly, setInStockOnly] = useState(false);
-
-  const toggleCategory = (categoryId: string) => {
-    setSelectedCategories((prev) =>
-      prev.includes(categoryId)
-        ? prev.filter((id) => id !== categoryId)
-        : [...prev, categoryId]
-    );
-  };
-
-  const togglePriceRange = (rangeId: string) => {
-    setSelectedPriceRanges((prev) =>
-      prev.includes(rangeId)
-        ? prev.filter((id) => id !== rangeId)
-        : [...prev, rangeId]
-    );
-  };
-
-  const clearAllFilters = () => {
-    setSelectedCategories([]);
-    setSelectedPriceRanges([]);
-    setInStockOnly(false);
-  };
-
-  // Only show active filters badge if any filters are applied
-  const hasActiveFilters =
-    selectedCategories.length > 0 ||
-    selectedPriceRanges.length > 0 ||
-    inStockOnly;
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  
+  const [categories, setCategories] = useState([]);
+  const [loading, setLoading] = useState(true);
+  
+  // Get active filters for the badge
+  const categoryFilter = searchParams.get("category");
+  const searchFilter = searchParams.get("search");
+  const minPriceFilter = searchParams.get("minPrice");
+  const maxPriceFilter = searchParams.get("maxPrice");
+  const inStockOnly = searchParams.get("inStock") === "true";
+  
+  // Count active filters for badge
+  const activeFiltersCount = [
+    categoryFilter, 
+    searchFilter, 
+    minPriceFilter || maxPriceFilter,
+    inStockOnly
+  ].filter(Boolean).length;
+  
+  // Load categories
+  useEffect(() => {
+    async function loadCategories() {
+      setLoading(true);
+      try {
+        const data = await getCategories();
+        setCategories(data);
+      } catch (error) {
+        console.error("Failed to load categories:", error);
+      } finally {
+        setLoading(false);
+      }
+    }
+    
+    loadCategories();
+  }, []);
 
   return (
     <div className="container mx-auto px-4 py-6">
@@ -76,6 +72,14 @@ export default function ShopLayout({
         </Link>
         <ChevronRight className="h-4 w-4 mx-2" />
         <span className="font-medium text-foreground">Shop</span>
+        {categoryFilter && (
+          <>
+            <ChevronRight className="h-4 w-4 mx-2" />
+            <span className="font-medium text-foreground capitalize">
+              {categoryFilter.replace(/-/g, ' ')}
+            </span>
+          </>
+        )}
       </nav>
 
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
@@ -86,9 +90,9 @@ export default function ShopLayout({
               <Button variant="outline" size="sm" className="flex items-center">
                 <FilterIcon className="h-4 w-4 mr-2" />
                 Filters
-                {hasActiveFilters && (
+                {activeFiltersCount > 0 && (
                   <span className="ml-2 bg-primary text-primary-foreground text-xs rounded-full w-5 h-5 flex items-center justify-center">
-                    {selectedCategories.length + selectedPriceRanges.length + (inStockOnly ? 1 : 0)}
+                    {activeFiltersCount}
                   </span>
                 )}
               </Button>
@@ -97,61 +101,49 @@ export default function ShopLayout({
               <div className="h-full flex flex-col">
                 <div className="flex items-center justify-between mb-6">
                   <h2 className="text-lg font-semibold">Filters</h2>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={clearAllFilters}
-                    className="h-8 text-muted-foreground"
-                  >
-                    Clear all
-                  </Button>
+                  {activeFiltersCount > 0 && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => {
+                        const params = new URLSearchParams();
+                        params.set("page", "1");
+                        window.location.href = `${pathname}?${params.toString()}`;
+                      }}
+                      className="h-8 text-muted-foreground"
+                    >
+                      Clear all
+                    </Button>
+                  )}
+                </div>
+
+                <div className="mb-6">
+                  <SearchBar />
                 </div>
 
                 <Accordion type="multiple" defaultValue={["categories", "price"]} className="flex-1 overflow-auto">
                   <AccordionItem value="categories">
                     <AccordionTrigger>Categories</AccordionTrigger>
                     <AccordionContent>
-                      <div className="space-y-2">
-                        {categories.map((category) => (
-                          <div key={category.id} className="flex items-center space-x-2">
-                            <Checkbox
-                              id={`mobile-${category.id}`}
-                              checked={selectedCategories.includes(category.id)}
-                              onCheckedChange={() => toggleCategory(category.id)}
-                            />
-                            <label
-                              htmlFor={`mobile-${category.id}`}
-                              className="text-sm flex items-center justify-between w-full cursor-pointer"
-                            >
-                              <span>{category.name}</span>
-                              <span className="text-muted-foreground text-xs">({category.count})</span>
-                            </label>
-                          </div>
-                        ))}
-                      </div>
+                      {loading ? (
+                        <div className="space-y-2">
+                          {[1, 2, 3, 4].map((i) => (
+                            <div key={i} className="flex items-center space-x-2">
+                              <Skeleton className="h-4 w-4 rounded" />
+                              <Skeleton className="h-4 w-full rounded" />
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <CategoryFilter categories={categories} />
+                      )}
                     </AccordionContent>
                   </AccordionItem>
 
                   <AccordionItem value="price">
                     <AccordionTrigger>Price</AccordionTrigger>
                     <AccordionContent>
-                      <div className="space-y-2">
-                        {priceRanges.map((range) => (
-                          <div key={range.id} className="flex items-center space-x-2">
-                            <Checkbox
-                              id={`mobile-${range.id}`}
-                              checked={selectedPriceRanges.includes(range.id)}
-                              onCheckedChange={() => togglePriceRange(range.id)}
-                            />
-                            <label
-                              htmlFor={`mobile-${range.id}`}
-                              className="text-sm cursor-pointer"
-                            >
-                              {range.label}
-                            </label>
-                          </div>
-                        ))}
-                      </div>
+                      <PriceRangeFilter />
                     </AccordionContent>
                   </AccordionItem>
 
@@ -162,7 +154,16 @@ export default function ShopLayout({
                         <Checkbox
                           id="mobile-in-stock"
                           checked={inStockOnly}
-                          onCheckedChange={() => setInStockOnly(!inStockOnly)}
+                          onCheckedChange={(checked) => {
+                            const params = new URLSearchParams(searchParams.toString());
+                            if (checked) {
+                              params.set("inStock", "true");
+                            } else {
+                              params.delete("inStock");
+                            }
+                            params.set("page", "1");
+                            window.location.href = `${pathname}?${params.toString()}`;
+                          }}
                         />
                         <label
                           htmlFor="mobile-in-stock"
@@ -174,10 +175,6 @@ export default function ShopLayout({
                     </AccordionContent>
                   </AccordionItem>
                 </Accordion>
-
-                <div className="mt-auto pt-6">
-                  <Button className="w-full">Apply Filters</Button>
-                </div>
               </div>
             </SheetContent>
           </Sheet>
@@ -193,11 +190,15 @@ export default function ShopLayout({
         <aside className="hidden lg:block space-y-6">
           <div className="flex items-center justify-between">
             <h2 className="text-lg font-semibold">Filters</h2>
-            {hasActiveFilters && (
+            {activeFiltersCount > 0 && (
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={clearAllFilters}
+                onClick={() => {
+                  const params = new URLSearchParams();
+                  params.set("page", "1");
+                  window.location.href = `${pathname}?${params.toString()}`;
+                }}
                 className="h-8 text-muted-foreground"
               >
                 Clear all
@@ -205,50 +206,29 @@ export default function ShopLayout({
             )}
           </div>
 
+          <div className="mb-6">
+            <SearchBar />
+          </div>
+
           <div>
             <h3 className="font-medium mb-3">Categories</h3>
-            <div className="space-y-2">
-              {categories.map((category) => (
-                <div key={category.id} className="flex items-center space-x-2">
-                  <Checkbox
-                    id={category.id}
-                    checked={selectedCategories.includes(category.id)}
-                    onCheckedChange={() => toggleCategory(category.id)}
-                  />
-                  <label
-                    htmlFor={category.id}
-                    className="text-sm flex items-center justify-between w-full cursor-pointer"
-                  >
-                    <span>{category.name}</span>
-                    <span className="text-muted-foreground text-xs">({category.count})</span>
-                  </label>
-                </div>
-              ))}
-            </div>
+            {loading ? (
+              <div className="space-y-2">
+                {[1, 2, 3, 4].map((i) => (
+                  <div key={i} className="flex items-center space-x-2">
+                    <Skeleton className="h-4 w-4 rounded" />
+                    <Skeleton className="h-4 w-full rounded" />
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <CategoryFilter categories={categories} />
+            )}
           </div>
 
           <Separator />
 
-          <div>
-            <h3 className="font-medium mb-3">Price</h3>
-            <div className="space-y-2">
-              {priceRanges.map((range) => (
-                <div key={range.id} className="flex items-center space-x-2">
-                  <Checkbox
-                    id={range.id}
-                    checked={selectedPriceRanges.includes(range.id)}
-                    onCheckedChange={() => togglePriceRange(range.id)}
-                  />
-                  <label
-                    htmlFor={range.id}
-                    className="text-sm cursor-pointer"
-                  >
-                    {range.label}
-                  </label>
-                </div>
-              ))}
-            </div>
-          </div>
+          <PriceRangeFilter />
 
           <Separator />
 
@@ -258,7 +238,16 @@ export default function ShopLayout({
               <Checkbox
                 id="in-stock"
                 checked={inStockOnly}
-                onCheckedChange={() => setInStockOnly(!inStockOnly)}
+                onCheckedChange={(checked) => {
+                  const params = new URLSearchParams(searchParams.toString());
+                  if (checked) {
+                    params.set("inStock", "true");
+                  } else {
+                    params.delete("inStock");
+                  }
+                  params.set("page", "1");
+                  window.location.href = `${pathname}?${params.toString()}`;
+                }}
               />
               <label
                 htmlFor="in-stock"

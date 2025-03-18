@@ -47,40 +47,43 @@ export default function LoginForm() {
 
     async function onSubmit(values: z.infer<typeof loginSchema>) {
         setIsLoading(true);
-
+      
         try {
-            const result = await signIn("credentials", {
-                email: values.email,
-                password: values.password,
-                redirect: false,
-            });
-
-            if (result?.error) {
-                toast({
-                    variant: "destructive",
-                    title: "Login failed",
-                    description: result.error,
-                });
-                return;
-            }
-
+          const result = await signIn("credentials", {
+            email: values.email,
+            password: values.password,
+            redirect: false,
+          });
+      
+          if (result?.error) {
             toast({
-                title: "Login successful",
-                description: "Welcome back to Mrs. Pots!",
+              variant: "destructive",
+              title: "Login failed",
+              description: result.error,
             });
-
+            setIsLoading(false);
+            return;
+          }
+      
+          toast({
+            title: "Login successful",
+            description: "Welcome back to Mrs. Pots!",
+          });
+      
+          // Redirect to dashboard with a small delay for the toast to be visible
+          setTimeout(() => {
             router.push("/dashboard");
             router.refresh();
+          }, 1000);
         } catch (error) {
-            toast({
-                variant: "destructive",
-                title: "Something went wrong",
-                description: "Please try again later.",
-            });
-        } finally {
-            setIsLoading(false);
+          toast({
+            variant: "destructive",
+            title: "Something went wrong",
+            description: "Please try again later.",
+          });
+          setIsLoading(false);
         }
-    }
+      }
 
     // OAuth sign in functions
     const signInWithGoogle = async () => {

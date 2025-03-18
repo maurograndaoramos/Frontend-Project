@@ -37,6 +37,7 @@ const Footer: React.FC = () => {
                         <a href="/cookies" className="text-sm text-muted-foreground hover:underline">Cookies</a>
                     </div>
                 </div>
+                
             </div>
         </footer>
     );

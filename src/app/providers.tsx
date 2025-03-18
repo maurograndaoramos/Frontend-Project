@@ -1,7 +1,7 @@
 // src/app/Providers.tsx
 "use client";
 
-import { ThemeProvider } from "@/components/Theme-Provider";
+import { ThemeProvider } from "@/components/layout/Theme-Provider";
 import { SessionProvider } from "next-auth/react";
 import { Toaster } from "@/components/ui/toaster";
 

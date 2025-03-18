@@ -54,7 +54,6 @@ export default function RegisterForm() {
         setIsLoading(true);
         
         try {
-          // Make sure the URL is correct
           const response = await fetch('/api/auth/register', {
             method: 'POST',
             headers: {
@@ -67,27 +66,40 @@ export default function RegisterForm() {
             }),
           });
           
-          // Check if the response is ok first
           if (!response.ok) {
             const errorData = await response.json().catch(() => null);
             throw new Error(errorData?.message || 'Registration failed');
           }
           
-          const data = await response.json();
-          
           toast({
             title: "Account created!",
-            description: "You've successfully registered. Please sign in.",
+            description: "You've successfully registered. Signing you in...",
           });
           
-          router.push('/login');
+          // Auto sign-in after successful registration
+          const result = await signIn("credentials", {
+            email: values.email,
+            password: values.password,
+            redirect: false,
+          });
+          
+          if (result?.error) {
+            toast({
+              variant: "default",
+              title: "Account created, but couldn't sign in automatically",
+              description: "Please sign in with your credentials.",
+            });
+            router.push('/login');
+          } else {
+            // Successful sign-in
+            router.push('/dashboard');
+          }
         } catch (error) {
           toast({
             variant: "destructive",
             title: "Registration failed",
             description: error instanceof Error ? error.message : "Please try again later.",
           });
-        } finally {
           setIsLoading(false);
         }
       }

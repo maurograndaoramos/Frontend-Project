@@ -26,7 +26,7 @@ interface ProductDetailProps {
   relatedProducts?: Product[];
 }
 
-export default function ProductDetail({ product, relatedProducts }: ProductDetailProps) {
+export default function ProductDetail({ product, relatedProducts = [] }: ProductDetailProps) {
   const [quantity, setQuantity] = useState(1);
 
   const incrementQuantity = () => {
@@ -70,7 +70,7 @@ export default function ProductDetail({ product, relatedProducts }: ProductDetai
         <div className="space-y-4">
           <div className="relative rounded-lg overflow-hidden border">
             <Image
-              src={product.image}
+              src={product.images && product.images.length > 0 ? product.images[0] : "/api/placeholder/600/600"}
               alt={product.name}
               width={600}
               height={600}
