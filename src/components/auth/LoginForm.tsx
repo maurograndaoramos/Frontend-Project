@@ -1,8 +1,10 @@
 "use client";
 
 import * as React from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
+import { signIn } from "next-auth/react";
 import * as z from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
@@ -18,6 +20,7 @@ import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Checkbox } from "@/components/ui/checkbox";
 import Link from "next/link";
+import { useToast } from "@/lib/hooks/useToast";
 
 const loginSchema = z.object({
     email: z.string().email({
@@ -31,6 +34,9 @@ const loginSchema = z.object({
 
 export default function LoginForm() {
     const router = useRouter();
+    const [isLoading, setIsLoading] = useState(false);
+    const { toast } = useToast();
+    
     const form = useForm<z.infer<typeof loginSchema>>({
         resolver: zodResolver(loginSchema),
         defaultValues: {
@@ -40,21 +46,65 @@ export default function LoginForm() {
         },
     });
 
-    function onSubmit(values: z.infer<typeof loginSchema>) {
-        console.log(values);
-        router.push("/dashboard");
+    async function onSubmit(values: z.infer<typeof loginSchema>) {
+        setIsLoading(true);
+        
+        try {
+            const result = await signIn("credentials", {
+                email: values.email,
+                password: values.password,
+                redirect: false,
+            });
+            
+            if (result?.error) {
+                toast({
+                    variant: "destructive",
+                    title: "Login failed",
+                    description: result.error,
+                });
+                return;
+            }
+            
+            toast({
+                title: "Login successful",
+                description: "Welcome back to Mrs. Pots!",
+            });
+            
+            router.push("/dashboard");
+            router.refresh();
+        } catch (error) {
+            toast({
+                variant: "destructive",
+                title: "Something went wrong",
+                description: "Please try again later.",
+            });
+        } finally {
+            setIsLoading(false);
+        }
     }
 
-    // These functions would contain the actual OAuth implementation
-    const signInWithGoogle = () => {
-        console.log("Sign in with Google");
-        // In a real implementation, you would use a library like next-auth
-        // or firebase auth to handle the OAuth flow
+    // OAuth sign in functions
+    const signInWithGoogle = async () => {
+        setIsLoading(true);
+        try {
+            await signIn("google", { callbackUrl: "/dashboard" });
+        } catch (error) {
+            toast({
+                variant: "destructive",
+                title: "Something went wrong",
+                description: "Please try again later.",
+            });
+        } finally {
+            setIsLoading(false);
+        }
     };
 
     const signInWithFacebook = () => {
-        console.log("Sign in with Facebook");
-        // Similar to Google login, this would use an OAuth provider
+        // Implement Facebook login if you add a Facebook provider
+        toast({
+            title: "Coming soon",
+            description: "Facebook login will be available soon.",
+        });
     };
 
     return (
@@ -73,6 +123,7 @@ export default function LoginForm() {
                     type="button" 
                     onClick={signInWithGoogle}
                     className="w-full"
+                    disabled={isLoading}
                 >
                     <svg className="mr-2 h-4 w-4" viewBox="0 0 24 24">
                         <path
@@ -99,6 +150,7 @@ export default function LoginForm() {
                     type="button" 
                     onClick={signInWithFacebook}
                     className="w-full"
+                    disabled={isLoading}
                 >
                     <svg className="mr-2 h-4 w-4" fill="#1877F2" viewBox="0 0 24 24">
                         <path d="M9.19795 21.5H13.198V13.4901H16.8021L17.198 9.50977H13.198V7.5C13.198 6.94772 13.6457 6.5 14.198 6.5H17.198V2.5H14.198C11.4365 2.5 9.19795 4.73858 9.19795 7.5V9.50977H7.19795L6.80206 13.4901H9.19795V21.5Z" />
@@ -125,7 +177,7 @@ export default function LoginForm() {
                             <FormItem>
                                 <FormLabel>Email</FormLabel>
                                 <FormControl>
-                                    <Input type="email" placeholder="john.doe@example.com" {...field} />
+                                    <Input type="email" placeholder="john.doe@example.com" {...field} disabled={isLoading} />
                                 </FormControl>
                                 <FormMessage />
                             </FormItem>
@@ -147,7 +199,7 @@ export default function LoginForm() {
                                     </Link>
                                 </div>
                                 <FormControl>
-                                    <Input type="password" placeholder="********" {...field} />
+                                    <Input type="password" placeholder="********" {...field} disabled={isLoading} />
                                 </FormControl>
                                 <FormMessage />
                             </FormItem>
@@ -163,6 +215,7 @@ export default function LoginForm() {
                                     <Checkbox
                                         checked={field.value}
                                         onCheckedChange={field.onChange}
+                                        disabled={isLoading}
                                     />
                                 </FormControl>
                                 <div className="space-y-1 leading-none">
@@ -174,8 +227,8 @@ export default function LoginForm() {
                         )}
                     />
 
-                    <Button type="submit" className="w-full">
-                        Sign in
+                    <Button type="submit" className="w-full" disabled={isLoading}>
+                        {isLoading ? "Signing in..." : "Sign in"}
                     </Button>
                 </form>
             </Form>

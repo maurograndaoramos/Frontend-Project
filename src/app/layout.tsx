@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Layout from '../components/Layouts';
 import { ThemeProvider } from "@/components/Theme-Provider";
+import { Toaster } from "@/components/ui/toaster";
 import "./globals.scss";
 
 export const metadata: Metadata = {
@@ -16,6 +17,7 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body>
+        <Toaster />
         <ThemeProvider
           attribute="class"
           defaultTheme="system"

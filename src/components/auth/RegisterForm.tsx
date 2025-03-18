@@ -1,8 +1,10 @@
 "use client"
 
 import * as React from "react"
+import { useState } from "react";
 import { useRouter } from "next/navigation"
 import { useForm } from "react-hook-form"
+import { signIn } from "next-auth/react";
 import * as z from "zod"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
@@ -11,6 +13,7 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { Button } from "@/components/ui/button"
 import { Separator } from "@/components/ui/separator"
 import Link from "next/link"
+import { Toast } from "@/components/ui/use-toast";
 
 const formSchema = z.object({
     name: z.string().min(2, {
@@ -33,6 +36,8 @@ const formSchema = z.object({
 
 export default function RegisterForm() {
     const router = useRouter();
+    const [isLoading, setIsLoading] = useState(false);
+    
     const form = useForm<z.infer<typeof formSchema>>({
         resolver: zodResolver(formSchema),
         defaultValues: {
@@ -44,21 +49,80 @@ export default function RegisterForm() {
         },
     })
 
-    function onSubmit(values: z.infer<typeof formSchema>) {
-        console.log(values)
-        router.push("/dashboard");
+    async function onSubmit(values: z.infer<typeof formSchema>) {
+        setIsLoading(true);
+        
+        try {
+            const response = await fetch('/api/register', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    name: values.name,
+                    email: values.email,
+                    password: values.password,
+                }),
+            });
+            
+            const data = await response.json();
+            
+            if (!response.ok) {
+                throw new Error(data.message || 'Something went wrong');
+            }
+            
+            Toast({
+                title: "Account created!",
+                description: "You've successfully registered. Please sign in.",
+            });
+            
+            // Sign in the user after successful registration
+            const result = await signIn('credentials', {
+                email: values.email,
+                password: values.password,
+                redirect: false,
+            });
+            
+            if (result?.error) {
+                router.push('/login');
+                return;
+            }
+            
+            router.push('/dashboard');
+            router.refresh();
+        } catch (error) {
+            Toast({
+                variant: "destructive",
+                title: "Registration failed",
+                description: error instanceof Error ? error.message : "Please try again later.",
+            });
+        } finally {
+            setIsLoading(false);
+        }
     }
 
-    // These functions would contain the actual OAuth implementation
-    const signUpWithGoogle = () => {
-        console.log("Sign up with Google");
-        // In a real implementation, you would use a library like next-auth
-        // or firebase auth to handle the OAuth flow
+    // OAuth sign up functions
+    const signUpWithGoogle = async () => {
+        setIsLoading(true);
+        try {
+            await signIn("google", { callbackUrl: "/dashboard" });
+        } catch (error) {
+            Toast({
+                variant: "destructive",
+                title: "Something went wrong",
+                description: "Please try again later.",
+            });
+        } finally {
+            setIsLoading(false);
+        }
     };
 
     const signUpWithFacebook = () => {
-        console.log("Sign up with Facebook");
-        // Similar to Google signup, this would use an OAuth provider
+        // Implement Facebook login if you add a Facebook provider
+        Toast({
+            title: "Coming soon",
+            description: "Facebook signup will be available soon.",
+        });
     };
 
     return (
@@ -77,6 +141,7 @@ export default function RegisterForm() {
                     type="button" 
                     onClick={signUpWithGoogle}
                     className="w-full"
+                    disabled={isLoading}
                 >
                     <svg className="mr-2 h-4 w-4" viewBox="0 0 24 24">
                         <path
@@ -103,6 +168,7 @@ export default function RegisterForm() {
                     type="button" 
                     onClick={signUpWithFacebook}
                     className="w-full"
+                    disabled={isLoading}
                 >
                     <svg className="mr-2 h-4 w-4" fill="#1877F2" viewBox="0 0 24 24">
                         <path d="M9.19795 21.5H13.198V13.4901H16.8021L17.198 9.50977H13.198V7.5C13.198 6.94772 13.6457 6.5 14.198 6.5H17.198V2.5H14.198C11.4365 2.5 9.19795 4.73858 9.19795 7.5V9.50977H7.19795L6.80206 13.4901H9.19795V21.5Z" />
@@ -129,7 +195,7 @@ export default function RegisterForm() {
                             <FormItem>
                                 <FormLabel>Full Name</FormLabel>
                                 <FormControl>
-                                    <Input placeholder="John Doe" {...field} />
+                                    <Input placeholder="John Doe" {...field} disabled={isLoading} />
                                 </FormControl>
                                 <FormMessage />
                             </FormItem>
@@ -143,7 +209,7 @@ export default function RegisterForm() {
                             <FormItem>
                                 <FormLabel>Email</FormLabel>
                                 <FormControl>
-                                    <Input type="email" placeholder="john.doe@example.com" {...field} />
+                                    <Input type="email" placeholder="john.doe@example.com" {...field} disabled={isLoading} />
                                 </FormControl>
                                 <FormMessage />
                             </FormItem>
@@ -158,7 +224,7 @@ export default function RegisterForm() {
                                 <FormItem>
                                     <FormLabel>Password</FormLabel>
                                     <FormControl>
-                                        <Input type="password" placeholder="********" {...field} />
+                                        <Input type="password" placeholder="********" {...field} disabled={isLoading} />
                                     </FormControl>
                                     <FormMessage />
                                 </FormItem>
@@ -172,7 +238,7 @@ export default function RegisterForm() {
                                 <FormItem>
                                     <FormLabel>Confirm Password</FormLabel>
                                     <FormControl>
-                                        <Input type="password" placeholder="********" {...field} />
+                                        <Input type="password" placeholder="********" {...field} disabled={isLoading} />
                                     </FormControl>
                                     <FormMessage />
                                 </FormItem>
@@ -189,6 +255,7 @@ export default function RegisterForm() {
                                     <Checkbox
                                         checked={field.value}
                                         onCheckedChange={field.onChange}
+                                        disabled={isLoading}
                                     />
                                 </FormControl>
                                 <div className="space-y-1 leading-none">
@@ -204,8 +271,8 @@ export default function RegisterForm() {
                         )}
                     />
 
-                    <Button type="submit" className="w-full">
-                        Create Account
+                    <Button type="submit" className="w-full" disabled={isLoading}>
+                        {isLoading ? "Creating account..." : "Create Account"}
                     </Button>
                 </form>
             </Form>
