@@ -1,4 +1,3 @@
-// src/components/marketing/AboutPage.tsx
 "use client";
 
 import Image from "next/image";
@@ -13,8 +12,8 @@ export default function AboutPage() {
       <div className="mb-16 text-center">
         <h1 className="text-4xl md:text-5xl font-bold mb-4">Our Story</h1>
         <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
-          From humble beginnings to a thriving pottery studio, 
-          we've built Mrs. Pots on craftsmanship, passion, and community.
+          From humble beginnings to a thriving floral studio, 
+          we've built Blooming Delights on creativity, passion, and community.
         </p>
       </div>
 
@@ -23,23 +22,23 @@ export default function AboutPage() {
         <div>
           <h2 className="text-3xl font-bold mb-4">Our Journey</h2>
           <p className="mb-4">
-            Founded in 2015, Mrs. Pots began as a small pottery studio with a mission to create beautiful, 
-            functional ceramic pieces that bring joy to everyday life.
+            Founded in 2015, Blooming Delights began as a small flower shop with a mission to create beautiful, 
+            memorable floral arrangements that bring joy to every occasion.
           </p>
           <p className="mb-4">
-            Our founder, Eleanor Pots, discovered her passion for ceramics while traveling through rural 
-            villages in Portugal, where she was captivated by the traditional techniques passed down through 
+            Our founder, Eleanor Bloom, discovered her passion for floral design while traveling through rural 
+            villages in the Netherlands, where she was captivated by the traditional techniques passed down through 
             generations of artisans.
           </p>
           <p>
-            Today, our studio has grown into a team of skilled artisans dedicated to creating handcrafted 
-            pottery using both traditional methods and contemporary designs.
+            Today, our studio has grown into a team of skilled florists dedicated to creating stunning 
+            arrangements using both traditional methods and contemporary designs.
           </p>
         </div>
         <div className="rounded-lg overflow-hidden">
           <Image 
             src="/api/placeholder/600/400" 
-            alt="Our pottery studio" 
+            alt="Our flower studio" 
             width={600} 
             height={400}
             className="w-full h-auto"
@@ -55,9 +54,9 @@ export default function AboutPage() {
             <div className="bg-primary/10 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
               <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-primary"><path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"></path><path d="m7 10 3.5 3.5 7-7"></path></svg>
             </div>
-            <h3 className="text-xl font-bold mb-2">Quality Craftsmanship</h3>
+            <h3 className="text-xl font-bold mb-2">Quality Freshness</h3>
             <p className="text-muted-foreground">
-              We take pride in the quality of our work, ensuring each piece meets our high standards.
+              We take pride in the quality of our flowers, ensuring each arrangement meets our high standards.
             </p>
           </div>
           <div className="text-center">
@@ -66,7 +65,7 @@ export default function AboutPage() {
             </div>
             <h3 className="text-xl font-bold mb-2">Sustainability</h3>
             <p className="text-muted-foreground">
-              We source materials responsibly and work to minimize waste in our production process.
+              We source flowers responsibly and work to minimize waste in our design process.
             </p>
           </div>
           <div className="text-center">
@@ -75,7 +74,7 @@ export default function AboutPage() {
             </div>
             <h3 className="text-xl font-bold mb-2">Community</h3>
             <p className="text-muted-foreground">
-              We believe in building connections through our craft and supporting other local artisans.
+              We believe in building connections through our craft and supporting other local businesses.
             </p>
           </div>
         </div>
@@ -86,8 +85,8 @@ export default function AboutPage() {
         <h2 className="text-3xl font-bold text-center mb-12">Meet Our Team</h2>
         <div className="grid md:grid-cols-3 gap-8">
           {[
-            { name: "Eleanor Pots", role: "Founder & Lead Artist", image: "/api/placeholder/300/300" },
-            { name: "Michael Rivera", role: "Master Potter", image: "/api/placeholder/300/300" },
+            { name: "Eleanor Bloom", role: "Founder & Lead Florist", image: "/api/placeholder/300/300" },
+            { name: "Michael Rivera", role: "Master Florist", image: "/api/placeholder/300/300" },
             { name: "Sophia Chen", role: "Design Director", image: "/api/placeholder/300/300" },
           ].map((member, index) => (
             <div key={index} className="text-center">
@@ -112,7 +111,7 @@ export default function AboutPage() {
         <Separator className="mb-12" />
         <h2 className="text-3xl font-bold mb-4">Visit Our Shop</h2>
         <p className="text-xl text-muted-foreground max-w-2xl mx-auto mb-8">
-          Explore our collection of handcrafted pottery and find the perfect pieces for your home.
+          Explore our collection of beautiful flowers and find the perfect arrangement for any occasion.
         </p>
         <Button size="lg" asChild>
           <Link href="/shop">Browse Collection</Link>

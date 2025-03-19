@@ -87,7 +87,7 @@ export default function MarketingLayout({
             <p className="text-muted-foreground mt-2">
               {isLegalPage 
                 ? "Last updated: February 10, 2025" 
-                : "Learn more about Mrs. Pots and our mission to bring beautiful pottery to your home."}
+                : "Learn more about Blooming Delights and our mission to bring beautiful flowers to your life."}
             </p>
           </div>
           
@@ -101,7 +101,7 @@ export default function MarketingLayout({
             <div className="mt-12 bg-muted/50 rounded-lg p-6 text-center">
               <h2 className="text-xl font-semibold mb-2">Ready to explore our collection?</h2>
               <p className="text-muted-foreground mb-4">
-                Discover handcrafted pottery that brings beauty and functionality to your home.
+                Discover fresh floral arrangements that bring natural beauty and fragrance to your home.
               </p>
               <Button asChild>
                 <Link href="/shop">Shop Our Collection</Link>

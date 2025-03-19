@@ -12,7 +12,7 @@ export default function HeroSection() {
       <div className="absolute inset-0 z-0">
         <Image
           src="/api/placeholder/1600/800"
-          alt="Handcrafted pottery collection"
+          alt="Flower arrangement collection"
           width={1600}
           height={800}
           className="w-full h-full object-cover brightness-[0.85]"
@@ -25,7 +25,7 @@ export default function HeroSection() {
       <div className="container mx-auto px-4 py-24 md:py-32 lg:py-40 relative z-10">
         <div className="max-w-xl">
           <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-4 leading-tight">
-            Handcrafted Pottery for Your Home
+            Handmade flower arrangements for Your Home
           </h1>
           <p className="text-lg md:text-xl text-white/90 mb-8">
             Each piece tells a story, bringing beauty and functionality to everyday moments.

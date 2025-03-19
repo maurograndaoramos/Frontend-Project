@@ -29,7 +29,7 @@ const Footer: React.FC = () => {
                 </div>
                 <Separator className="my-6" />
                 <div className="flex flex-col md:flex-row justify-between items-center">
-                    <p className="text-sm text-muted-foreground">© {new Date().getFullYear()} Mrs. Pots. All rights reserved.</p>
+                    <p className="text-sm text-muted-foreground">© {new Date().getFullYear()} Blooming Delights. All rights reserved.</p>
                     <p className="text-sm text-muted-foreground">A ETICAlgarve meteu aqui o dedinho.</p>
                     <div className="flex space-x-4 mt-4 md:mt-0">
                         <a href="/terms" className="text-sm text-muted-foreground hover:underline">Terms</a>

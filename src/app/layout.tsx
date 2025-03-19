@@ -5,8 +5,8 @@ import Providers from "./providers";
 import "./globals.scss";
 
 export const metadata: Metadata = {
-  title: "Mrs. Pots - Beautiful pottery for your home",
-  description: "Shop for handcrafted pottery and ceramics",
+  title: "Blooming Delights - Fresh flowers and arrangements",
+  description: "Shop for beautiful floral arrangements and fresh flowers",
 };
 
 export default function RootLayout({

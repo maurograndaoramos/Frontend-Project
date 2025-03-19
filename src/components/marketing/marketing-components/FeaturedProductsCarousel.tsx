@@ -61,7 +61,7 @@ export default function FeaturedProductsCarousel() {
         <div className="flex flex-col md:flex-row md:items-center justify-between mb-10">
           <div>
             <h2 className="text-3xl font-bold mb-2">Featured Products</h2>
-            <p className="text-muted-foreground">Our most popular handcrafted pieces</p>
+            <p className="text-muted-foreground">Our most popular flower arrangements</p>
           </div>
           <Link href="/shop" className="text-primary mt-4 md:mt-0 hover:underline">
             View all products →

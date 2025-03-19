@@ -1,4 +1,3 @@
-// src/components/marketing/ContactPage.tsx
 "use client";
 
 import { useState } from "react";
@@ -191,5 +190,16 @@ export default function ContactPage() {
                       )}
                     />
 
-                    <Button type="submit" className="w-full">
-                      <Send className="h-4 w
+                                        <Button type="submit" className="w-full">
+                                          <Send className="h-4 w-4 mr-2" /> Send Message
+                                        </Button>
+                                      </form>
+                                    </Form>
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    }

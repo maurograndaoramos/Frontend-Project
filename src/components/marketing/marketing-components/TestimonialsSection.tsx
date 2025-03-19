@@ -42,7 +42,7 @@ export default function TestimonialsSection() {
       <div className="container mx-auto px-4">
         <h2 className="text-3xl font-bold text-center mb-4">What Our Customers Say</h2>
         <p className="text-center text-muted-foreground mb-12 max-w-2xl mx-auto">
-          We take pride in creating beautiful, functional pottery that brings joy to our customers' lives.
+          We take pride in creating beautiful,  that brings joy to our customers' lives.
         </p>
 
         <Tabs defaultValue="1" className="w-full max-w-3xl mx-auto">

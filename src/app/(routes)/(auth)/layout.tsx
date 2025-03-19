@@ -36,7 +36,7 @@ export default function AuthLayout({
                 <span className="text-2xl font-bold">Mrs. Pots</span>
               </Link>
               <p className="text-sm text-muted-foreground mt-2">
-                Beautiful pottery for your home
+                Beautiful floral arrangements for every occasion
               </p>
             </div>
             
