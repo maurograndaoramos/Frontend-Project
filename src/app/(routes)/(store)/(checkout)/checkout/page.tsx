@@ -30,7 +30,7 @@ export default function CheckoutPage() {
       state: "",
       zipCode: "",
       country: "US",
-      shippingMethod: "standard",
+      shippingMethod: "standard" as "standard",
       deliveryNotes: "",
     },
     billing: {
@@ -44,7 +44,7 @@ export default function CheckoutPage() {
       country: "US",
     },
     payment: {
-      method: "credit-card",
+      method: "credit-card" as "credit-card",
       cardHolder: "",
       cardNumber: "",
       expiryDate: "",
@@ -52,7 +52,7 @@ export default function CheckoutPage() {
     },
     items: cart.items,
     subtotal: getCartTotal(),
-    shipping: 0,
+    shippingCost: 0,
     tax: getCartTotal() * 0.08, // 8% tax rate
     total: getCartTotal() + (getCartTotal() * 0.08),
     orderId: `ORD-${Math.floor(100000 + Math.random() * 900000)}`,
@@ -130,14 +130,6 @@ export default function CheckoutPage() {
                 onBack={() => setCurrentStep("shipping")}
               />
             )}
-
-            {currentStep === "review" && (
-              <OrderReview 
-                orderData={orderData}
-                onBack={() => setCurrentStep("payment")}
-                onPlaceOrder={placeOrder}
-              />
-            )}
           </CardContent>
         </Card>
       </div>
@@ -145,12 +137,12 @@ export default function CheckoutPage() {
       {/* Order summary */}
       <div className="lg:col-span-1">
         <OrderSummary 
-          items={cart.items} 
-          subtotal={getCartTotal()} 
-          tax={orderData.tax}
-          shipping={orderData.shipping}
-          total={orderData.total}
-        />
+            items={cart.items} 
+            subtotal={getCartTotal()} 
+            tax={orderData.tax}
+            shipping={orderData.shippingCost}
+            total={orderData.total}
+          />
       </div>
     </div>
   );

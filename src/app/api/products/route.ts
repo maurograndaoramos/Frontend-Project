@@ -58,9 +58,6 @@ export async function GET(request: Request) {
       case "newest":
         orderBy = { createdAt: "desc" };
         break;
-      case "rating":
-        orderBy = { reviewCount: "desc" };
-        break;
       case "featured":
       default:
         orderBy = { isFeatured: "desc" };

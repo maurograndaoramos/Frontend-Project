@@ -1,4 +1,3 @@
-// src/components/shop/ShopPageContent.tsx
 "use client";
 
 import { useEffect, useState } from "react";
@@ -9,6 +8,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Product } from "@/types/product";
 import { getProducts } from "@/lib/services/productService";
 import { useToast } from "@/lib/hooks/useToast";
+import RecentlyViewedProducts from "@/components/shop/shop-components/RecentlyViewedProducts";
 
 export default function ShopPageContent() {
   const searchParams = useSearchParams();
@@ -95,11 +95,16 @@ export default function ShopPageContent() {
   }
 
   return (
-    <ProductGrid 
-      products={products} 
-      title="Shop All Products" 
-      description={`Browse our collection of handcrafted pottery and ceramic goods (${pagination.total} products)`}
-      pagination={pagination}
-    />
+    <>
+      <ProductGrid 
+        products={products} 
+        title="Shop All Products" 
+        description={`Browse our collection of handcrafted pottery and ceramic goods (${pagination.total} products)`}
+        pagination={pagination}
+      />
+      
+      {/* Recently viewed products section */}
+      <RecentlyViewedProducts maxItems={4} />
+    </>
   );
 }

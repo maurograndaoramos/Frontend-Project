@@ -1,4 +1,3 @@
-// src/components/shop/shop-components/ProductCard.tsx
 "use client";
 
 import { Heart, ShoppingCart } from "lucide-react";
@@ -9,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Product } from "@/types/product";
 import { useCart } from "@/lib/context/CartContext";
+import { useWishlist } from "@/lib/context/WishlistContext";
 import { formatPrice } from "@/lib/utils";
 
 interface ProductCardProps {
@@ -18,6 +18,7 @@ interface ProductCardProps {
 
 export default function ProductCard({ product, view }: ProductCardProps) {
   const { addItem } = useCart();
+  const { addToWishlist, removeFromWishlist, isInWishlist } = useWishlist();
 
   const addToCart = (e: React.MouseEvent) => {
     e.preventDefault(); // Prevent navigation to product detail
@@ -25,12 +26,18 @@ export default function ProductCard({ product, view }: ProductCardProps) {
     addItem(product, 1); // Add 1 quantity by default from listing page
   };
 
-  const addToWishlist = (e: React.MouseEvent) => {
+  const toggleWishlist = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    console.log(`Adding ${product.name} to wishlist`);
-    // This will be connected to your wishlist state management
+    
+    if (isInWishlist(product.id)) {
+      removeFromWishlist(product.id);
+    } else {
+      addToWishlist(product);
+    }
   };
+
+  const isWishlisted = isInWishlist(product.id);
 
   if (view === "grid") {
     return (
@@ -56,11 +63,15 @@ export default function ProductCard({ product, view }: ProductCardProps) {
           <Button
             variant="ghost"
             size="icon"
-            className="absolute top-3 right-3 h-8 w-8 rounded-full bg-background/50 hover:bg-background/80"
-            onClick={addToWishlist}
-            aria-label="Add to wishlist"
+            className={`absolute top-3 right-3 h-8 w-8 rounded-full ${
+              isWishlisted 
+                ? "bg-primary text-primary-foreground hover:bg-primary/80" 
+                : "bg-background/50 hover:bg-background/80"
+            }`}
+            onClick={toggleWishlist}
+            aria-label={isWishlisted ? "Remove from wishlist" : "Add to wishlist"}
           >
-            <Heart className="h-4 w-4" />
+            <Heart className={`h-4 w-4 ${isWishlisted ? "fill-current" : ""}`} />
           </Button>
         </div>
         <CardContent className="flex flex-col flex-grow p-4">
@@ -140,12 +151,12 @@ export default function ProductCard({ product, view }: ProductCardProps) {
               </div>
               <div className="flex space-x-2">
                 <Button
-                  variant="outline"
+                  variant={isWishlisted ? "default" : "outline"}
                   size="icon"
-                  onClick={addToWishlist}
-                  aria-label="Add to wishlist"
+                  onClick={toggleWishlist}
+                  aria-label={isWishlisted ? "Remove from wishlist" : "Add to wishlist"}
                 >
-                  <Heart className="h-4 w-4" />
+                  <Heart className={`h-4 w-4 ${isWishlisted ? "fill-current" : ""}`} />
                 </Button>
                 <Button disabled={!product.inStock} onClick={addToCart}>
                   <ShoppingCart className="h-4 w-4 mr-2" />

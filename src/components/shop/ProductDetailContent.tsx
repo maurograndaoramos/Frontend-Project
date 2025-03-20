@@ -1,97 +1,245 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useParams } from "next/navigation";
-import ProductDetail from "@/components/shop/shop-components/ProductDetail";
-import { Product } from "@/types/product";
-import { getProduct } from "@/lib/services/productService";
-import { useToast } from "@/lib/hooks/useToast";
-import { Skeleton } from "@/components/ui/skeleton";
+import { useState, useEffect } from "react";
+import Image from "next/image";
+import {
+  Heart,
+  ShoppingCart,
+  Truck,
+  ShieldCheck,
+  RotateCcw,
+  Minus,
+  Plus,
+  Share2
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Product } from "@/types/product";
+import { useCart } from "@/lib/context/CartContext";
+import { useWishlist } from "@/lib/context/WishlistContext";
+import { addToViewingHistory } from "@/lib/services/recommendationService";
+import ProductRecommendations from "@/components/shop/shop-components/ProductRecommendations"
 
-export default function ProductDetailContent() {
-  const params = useParams();
-  const productId = params.id as string;
-  const { toast } = useToast();
-  
-  const [product, setProduct] = useState<Product | null>(null);
-  const [relatedProducts, setRelatedProducts] = useState<Product[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(false);
-  
+interface ProductDetailProps {
+  product: Product;
+}
+
+export default function ProductDetail({ product }: ProductDetailProps) {
+  const [quantity, setQuantity] = useState(1);
+  const { addItem } = useCart();
+  const { addToWishlist, removeFromWishlist, isInWishlist } = useWishlist();
+  const isWishlisted = isInWishlist(product.id);
+
   useEffect(() => {
-    async function loadProduct() {
-      setLoading(true);
-      setError(false);
-      
-      try {
-        const data = await getProduct(productId);
-        
-        if (!data) {
-          setError(true);
-          toast({
-            variant: "destructive",
-            title: "Product not found",
-            description: "The requested product could not be found.",
-          });
-          return;
-        }
-        
-        // Extract relatedProducts before setting product
-        const { relatedProducts: related, ...productData } = data;
-        
-        setProduct(productData);
-        
-        // Make sure relatedProducts is of type Product[]
-        if (related && Array.isArray(related)) {
-          // Assuming each item in related is a Product 
-          const typedRelated = related as unknown as Product[];
-          setRelatedProducts(typedRelated);
-        }
-      } catch (err) {
-        setError(true);
-        toast({
-          variant: "destructive",
-          title: "Error loading product",
-          description: "Please try again later.",
-        });
-      } finally {
-        setLoading(false);
-      }
+    // Add to viewing history when component mounts
+    addToViewingHistory(product.id);
+  }, [product.id]);
+
+  const incrementQuantity = () => {
+    setQuantity(prev => prev + 1);
+  };
+
+  const decrementQuantity = () => {
+    setQuantity(prev => prev > 1 ? prev - 1 : 1);
+  };
+
+  const addToCart = () => {
+    addItem(product, quantity);
+  };
+
+  const toggleWishlist = () => {
+    if (isWishlisted) {
+      removeFromWishlist(product.id);
+    } else {
+      addToWishlist(product);
     }
-    
-    loadProduct();
-  }, [productId, toast]);
-  
-  if (loading) {
-    return (
-      <div className="container mx-auto px-4 py-8">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-          <Skeleton className="h-96 w-full rounded-lg" />
+  };
+
+  return (
+    <div className="container mx-auto px-4 py-8">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+        {/* Product Images */}
+        <div className="space-y-4">
+          <div className="relative rounded-lg overflow-hidden border">
+            <Image
+              src={product.images && product.images.length > 0 ? product.images[0] : "/api/placeholder/600/600"}
+              alt={product.name}
+              width={600}
+              height={600}
+              className="w-full object-cover"
+            />
+            {product.isNew && <Badge className="absolute top-4 left-4">New</Badge>}
+          </div>
+          {/* Additional image thumbnails would go here */}
+        </div>
+
+        {/* Product Info */}
+        <div className="space-y-6">
+          <div>
+            <Badge variant="secondary">{product.category}</Badge>
+            <h1 className="text-3xl font-bold mt-2">{product.name}</h1>
+
+            <div className="flex items-center mt-4">
+              <span className="text-2xl font-bold">${product.price.toFixed(2)}</span>
+              {product.originalPrice && (
+                <span className="ml-3 text-lg text-muted-foreground line-through">
+                  ${product.originalPrice.toFixed(2)}
+                </span>
+              )}
+              {product.originalPrice && (
+                <Badge variant="secondary" className="ml-3">
+                  Save ${(product.originalPrice - product.price).toFixed(2)}
+                </Badge>
+              )}
+            </div>
+          </div>
+
+          <Separator />
+
           <div className="space-y-4">
-            <Skeleton className="h-8 w-3/4" />
-            <Skeleton className="h-6 w-1/2" />
-            <Skeleton className="h-24 w-full" />
-            <Skeleton className="h-12 w-full" />
+            <p className="text-muted-foreground">{product.description}</p>
+
+            {/* Quantity selector */}
+            <div className="flex items-center space-x-4">
+              <span className="font-medium">Quantity:</span>
+              <div className="flex items-center">
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={decrementQuantity}
+                  disabled={quantity <= 1}
+                  className="h-8 w-8 rounded-r-none"
+                >
+                  <Minus className="h-3 w-3" />
+                </Button>
+                <div className="h-8 px-4 flex items-center justify-center border-y">
+                  {quantity}
+                </div>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={incrementQuantity}
+                  className="h-8 w-8 rounded-l-none"
+                >
+                  <Plus className="h-3 w-3" />
+                </Button>
+              </div>
+            </div>
+
+            {/* Action buttons */}
+            <div className="flex flex-col sm:flex-row gap-3">
+              <Button
+                className="flex-1"
+                size="lg"
+                disabled={!product.inStock}
+                onClick={addToCart}
+              >
+                <ShoppingCart className="mr-2 h-5 w-5" />
+                {product.inStock ? 'Add to Cart' : 'Out of Stock'}
+              </Button>
+              <Button
+                variant={isWishlisted ? "default" : "outline"}
+                size="lg"
+                onClick={toggleWishlist}
+              >
+                <Heart className={`mr-2 h-5 w-5 ${isWishlisted ? "fill-current" : ""}`} />
+                {isWishlisted ? 'Remove from Wishlist' : 'Add to Wishlist'}
+              </Button>
+            </div>
+          </div>
+
+          <Separator />
+
+          {/* Product features */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="flex items-center space-x-2">
+              <Truck className="h-5 w-5 text-muted-foreground" />
+              <span className="text-sm">Free shipping on orders over $50</span>
+            </div>
+            <div className="flex items-center space-x-2">
+              <ShieldCheck className="h-5 w-5 text-muted-foreground" />
+              <span className="text-sm">Satisfaction guaranteed</span>
+            </div>
+            <div className="flex items-center space-x-2">
+              <RotateCcw className="h-5 w-5 text-muted-foreground" />
+              <span className="text-sm">30-day returns policy</span>
+            </div>
+          </div>
+
+          <div className="flex items-center justify-between">
+            <span className="text-sm text-muted-foreground">SKU: {product.id}</span>
+            <Button variant="ghost" size="sm">
+              <Share2 className="mr-1 h-4 w-4" />
+              Share
+            </Button>
           </div>
         </div>
       </div>
-    );
-  }
-  
-  if (error || !product) {
-    return (
-      <div className="container mx-auto px-4 py-8 text-center">
-        <h1 className="text-2xl font-bold mb-4">Product Not Found</h1>
-        <p className="text-muted-foreground mb-6">
-          We couldn't find the product you're looking for.
-        </p>
-        <Button variant="outline" onClick={() => window.history.back()}>
-          Go Back
-        </Button>
+
+      {/* Product details tabs */}
+      <div className="mt-12">
+        <Tabs defaultValue="description">
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="description">Description</TabsTrigger>
+            <TabsTrigger value="specifications">Specifications</TabsTrigger>
+          </TabsList>
+          <TabsContent value="description" className="p-4 border rounded-b-lg">
+            <p>
+              {product.description}
+            </p>
+            {product.care && product.care.length > 0 && (
+              <div className="mt-4">
+                <h3 className="font-medium mb-2">Care Instructions:</h3>
+                <ul className="list-disc pl-5 space-y-1">
+                  {product.care.map((instruction, index) => (
+                    <li key={index} className="text-muted-foreground">{instruction}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </TabsContent>
+          <TabsContent value="specifications" className="p-4 border rounded-b-lg">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {product.dimensions && (
+                <div>
+                  <h3 className="font-medium">Dimensions</h3>
+                  <p className="text-sm text-muted-foreground">
+                    {product.dimensions.height && `H: ${product.dimensions.height}${product.dimensions.unit} `}
+                    {product.dimensions.width && `W: ${product.dimensions.width}${product.dimensions.unit} `}
+                    {product.dimensions.depth && `D: ${product.dimensions.depth}${product.dimensions.unit}`}
+                  </p>
+                </div>
+              )}
+              {product.weight && (
+                <div>
+                  <h3 className="font-medium">Weight</h3>
+                  <p className="text-sm text-muted-foreground">
+                    {product.weight.value} {product.weight.unit}
+                  </p>
+                </div>
+              )}
+              {product.material && (
+                <div>
+                  <h3 className="font-medium">Materials</h3>
+                  <p className="text-sm text-muted-foreground">{product.material}</p>
+                </div>
+              )}
+              <div>
+                <h3 className="font-medium">Category</h3>
+                <p className="text-sm text-muted-foreground">{product.category}</p>
+              </div>
+            </div>
+          </TabsContent>
+        </Tabs>
       </div>
-    );
-  }
-  
-  return <ProductDetail product={product} relatedProducts={relatedProducts} />;
+
+      {/* Product recommendations */}
+      <ProductRecommendations 
+        currentProductId={product.id} 
+        category={product.category} 
+      />
+    </div>
+  );
 }

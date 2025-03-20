@@ -12,8 +12,6 @@ export interface Product {
   tags?: string[];
   isNew?: boolean;
   isFeatured?: boolean;
-  rating?: number;
-  reviewCount?: number;
   dimensions?: {
     height?: number;
     width?: number;

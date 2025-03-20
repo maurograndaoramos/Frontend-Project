@@ -10,20 +10,7 @@ export async function GET(
   
   try {
     const product = await prisma.product.findUnique({
-      where: { id },
-      include: {
-        reviews: {
-          include: {
-            user: {
-              select: {
-                id: true,
-                name: true,
-                image: true,
-              },
-            },
-          },
-        },
-      },
+      where: { id }
     });
     
     if (!product) {
@@ -32,11 +19,6 @@ export async function GET(
         { status: 404 }
       );
     }
-    
-    // Calculate average rating
-    const avgRating = product.reviews.length > 0
-      ? product.reviews.reduce((sum, review) => sum + review.rating, 0) / product.reviews.length
-      : null;
     
     // Get related products (same category)
     const relatedProducts = await prisma.product.findMany({
@@ -49,8 +31,6 @@ export async function GET(
     
     return NextResponse.json({
       ...product,
-      rating: avgRating,
-      reviewCount: product.reviews.length,
       relatedProducts,
     });
   } catch (error) {
