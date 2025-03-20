@@ -19,12 +19,15 @@ import {
   DropdownMenuLabel,
 } from "@/components/ui/dropdown-menu";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
+import { useCart } from "@/lib/context/CartContext";
 
 const Navbar: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const router = useRouter();
   const { data: session, status } = useSession();
   const isLoading = status === "loading";
+  const { toggleCart, getCartCount } = useCart();
+  const cartCount = getCartCount();
 
   const handleSignOut = async () => {
     await signOut({ callbackUrl: '/' });
@@ -134,8 +137,19 @@ const Navbar: React.FC = () => {
         </Sheet>
 
         {/* Shopping Cart */}
-        <Button variant="ghost" size="icon" aria-label="Shopping Cart">
+        <Button
+          variant="ghost"
+          size="icon"
+          aria-label="Shopping Cart"
+          onClick={() => toggleCart(true)}
+          className="relative"
+        >
           <ShoppingCart />
+          {cartCount > 0 && (
+            <span className="absolute -top-1 -right-1 h-5 w-5 rounded-full bg-primary text-primary-foreground text-xs flex items-center justify-center">
+              {cartCount}
+            </span>
+          )}
         </Button>
 
         {isLoading ? (

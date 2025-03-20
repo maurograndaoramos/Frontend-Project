@@ -3,13 +3,13 @@
 
 import { useState } from "react";
 import Image from "next/image";
-import { 
-  Heart, 
-  ShoppingCart, 
-  Star, 
-  StarHalf, 
-  Truck, 
-  ShieldCheck, 
+import {
+  Heart,
+  ShoppingCart,
+  Star,
+  StarHalf,
+  Truck,
+  ShieldCheck,
   RotateCcw,
   Minus,
   Plus,
@@ -20,6 +20,7 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Product } from "@/types/product";
+import { useCart } from "@/lib/context/CartContext";
 
 interface ProductDetailProps {
   product: Product;
@@ -28,6 +29,7 @@ interface ProductDetailProps {
 
 export default function ProductDetail({ product, relatedProducts = [] }: ProductDetailProps) {
   const [quantity, setQuantity] = useState(1);
+  const { addItem } = useCart();
 
   const incrementQuantity = () => {
     setQuantity(prev => prev + 1);
@@ -38,8 +40,7 @@ export default function ProductDetail({ product, relatedProducts = [] }: Product
   };
 
   const addToCart = () => {
-    console.log(`Adding ${quantity} of ${product.name} to cart`);
-    // This will be connected to your cart state management
+    addItem(product, quantity);
   };
 
   const addToWishlist = () => {
@@ -51,7 +52,7 @@ export default function ProductDetail({ product, relatedProducts = [] }: Product
   const renderRating = (rating: number) => {
     const fullStars = Math.floor(rating);
     const hasHalfStar = rating % 1 >= 0.5;
-    
+
     return (
       <div className="flex items-center">
         {[...Array(fullStars)].map((_, i) => (
@@ -86,11 +87,11 @@ export default function ProductDetail({ product, relatedProducts = [] }: Product
           <div>
             <Badge variant="secondary">{product.category}</Badge>
             <h1 className="text-3xl font-bold mt-2">{product.name}</h1>
-            
+
             <div className="flex items-center mt-2">
               {product.rating && renderRating(product.rating)}
             </div>
-            
+
             <div className="flex items-center mt-4">
               <span className="text-2xl font-bold">${product.price.toFixed(2)}</span>
               {product.originalPrice && (
@@ -110,15 +111,15 @@ export default function ProductDetail({ product, relatedProducts = [] }: Product
 
           <div className="space-y-4">
             <p className="text-muted-foreground">{product.description}</p>
-            
+
             {/* Quantity selector */}
             <div className="flex items-center space-x-4">
               <span className="font-medium">Quantity:</span>
               <div className="flex items-center">
-                <Button 
-                  variant="outline" 
-                  size="icon" 
-                  onClick={decrementQuantity} 
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={decrementQuantity}
                   disabled={quantity <= 1}
                   className="h-8 w-8 rounded-r-none"
                 >
@@ -127,9 +128,9 @@ export default function ProductDetail({ product, relatedProducts = [] }: Product
                 <div className="h-8 px-4 flex items-center justify-center border-y">
                   {quantity}
                 </div>
-                <Button 
-                  variant="outline" 
-                  size="icon" 
+                <Button
+                  variant="outline"
+                  size="icon"
                   onClick={incrementQuantity}
                   className="h-8 w-8 rounded-l-none"
                 >
@@ -137,21 +138,21 @@ export default function ProductDetail({ product, relatedProducts = [] }: Product
                 </Button>
               </div>
             </div>
-            
+
             {/* Action buttons */}
             <div className="flex flex-col sm:flex-row gap-3">
-              <Button 
-                className="flex-1" 
-                size="lg" 
+              <Button
+                className="flex-1"
+                size="lg"
                 disabled={!product.inStock}
                 onClick={addToCart}
               >
                 <ShoppingCart className="mr-2 h-5 w-5" />
                 {product.inStock ? 'Add to Cart' : 'Out of Stock'}
               </Button>
-              <Button 
-                variant="outline" 
-                size="lg" 
+              <Button
+                variant="outline"
+                size="lg"
                 onClick={addToWishlist}
               >
                 <Heart className="mr-2 h-5 w-5" />

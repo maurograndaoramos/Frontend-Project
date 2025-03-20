@@ -1,4 +1,4 @@
-// src/components/shop/ProductCard.tsx
+// src/components/shop/shop-components/ProductCard.tsx
 "use client";
 
 import { Heart, ShoppingCart } from "lucide-react";
@@ -8,6 +8,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Product } from "@/types/product";
+import { useCart } from "@/lib/context/CartContext";
+import { formatPrice } from "@/lib/utils";
 
 interface ProductCardProps {
   product: Product;
@@ -15,12 +17,17 @@ interface ProductCardProps {
 }
 
 export default function ProductCard({ product, view }: ProductCardProps) {
-  const addToCart = () => {
-    console.log(`Adding ${product.name} to cart`);
-    // This will be connected to your cart state management
+  const { addItem } = useCart();
+
+  const addToCart = (e: React.MouseEvent) => {
+    e.preventDefault(); // Prevent navigation to product detail
+    e.stopPropagation(); // Prevent event bubbling
+    addItem(product, 1); // Add 1 quantity by default from listing page
   };
 
-  const addToWishlist = () => {
+  const addToWishlist = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
     console.log(`Adding ${product.name} to wishlist`);
     // This will be connected to your wishlist state management
   };
@@ -31,7 +38,7 @@ export default function ProductCard({ product, view }: ProductCardProps) {
         <div className="relative">
           <Link href={`/shop/product/${product.id}`}>
             <Image
-              src={product.image}
+              src={product.images && product.images.length > 0 ? product.images[0] : "/api/placeholder/400/500"}
               alt={product.name}
               width={400}
               height={500}
@@ -66,10 +73,10 @@ export default function ProductCard({ product, view }: ProductCardProps) {
             </Link>
           </div>
           <div className="flex items-center mt-1 mb-auto">
-            <span className="font-medium">${product.price.toFixed(2)}</span>
+            <span className="font-medium">{formatPrice(product.price)}</span>
             {product.originalPrice && (
               <span className="ml-2 text-sm text-muted-foreground line-through">
-                ${product.originalPrice.toFixed(2)}
+                {formatPrice(product.originalPrice)}
               </span>
             )}
           </div>
@@ -93,7 +100,7 @@ export default function ProductCard({ product, view }: ProductCardProps) {
         <div className="relative sm:w-48">
           <Link href={`/shop/product/${product.id}`}>
             <Image
-              src={product.image}
+              src={product.images && product.images.length > 0 ? product.images[0] : "/api/placeholder/400/500"}
               alt={product.name}
               width={400}
               height={500}
@@ -124,10 +131,10 @@ export default function ProductCard({ product, view }: ProductCardProps) {
             </div>
             <div className="flex items-center justify-between mt-auto">
               <div>
-                <span className="font-medium text-lg">${product.price.toFixed(2)}</span>
+                <span className="font-medium text-lg">{formatPrice(product.price)}</span>
                 {product.originalPrice && (
                   <span className="ml-2 text-sm text-muted-foreground line-through">
-                    ${product.originalPrice.toFixed(2)}
+                    {formatPrice(product.originalPrice)}
                   </span>
                 )}
               </div>

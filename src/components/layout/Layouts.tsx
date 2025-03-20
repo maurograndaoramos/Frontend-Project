@@ -1,5 +1,6 @@
 import Navbar from './Navbar';
 import Footer from './Footer';
+import CartSidebar from '../shop/shop-components/CartSidebar';
 
 const Layouts: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   return (
@@ -7,6 +8,7 @@ const Layouts: React.FC<{ children: React.ReactNode }> = ({ children }) => {
       <Navbar />
       {children}
       <Footer />
+      <CartSidebar />
     </div>
   );
 };
