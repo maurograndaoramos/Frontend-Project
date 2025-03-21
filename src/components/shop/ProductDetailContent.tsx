@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useParams } from "next/navigation";
 import Image from "next/image";
 import {
   Heart,
@@ -20,22 +21,46 @@ import { Product } from "@/types/product";
 import { useCart } from "@/lib/context/CartContext";
 import { useWishlist } from "@/lib/context/WishlistContext";
 import { addToViewingHistory } from "@/lib/services/recommendationService";
-import ProductRecommendations from "@/components/shop/shop-components/ProductRecommendations"
+import { getProduct } from "@/lib/services/productService";
+import ProductRecommendations from "@/components/shop/shop-components/ProductRecommendations";
+import RecentlyViewedProducts from "@/components/shop/shop-components/RecentlyViewedProducts";
+import { Skeleton } from "@/components/ui/skeleton";
 
-interface ProductDetailProps {
-  product: Product;
-}
-
-export default function ProductDetail({ product }: ProductDetailProps) {
+export default function ProductDetailContent() {
+  const params = useParams();
+  const [product, setProduct] = useState<Product | null>(null);
+  const [loading, setLoading] = useState(true);
   const [quantity, setQuantity] = useState(1);
+  const [selectedImage, setSelectedImage] = useState(0);
   const { addItem } = useCart();
   const { addToWishlist, removeFromWishlist, isInWishlist } = useWishlist();
-  const isWishlisted = isInWishlist(product.id);
+  
+  // We'll check if product exists before using isInWishlist
+  const isWishlisted = product ? isInWishlist(product.id) : false;
 
   useEffect(() => {
-    // Add to viewing history when component mounts
-    addToViewingHistory(product.id);
-  }, [product.id]);
+    async function loadProduct() {
+      setLoading(true);
+      try {
+        const productId = params.id as string;
+        const productData = await getProduct(productId);
+        setProduct(productData);
+        
+        if (productData) {
+          // Add to viewing history when product data is loaded
+          addToViewingHistory(productData.id);
+        }
+      } catch (error) {
+        console.error('Error loading product:', error);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    if (params.id) {
+      loadProduct();
+    }
+  }, [params.id]);
 
   const incrementQuantity = () => {
     setQuantity(prev => prev + 1);
@@ -46,16 +71,83 @@ export default function ProductDetail({ product }: ProductDetailProps) {
   };
 
   const addToCart = () => {
-    addItem(product, quantity);
+    if (product) {
+      addItem(product, quantity);
+    }
   };
 
   const toggleWishlist = () => {
+    if (!product) return;
+    
     if (isWishlisted) {
       removeFromWishlist(product.id);
     } else {
       addToWishlist(product);
     }
   };
+
+  // Loading state
+  if (loading) {
+    return (
+      <div className="container mx-auto px-4 py-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+          {/* Product Image Skeleton */}
+          <div className="space-y-4">
+            <Skeleton className="w-full h-[400px] rounded-lg" />
+            <div className="grid grid-cols-4 gap-2">
+              {[1, 2, 3, 4].map(i => (
+                <Skeleton key={i} className="w-full h-20 rounded-md" />
+              ))}
+            </div>
+          </div>
+
+          {/* Product Info Skeleton */}
+          <div className="space-y-6">
+            <div>
+              <Skeleton className="h-6 w-24 mb-2" />
+              <Skeleton className="h-10 w-3/4 mb-4" />
+              <Skeleton className="h-8 w-36" />
+            </div>
+            <Skeleton className="h-px w-full" />
+            <div className="space-y-4">
+              <Skeleton className="h-20 w-full" />
+              <Skeleton className="h-10 w-full" />
+              <div className="flex flex-col sm:flex-row gap-3">
+                <Skeleton className="h-12 w-full" />
+                <Skeleton className="h-12 w-full" />
+              </div>
+            </div>
+            <Skeleton className="h-px w-full" />
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              {[1, 2, 3].map(i => (
+                <Skeleton key={i} className="h-12 w-full" />
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Error state or product not found
+  if (!product) {
+    return (
+      <div className="container mx-auto px-4 py-8 text-center">
+        <h2 className="text-2xl font-bold mb-4">Product Not Found</h2>
+        <p className="text-muted-foreground mb-6">
+          Sorry, we couldn't find the product you're looking for.
+        </p>
+        <Button asChild>
+          <a href="/shop">Back to Shop</a>
+        </Button>
+      </div>
+    );
+  }
+
+  // Get main image or fallback
+  const mainImage = product.images && product.images.length > 0 
+    ? product.images[selectedImage] 
+    : "/api/placeholder/600/600";
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -64,15 +156,37 @@ export default function ProductDetail({ product }: ProductDetailProps) {
         <div className="space-y-4">
           <div className="relative rounded-lg overflow-hidden border">
             <Image
-              src={product.images && product.images.length > 0 ? product.images[0] : "/api/placeholder/600/600"}
+              src={mainImage}
               alt={product.name}
               width={600}
               height={600}
-              className="w-full object-cover"
+              className="w-full h-[400px] object-cover"
             />
             {product.isNew && <Badge className="absolute top-4 left-4">New</Badge>}
           </div>
-          {/* Additional image thumbnails would go here */}
+          
+          {/* Image thumbnails */}
+          {product.images && product.images.length > 1 && (
+            <div className="grid grid-cols-4 gap-2">
+              {product.images.map((image, index) => (
+                <div 
+                  key={index} 
+                  className={`rounded-md overflow-hidden border cursor-pointer ${
+                    selectedImage === index ? "ring-2 ring-primary" : ""
+                  }`}
+                  onClick={() => setSelectedImage(index)}
+                >
+                  <Image 
+                    src={image}
+                    alt={`${product.name} - view ${index + 1}`}
+                    width={150}
+                    height={150}
+                    className="w-full h-20 object-cover"
+                  />
+                </div>
+              ))}
+            </div>
+          )}
         </div>
 
         {/* Product Info */}
@@ -101,32 +215,42 @@ export default function ProductDetail({ product }: ProductDetailProps) {
           <div className="space-y-4">
             <p className="text-muted-foreground">{product.description}</p>
 
-            {/* Quantity selector */}
-            <div className="flex items-center space-x-4">
-              <span className="font-medium">Quantity:</span>
-              <div className="flex items-center">
-                <Button
-                  variant="outline"
-                  size="icon"
-                  onClick={decrementQuantity}
-                  disabled={quantity <= 1}
-                  className="h-8 w-8 rounded-r-none"
-                >
-                  <Minus className="h-3 w-3" />
-                </Button>
-                <div className="h-8 px-4 flex items-center justify-center border-y">
-                  {quantity}
-                </div>
-                <Button
-                  variant="outline"
-                  size="icon"
-                  onClick={incrementQuantity}
-                  className="h-8 w-8 rounded-l-none"
-                >
-                  <Plus className="h-3 w-3" />
-                </Button>
-              </div>
+            {/* Stock status */}
+            <div className="flex items-center space-x-2">
+              <span className="font-medium">Availability:</span>
+              <span className={product.inStock ? "text-green-600" : "text-red-600"}>
+                {product.inStock ? 'In Stock' : 'Out of Stock'}
+              </span>
             </div>
+
+            {/* Quantity selector */}
+            {product.inStock && (
+              <div className="flex items-center space-x-4">
+                <span className="font-medium">Quantity:</span>
+                <div className="flex items-center">
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    onClick={decrementQuantity}
+                    disabled={quantity <= 1}
+                    className="h-8 w-8 rounded-r-none"
+                  >
+                    <Minus className="h-3 w-3" />
+                  </Button>
+                  <div className="h-8 px-4 flex items-center justify-center border-y">
+                    {quantity}
+                  </div>
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    onClick={incrementQuantity}
+                    className="h-8 w-8 rounded-l-none"
+                  >
+                    <Plus className="h-3 w-3" />
+                  </Button>
+                </div>
+              </div>
+            )}
 
             {/* Action buttons */}
             <div className="flex flex-col sm:flex-row gap-3">
@@ -167,6 +291,8 @@ export default function ProductDetail({ product }: ProductDetailProps) {
               <span className="text-sm">30-day returns policy</span>
             </div>
           </div>
+
+          <Separator />
 
           <div className="flex items-center justify-between">
             <span className="text-sm text-muted-foreground">SKU: {product.id}</span>
@@ -230,6 +356,22 @@ export default function ProductDetail({ product }: ProductDetailProps) {
                 <h3 className="font-medium">Category</h3>
                 <p className="text-sm text-muted-foreground">{product.category}</p>
               </div>
+              {product.subcategory && (
+                <div>
+                  <h3 className="font-medium">Subcategory</h3>
+                  <p className="text-sm text-muted-foreground">{product.subcategory}</p>
+                </div>
+              )}
+              {product.tags && product.tags.length > 0 && (
+                <div>
+                  <h3 className="font-medium">Tags</h3>
+                  <div className="flex flex-wrap gap-1 mt-1">
+                    {product.tags.map((tag, index) => (
+                      <Badge key={index} variant="outline">{tag}</Badge>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           </TabsContent>
         </Tabs>
@@ -239,6 +381,13 @@ export default function ProductDetail({ product }: ProductDetailProps) {
       <ProductRecommendations 
         currentProductId={product.id} 
         category={product.category} 
+      />
+      
+      {/* Recently viewed products */}
+      <RecentlyViewedProducts 
+        maxItems={4}
+        excludeProductId={product.id}
+        title="Recently Viewed Items"
       />
     </div>
   );

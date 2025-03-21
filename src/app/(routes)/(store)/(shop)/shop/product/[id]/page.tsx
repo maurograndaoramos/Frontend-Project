@@ -1,7 +1,7 @@
 "use client";
 
-import ProductDetailPageContent from "@/components/shop/ProductDetailContent";
+import ProductDetailContent from "@/components/shop/ProductDetailContent";
 
 export default function ProductDetailPage() {
-    return <ProductDetailPageContent />;
+    return <ProductDetailContent />;
 }
