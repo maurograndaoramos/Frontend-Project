@@ -61,6 +61,31 @@ export default function CategoriesShowcase() {
     return null;
   }
 
+  // Map of category names to appropriate floral images
+  const categoryImages: Record<string, string> = {
+    "floral": "/api/placeholder/600/400?text=Beautiful+Arrangements",
+    "roses": "/api/placeholder/600/400?text=Elegant+Roses",
+    "mixed arrangements": "/api/placeholder/600/400?text=Mixed+Arrangements",
+    "seasonal": "/api/placeholder/600/400?text=Seasonal+Flowers",
+    "bouquets": "/api/placeholder/600/400?text=Fresh+Bouquets",
+  };
+
+  // Function to get the best image for a category
+  const getCategoryImage = (category: Category) => {
+    const lowerCaseName = category.name.toLowerCase();
+    
+    // Look for specific matches first
+    for (const [key, imageUrl] of Object.entries(categoryImages)) {
+      if (lowerCaseName.includes(key)) {
+        return imageUrl;
+      }
+    }
+    
+    // Fallback to default with category name
+    return `/api/placeholder/600/400?text=${encodeURIComponent(category.name)}`;
+  };
+
+
   return (
     <section className="py-16">
       <div className="container mx-auto px-4">
@@ -73,7 +98,7 @@ export default function CategoriesShowcase() {
                 <div className="overflow-hidden rounded-lg">
                   <AspectRatio ratio={3/2} className="bg-muted">
                     <Image
-                      src={`/api/placeholder/600/400?text=${encodeURIComponent(category.name)}`}
+                      src={getCategoryImage(category)}
                       alt={category.name}
                       fill
                       className="object-cover transition-transform group-hover:scale-105 duration-500"

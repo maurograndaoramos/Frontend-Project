@@ -1,4 +1,3 @@
-// src/components/marketing/marketing-components/FeaturedProductsCarousel.tsx
 "use client";
 
 import { useEffect, useState } from "react";
@@ -32,7 +31,7 @@ export default function FeaturedProductsCarousel() {
       try {
         // Get featured products specifically
         const { data } = await getProducts({ 
-          sort: "featured", 
+          sort: "featured",
           limit: 5 
         });
         setFeaturedProducts(data);
@@ -46,10 +45,13 @@ export default function FeaturedProductsCarousel() {
     loadFeaturedProducts();
   }, []);
 
-  // Handler for adding to cart
-  const handleAddToCart = (e: React.MouseEvent<HTMLButtonElement>, product: Product) => {
-    e.preventDefault(); // Prevent navigating to product page
-    e.stopPropagation(); // Prevent event bubbling
+  // Handler for adding to cart with proper types
+  const handleAddToCart = (
+    e: React.MouseEvent<HTMLButtonElement>,
+    product: Product
+  ) => {
+    e.preventDefault();
+    e.stopPropagation();
     addItem(product, 1);
   };
 
@@ -61,18 +63,22 @@ export default function FeaturedProductsCarousel() {
             <Skeleton className="h-10 w-48 mb-2" />
             <Skeleton className="h-6 w-32" />
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {[1, 2, 3].map((i) => (
-              <Card key={i} className="overflow-hidden">
-                <Skeleton className="h-48 w-full" />
-                <CardContent className="p-6">
-                  <Skeleton className="h-6 w-3/4 mb-2" />
-                  <Skeleton className="h-4 w-1/2 mb-4" />
-                  <Skeleton className="h-10 w-full" />
-                </CardContent>
-              </Card>
-            ))}
-          </div>
+          <Carousel>
+            <CarouselContent>
+              {[1, 2, 3].map((i) => (
+                <CarouselItem key={i} className="md:basis-1/2 lg:basis-1/3">
+                  <Card className="overflow-hidden">
+                    <Skeleton className="h-48 w-full" />
+                    <CardContent className="p-6">
+                      <Skeleton className="h-6 w-3/4 mb-2" />
+                      <Skeleton className="h-4 w-1/2 mb-4" />
+                      <Skeleton className="h-10 w-full" />
+                    </CardContent>
+                  </Card>
+                </CarouselItem>
+              ))}
+            </CarouselContent>
+          </Carousel>
         </div>
       </section>
     );
@@ -88,7 +94,7 @@ export default function FeaturedProductsCarousel() {
       <div className="container mx-auto px-4">
         <div className="flex flex-col md:flex-row md:items-center justify-between mb-10">
           <div>
-            <h2 className="text-3xl font-bold mb-2">Featured Products</h2>
+            <h2 className="text-3xl font-bold mb-2">Featured Arrangements</h2>
             <p className="text-muted-foreground">Our most popular flower arrangements</p>
           </div>
           <Link href="/shop" className="text-primary mt-4 md:mt-0 hover:underline">
@@ -106,7 +112,7 @@ export default function FeaturedProductsCarousel() {
                       <Image
                         src={product.images && product.images.length > 0 
                           ? product.images[0] 
-                          : "/api/placeholder/400/300"}
+                          : "/api/placeholder/400/300?text=Beautiful+Flowers"}
                         alt={product.name}
                         width={400}
                         height={300}
