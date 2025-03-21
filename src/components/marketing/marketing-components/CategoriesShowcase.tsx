@@ -9,6 +9,7 @@ import { ArrowRight } from "lucide-react";
 import { AspectRatio } from "@/components/ui/aspect-ratio";
 import { getCategories } from "@/lib/services/productService";
 import { Skeleton } from "@/components/ui/skeleton";
+import { motion } from "framer-motion";
 
 interface Category {
   id: string;
@@ -87,37 +88,59 @@ export default function CategoriesShowcase() {
 
 
   return (
-    <section className="py-16">
+    <section className="py-16 bg-muted/30">
       <div className="container mx-auto px-4">
-        <h2 className="text-3xl font-bold text-center mb-12">Shop by Category</h2>
+        <motion.h2 
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.6 }}
+          className="text-3xl font-bold text-center mb-4"
+        >
+          Shop by Category
+        </motion.h2>
+        <motion.p 
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.6, delay: 0.2 }}
+          className="text-muted-foreground text-center mb-12"
+        >
+          Discover our curated collection of floral arrangements
+        </motion.p>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          {categories.map((category) => (
-            <div key={category.id} className="group">
+          {categories.map((category, index) => (
+            <motion.div
+              key={category.id}
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.6, delay: 0.2 * index }}
+            >
               <Link href={`/shop?category=${encodeURIComponent(category.id)}`}>
-                <div className="overflow-hidden rounded-lg">
+                <div className="group relative overflow-hidden rounded-xl shadow-lg hover:shadow-xl transition-all duration-300">
                   <AspectRatio ratio={3/2} className="bg-muted">
                     <Image
                       src={getCategoryImage(category)}
                       alt={category.name}
                       fill
-                      className="object-cover transition-transform group-hover:scale-105 duration-500"
+                      className="object-cover transition-transform duration-700 group-hover:scale-110"
                     />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                   </AspectRatio>
-                </div>
-                <div className="mt-4">
-                  <h3 className="text-xl font-semibold group-hover:text-primary transition-colors">
-                    {category.name}
-                  </h3>
-                  <p className="text-muted-foreground">
-                    {category.count} {category.count === 1 ? 'product' : 'products'}
-                  </p>
-                  <div className="mt-2 flex items-center text-primary text-sm font-medium">
-                    Shop Now <ArrowRight className="ml-1 h-4 w-4" />
+                  <div className="absolute bottom-0 left-0 right-0 p-6 text-white transform translate-y-4 group-hover:translate-y-0 transition-transform duration-300">
+                    <h3 className="text-2xl font-semibold mb-2">{category.name}</h3>
+                    <p className="text-white/80 mb-4">
+                      {category.count} {category.count === 1 ? 'product' : 'products'}
+                    </p>
+                    <div className="flex items-center text-white/90 text-sm font-medium">
+                      Shop Now <ArrowRight className="ml-2 h-4 w-4 transform group-hover:translate-x-1 transition-transform duration-300" />
+                    </div>
                   </div>
                 </div>
               </Link>
-            </div>
+            </motion.div>
           ))}
         </div>
       </div>

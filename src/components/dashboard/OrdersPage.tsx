@@ -152,22 +152,29 @@ export default function OrdersPage() {
   };
 
   return (
-    <div className="container mx-auto py-8 px-4">
-      <div className="mb-8 flex items-center justify-between">
+    <div className="container mx-auto py-8 px-4 space-y-8">
+      <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold mb-2">Order History</h1>
+          <h1 className="text-3xl font-bold mb-2 bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">Order History</h1>
           <p className="text-muted-foreground">View and track your orders</p>
         </div>
-        <Button onClick={() => router.push("/dashboard")}>
+        <Button 
+          onClick={() => router.push("/dashboard")}
+          variant="outline"
+          className="transition-colors hover:bg-primary hover:text-primary-foreground"
+        >
           Back to Dashboard
         </Button>
       </div>
 
-      <Card className="mb-6">
+      <Card className="transition-all duration-300 hover:shadow-lg">
         <CardHeader className="pb-3">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div>
-              <CardTitle>My Orders</CardTitle>
+              <CardTitle className="flex items-center gap-2">
+                <ShoppingBag className="h-5 w-5 text-primary" />
+                My Orders
+              </CardTitle>
               <CardDescription>
                 You have placed {orders.length} orders
               </CardDescription>
@@ -177,7 +184,7 @@ export default function OrdersPage() {
                 value={filterStatus}
                 onValueChange={setFilterStatus}
               >
-                <SelectTrigger className="w-[180px]">
+                <SelectTrigger className="w-[180px] transition-colors hover:border-primary">
                   <SelectValue placeholder="Filter by status" />
                 </SelectTrigger>
                 <SelectContent>
@@ -188,7 +195,11 @@ export default function OrdersPage() {
                   <SelectItem value="cancelled">Cancelled</SelectItem>
                 </SelectContent>
               </Select>
-              <Button variant="outline" size="icon" className="h-9 w-9">
+              <Button 
+                variant="outline" 
+                size="icon" 
+                className="h-9 w-9 transition-colors hover:bg-primary hover:text-primary-foreground"
+              >
                 <RefreshCw className="h-4 w-4" />
               </Button>
             </div>
@@ -197,7 +208,9 @@ export default function OrdersPage() {
         <CardContent>
           {filteredOrders.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-12">
-              <ShoppingBag className="h-12 w-12 text-muted-foreground mb-4" />
+              <div className="h-16 w-16 rounded-full bg-primary/10 flex items-center justify-center mb-4">
+                <ShoppingBag className="h-8 w-8 text-primary" />
+              </div>
               <h3 className="text-lg font-medium">No orders found</h3>
               <p className="text-muted-foreground text-center mt-2">
                 {filterStatus === "all" 
@@ -207,7 +220,7 @@ export default function OrdersPage() {
               {filterStatus !== "all" && (
                 <Button 
                   variant="outline" 
-                  className="mt-4"
+                  className="mt-4 transition-colors hover:bg-primary hover:text-primary-foreground"
                   onClick={() => setFilterStatus("all")}
                 >
                   View All Orders
@@ -227,114 +240,82 @@ export default function OrdersPage() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                {filteredOrders.map((order) => (
+                  {filteredOrders.map((order) => (
                     <React.Fragment key={order.id}>
-                        <TableRow className="cursor-pointer hover:bg-muted/50" onClick={() => toggleOrderDetails(order.id)}>
+                      <TableRow 
+                        className="cursor-pointer transition-colors hover:bg-muted/50"
+                        onClick={() => toggleOrderDetails(order.id)}
+                      >
                         <TableCell className="font-medium">{order.id}</TableCell>
                         <TableCell>{order.date}</TableCell>
                         <TableCell>
-                          <Badge variant={getBadgeVariant(order.status)}>
+                          <Badge 
+                            variant={getBadgeVariant(order.status)}
+                            className="transition-colors"
+                          >
                             {order.status}
                           </Badge>
                         </TableCell>
                         <TableCell>{order.total}</TableCell>
                         <TableCell className="text-right">
                           <div className="flex justify-end gap-2">
-                            <Button variant="ghost" size="sm">
+                            <Button 
+                              variant="ghost" 
+                              size="sm"
+                              className="transition-colors hover:bg-primary hover:text-primary-foreground"
+                            >
                               <Eye className="h-4 w-4 mr-1" /> View
                             </Button>
                             <Button 
                               variant="ghost" 
                               size="icon" 
+                              className="transition-colors hover:bg-primary hover:text-primary-foreground"
                               onClick={(e) => {
                                 e.stopPropagation();
                                 toggleOrderDetails(order.id);
                               }}
                             >
-                              <ChevronDown 
-                                className={`h-4 w-4 transition-transform ${
-                                  expandedOrder === order.id ? "rotate-180" : ""
-                                }`} 
-                              />
+                              <ChevronDown className={`h-4 w-4 transition-transform ${expandedOrder === order.id ? 'rotate-180' : ''}`} />
                             </Button>
                           </div>
                         </TableCell>
                       </TableRow>
                       {expandedOrder === order.id && (
                         <TableRow>
-                          <TableCell colSpan={5} className="p-0">
-                            <div className="bg-muted/30 p-4 px-6">
-                              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                          <TableCell colSpan={5} className="bg-muted/30">
+                            <div className="py-4 space-y-4">
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div>
-                                  <h4 className="text-sm font-semibold mb-2">Shipping Address</h4>
-                                  <p className="text-sm">{order.address}</p>
-                                </div>
-                                {order.trackingNumber && (
-                                  <div>
-                                    <h4 className="text-sm font-semibold mb-2">Tracking Number</h4>
-                                    <p className="text-sm font-mono">{order.trackingNumber}</p>
+                                  <h4 className="font-medium mb-2">Order Items</h4>
+                                  <div className="space-y-2">
+                                    {order.items.map((item, index) => (
+                                      <div key={index} className="flex justify-between text-sm">
+                                        <span>{item.name} x {item.quantity}</span>
+                                        <span>{item.price}</span>
+                                      </div>
+                                    ))}
                                   </div>
-                                )}
-                              </div>
-                              <h4 className="text-sm font-semibold mb-2">Order Items</h4>
-                              <Table>
-                                <TableHeader>
-                                  <TableRow>
-                                    <TableHead>Item</TableHead>
-                                    <TableHead>Price</TableHead>
-                                    <TableHead>Quantity</TableHead>
-                                    <TableHead className="text-right">Subtotal</TableHead>
-                                  </TableRow>
-                                </TableHeader>
-                                <TableBody>
-                                  {order.items.map((item, index) => (
-                                    <TableRow key={`${order.id}-item-${index}`}>
-                                      <TableCell>{item.name}</TableCell>
-                                      <TableCell>{item.price}</TableCell>
-                                      <TableCell>{item.quantity}</TableCell>
-                                      <TableCell className="text-right">
-                                        {`$${(parseFloat(item.price.replace('$', '')) * item.quantity).toFixed(2)}`}
-                                      </TableCell>
-                                    </TableRow>
-                                  ))}
-                                </TableBody>
-                              </Table>
-                              <div className="flex justify-between items-center mt-4">
-                                <Button variant="outline" size="sm">
-                                  Need Help?
-                                </Button>
-                                {order.status === "Delivered" && (
-                                  <Button size="sm">
-                                    Write a Review
-                                  </Button>
-                                )}
+                                </div>
+                                <div>
+                                  <h4 className="font-medium mb-2">Shipping Details</h4>
+                                  <div className="space-y-2 text-sm">
+                                    <p>{order.address}</p>
+                                    {order.trackingNumber && (
+                                      <p>Tracking: {order.trackingNumber}</p>
+                                    )}
+                                  </div>
+                                </div>
                               </div>
                             </div>
                           </TableCell>
                         </TableRow>
                       )}
                     </React.Fragment>
-                    ))}
+                  ))}
                 </TableBody>
               </Table>
             </div>
           )}
-          <Pagination className="mt-4">
-            <PaginationContent>
-              <PaginationItem>
-                <PaginationPrevious href="#" />
-              </PaginationItem>
-              <PaginationItem>
-                <PaginationLink href="#" isActive>1</PaginationLink>
-              </PaginationItem>
-              <PaginationItem>
-                <PaginationLink href="#">2</PaginationLink>
-              </PaginationItem>
-              <PaginationItem>
-                <PaginationNext href="#" />
-              </PaginationItem>
-            </PaginationContent>
-          </Pagination>
         </CardContent>
       </Card>
     </div>

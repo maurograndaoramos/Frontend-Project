@@ -3,10 +3,10 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
 export async function GET(
-  request: Request,
+  _request: Request,
   { params }: { params: { id: string } }
 ) {
-  const id = params.id;
+  const { id } = await Promise.resolve(params);
   
   try {
     const product = await prisma.product.findUnique({

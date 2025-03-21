@@ -116,24 +116,31 @@ export default function WishlistPage() {
   };
 
   return (
-    <div className="container mx-auto py-8 px-4">
-      <div className="mb-8 flex items-center justify-between">
+    <div className="container mx-auto py-8 px-4 space-y-8">
+      <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold mb-2">My Wishlist</h1>
+          <h1 className="text-3xl font-bold mb-2 bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">My Wishlist</h1>
           <p className="text-muted-foreground">
             {items.length} {items.length === 1 ? 'item' : 'items'} saved for later
           </p>
         </div>
-        <Button onClick={() => router.push("/dashboard")}>
+        <Button 
+          onClick={() => router.push("/dashboard")}
+          variant="outline"
+          className="transition-colors hover:bg-primary hover:text-primary-foreground"
+        >
           Back to Dashboard
         </Button>
       </div>
 
-      <Card>
+      <Card className="transition-all duration-300 hover:shadow-lg">
         <CardHeader className="pb-3">
           <div className="flex flex-col md:flex-row justify-between gap-4">
             <div>
-              <CardTitle>Saved Items</CardTitle>
+              <CardTitle className="flex items-center gap-2">
+                <Heart className="h-5 w-5 text-primary" />
+                Saved Items
+              </CardTitle>
               <CardDescription>
                 Products you're interested in purchasing
               </CardDescription>
@@ -143,7 +150,7 @@ export default function WishlistPage() {
                 value={categoryFilter}
                 onValueChange={setCategoryFilter}
               >
-                <SelectTrigger className="w-[180px]">
+                <SelectTrigger className="w-[180px] transition-colors hover:border-primary">
                   <SelectValue placeholder="Filter by category" />
                 </SelectTrigger>
                 <SelectContent>
@@ -158,7 +165,7 @@ export default function WishlistPage() {
               <div className="flex gap-2">
                 <Button 
                   variant="outline" 
-                  className="flex-1 sm:flex-none"
+                  className="flex-1 sm:flex-none transition-colors hover:bg-primary hover:text-primary-foreground"
                   onClick={addAllToCart}
                   disabled={filteredItems.length === 0 || !filteredItems.some(item => item.inStock)}
                 >
@@ -168,7 +175,7 @@ export default function WishlistPage() {
                 <Button 
                   variant="outline" 
                   size="icon" 
-                  className="h-9 w-9"
+                  className="h-9 w-9 transition-colors hover:bg-primary hover:text-primary-foreground"
                   onClick={clearWishlist}
                   disabled={filteredItems.length === 0}
                 >
@@ -181,7 +188,9 @@ export default function WishlistPage() {
         <CardContent>
           {filteredItems.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-12">
-              <HeartOff className="h-12 w-12 text-muted-foreground mb-4" />
+              <div className="h-16 w-16 rounded-full bg-primary/10 flex items-center justify-center mb-4">
+                <HeartOff className="h-8 w-8 text-primary" />
+              </div>
               <h3 className="text-lg font-medium">Your wishlist is empty</h3>
               <p className="text-muted-foreground text-center mt-2">
                 {categoryFilter === "all" 
@@ -191,14 +200,14 @@ export default function WishlistPage() {
               {categoryFilter !== "all" && (
                 <Button 
                   variant="outline" 
-                  className="mt-4"
+                  className="mt-4 transition-colors hover:bg-primary hover:text-primary-foreground"
                   onClick={() => setCategoryFilter("all")}
                 >
                   View All Items
                 </Button>
               )}
               <Button 
-                className="mt-4"
+                className="mt-4 transition-colors hover:bg-primary/90"
                 onClick={() => router.push("/shop")}
               >
                 Browse Products
@@ -207,14 +216,17 @@ export default function WishlistPage() {
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {filteredItems.map((item) => (
-                <Card key={item.id} className="overflow-hidden h-full flex flex-col">
-                  <div className="relative">
+                <Card 
+                  key={item.id} 
+                  className="overflow-hidden h-full flex flex-col transition-all duration-300 hover:shadow-lg"
+                >
+                  <div className="relative group">
                     <Image
                       src={item.image}
                       alt={item.name}
                       width={400}
                       height={320}
-                      className="w-full h-48 object-cover"
+                      className="w-full h-48 object-cover transition-transform duration-300 group-hover:scale-105"
                     />
                     {!item.inStock && (
                       <div className="absolute inset-0 bg-background/80 flex items-center justify-center">
@@ -224,7 +236,7 @@ export default function WishlistPage() {
                     <Button
                       variant="ghost"
                       size="icon"
-                      className="absolute top-2 right-2 h-8 w-8 rounded-full bg-background/50 hover:bg-background/80"
+                      className="absolute top-2 right-2 h-8 w-8 rounded-full bg-background/50 hover:bg-background/80 transition-colors hover:bg-destructive hover:text-destructive-foreground"
                       onClick={() => removeFromWishlist(item.id)}
                     >
                       <Trash2 className="h-4 w-4" />
@@ -232,7 +244,7 @@ export default function WishlistPage() {
                   </div>
                   <CardContent className="flex flex-col flex-grow p-4">
                     <div className="mb-2">
-                      <Badge variant="secondary" className="mb-2">{item.category}</Badge>
+                      <Badge variant="secondary" className="mb-2 transition-colors">{item.category}</Badge>
                       <h3 className="font-semibold line-clamp-2">{item.name}</h3>
                     </div>
                     <div className="flex items-center mt-1 mb-4">
@@ -247,10 +259,9 @@ export default function WishlistPage() {
                       Added on {item.addedDate}
                     </p>
                     <Button
-                      className="w-full mt-auto"
+                      className="w-full mt-auto transition-colors hover:bg-primary/90"
                       disabled={!item.inStock}
                     >
-                      <ShoppingCart className="h-4 w-4 mr-2" />
                       {item.inStock ? 'Add to Cart' : 'Out of Stock'}
                     </Button>
                   </CardContent>
