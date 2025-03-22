@@ -12,6 +12,9 @@ import ShippingForm from "@/components/checkout/checkout-components/ShippingForm
 import PaymentForm from "@/components/checkout/checkout-components/PaymentForm";
 import OrderSummary from "@/components/checkout/checkout-components/OrderSummary";
 import OrderReview from "@/components/checkout/checkout-components/OrderReview";
+import { motion, AnimatePresence } from 'framer-motion';
+import { Package, CreditCard, CheckCircle2, ArrowLeft } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
 type CheckoutStep = "shipping" | "payment" | "review";
 
@@ -98,52 +101,112 @@ export default function CheckoutPageContent() {
   };
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+    <motion.div 
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.3 }}
+      className="grid grid-cols-1 lg:grid-cols-3 gap-8"
+    >
       {/* Main checkout form */}
       <div className="lg:col-span-2">
-        <Card className="mb-8">
-          <CardContent className="p-6">
-            <Steps currentStep={
-              currentStep === "shipping" ? 0 : 
-              currentStep === "payment" ? 1 : 2
-            }>
-              <Step title="Shipping" />
-              <Step title="Payment" />
-              <Step title="Review" />
-            </Steps>
-          </CardContent>
-        </Card>
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3 }}
+        >
+          <Card className="mb-8">
+            <CardContent className="p-6">
+              <Steps currentStep={
+                currentStep === "shipping" ? 0 : 
+                currentStep === "payment" ? 1 : 2
+              }>
+                <Step title="Shipping" />
+                <Step title="Payment" />
+                <Step title="Review" />
+              </Steps>
+            </CardContent>
+          </Card>
+        </motion.div>
 
-        <Card>
-          <CardContent className="p-6">
-            {currentStep === "shipping" && (
-              <ShippingForm 
-                initialData={orderData.shipping} 
-                onSubmit={updateShippingData} 
-              />
-            )}
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={currentStep}
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -20 }}
+            transition={{ duration: 0.2 }}
+          >
+            <Card>
+              <CardContent className="p-6">
+                {currentStep === "shipping" && (
+                  <div>
+                    <ShippingForm 
+                      initialData={orderData.shipping} 
+                      onSubmit={updateShippingData} 
+                    />
+                  </div>
+                )}
 
-            {currentStep === "payment" && (
-              <PaymentForm 
-                initialData={orderData.payment}
-                onSubmit={updatePaymentData}
-                onBack={() => setCurrentStep("shipping")}
-              />
-            )}
-          </CardContent>
-        </Card>
+                {currentStep === "payment" && (
+                  <div>
+                    <div className="mb-6">
+                      <Button
+                        variant="ghost"
+                        onClick={() => setCurrentStep("shipping")}
+                        className="mb-4"
+                      >
+                        <ArrowLeft className="h-4 w-4 mr-2" />
+                        Back to Shipping
+                      </Button>
+                    </div>
+                    <PaymentForm 
+                      initialData={orderData.payment}
+                      onSubmit={updatePaymentData}
+                      onBack={() => setCurrentStep("shipping")}
+                    />
+                  </div>
+                )}
+
+                {currentStep === "review" && (
+                  <div>
+                    <div className="mb-6">
+                      <Button
+                        variant="ghost"
+                        onClick={() => setCurrentStep("payment")}
+                        className="mb-4"
+                      >
+                        <ArrowLeft className="h-4 w-4 mr-2" />
+                        Back to Payment
+                      </Button>
+                    </div>
+                    <OrderReview
+                      orderData={orderData}
+                      onBack={() => setCurrentStep("payment")}
+                      onPlaceOrder={placeOrder}
+                    />
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </motion.div>
+        </AnimatePresence>
       </div>
 
       {/* Order summary */}
-      <div className="lg:col-span-1">
+      <motion.div 
+        initial={{ opacity: 0, x: 20 }}
+        animate={{ opacity: 1, x: 0 }}
+        transition={{ duration: 0.3, delay: 0.1 }}
+        className="lg:col-span-1"
+      >
         <OrderSummary 
-            items={cart.items} 
-            subtotal={getCartTotal()} 
-            tax={orderData.tax}
-            shipping={orderData.shippingCost}
-            total={orderData.total}
-          />
-      </div>
-    </div>
+          items={cart.items} 
+          subtotal={getCartTotal()} 
+          tax={orderData.tax}
+          shipping={orderData.shippingCost}
+          total={orderData.total}
+        />
+      </motion.div>
+    </motion.div>
   );
 }

@@ -1,16 +1,23 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
-import { UserCircle } from "lucide-react";
+import { UserCircle, Loader2, Camera, Bell, MessageSquare, CheckCircle2, XCircle } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { motion, AnimatePresence } from "framer-motion";
+import { Skeleton } from "@/components/ui/skeleton";
+import { toast } from "sonner";
+import { Switch } from "@/components/ui/switch";
 
 export default function ProfilePage() {
   const router = useRouter();
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
   
   // Mock user data - in a real app, this would come from an API or context
   const [user, setUser] = useState({
@@ -22,6 +29,18 @@ export default function ProfilePage() {
 
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState(user);
+  const [notifications, setNotifications] = useState({
+    email: true,
+    sms: false,
+  });
+
+  useEffect(() => {
+    // Simulate loading data
+    const timer = setTimeout(() => {
+      setIsLoading(false);
+    }, 1000);
+    return () => clearTimeout(timer);
+  }, []);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -31,11 +50,20 @@ export default function ProfilePage() {
     }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // In a real app, you would send this data to an API
-    setUser(formData);
-    setIsEditing(false);
+    setIsSaving(true);
+    try {
+      // Simulate API call
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      setUser(formData);
+      setIsEditing(false);
+      toast.success("Profile updated successfully");
+    } catch (error) {
+      toast.error("Failed to update profile");
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const handleCancel = () => {
@@ -43,57 +71,152 @@ export default function ProfilePage() {
     setIsEditing(false);
   };
 
+  const handleImageUpload = async () => {
+    setIsUploading(true);
+    try {
+      // Simulate image upload
+      await new Promise(resolve => setTimeout(resolve, 1500));
+      toast.success("Profile picture updated successfully");
+    } catch (error) {
+      toast.error("Failed to update profile picture");
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  const toggleNotification = (type: 'email' | 'sms') => {
+    setNotifications(prev => ({
+      ...prev,
+      [type]: !prev[type]
+    }));
+  };
+
+  if (isLoading) {
+    return (
+      <motion.div 
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        className="container mx-auto py-8 px-4 space-y-8"
+      >
+        <div className="flex items-center justify-between">
+          <div>
+            <Skeleton className="h-10 w-48 mb-2" />
+            <Skeleton className="h-6 w-64" />
+          </div>
+          <Skeleton className="h-10 w-32" />
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="md:col-span-1">
+            <Card>
+              <CardContent className="pt-6">
+                <div className="flex flex-col items-center">
+                  <Skeleton className="h-24 w-24 rounded-full mb-4" />
+                  <Skeleton className="h-6 w-32 mb-2" />
+                  <Skeleton className="h-4 w-48" />
+                  <Skeleton className="h-10 w-full mt-4" />
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          <div className="md:col-span-2 space-y-6">
+            <Card>
+              <CardHeader>
+                <Skeleton className="h-6 w-48 mb-2" />
+                <Skeleton className="h-4 w-64" />
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {[1, 2, 3, 4].map((i) => (
+                  <div key={i} className="space-y-2">
+                    <Skeleton className="h-4 w-24" />
+                    <Skeleton className="h-10 w-full" />
+                  </div>
+                ))}
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+      </motion.div>
+    );
+  }
+
   return (
-    <div className="container mx-auto py-8 px-4 space-y-8">
-      <div className="flex items-center justify-between">
+    <motion.div 
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      className="container mx-auto py-8 px-4 space-y-8"
+    >
+      <motion.div 
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="flex items-center justify-between"
+      >
         <div>
-          <h1 className="text-3xl font-bold mb-2 bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">Profile Settings</h1>
+          <h1 className="text-3xl font-bold mb-2 bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
+            Profile Settings
+          </h1>
           <p className="text-muted-foreground">Manage your account details</p>
         </div>
         <Button 
           onClick={() => router.back()}
           variant="outline"
-          className="transition-colors hover:bg-primary hover:text-primary-foreground"
+          className="transition-all duration-300 hover:bg-primary hover:text-primary-foreground hover:shadow-md"
         >
           Back to Dashboard
         </Button>
-      </div>
+      </motion.div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="md:col-span-1">
+        <motion.div 
+          initial={{ opacity: 0, x: -20 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ delay: 0.1 }}
+          className="md:col-span-1"
+        >
           <Card className="transition-all duration-300 hover:shadow-lg">
             <CardContent className="pt-6">
               <div className="flex flex-col items-center">
                 <div className="relative group">
-                  <div className="h-24 w-24 rounded-full bg-primary/10 flex items-center justify-center mb-4 transition-transform duration-300 group-hover:scale-105">
+                  <motion.div 
+                    whileHover={{ scale: 1.05 }}
+                    className="h-24 w-24 rounded-full bg-primary/10 flex items-center justify-center mb-4"
+                  >
                     <UserCircle className="h-20 w-20 text-primary" />
-                  </div>
+                  </motion.div>
                   <Button 
                     variant="outline" 
                     size="icon"
-                    className="absolute bottom-0 right-0 h-8 w-8 rounded-full transition-colors hover:bg-primary hover:text-primary-foreground"
+                    className="absolute bottom-0 right-0 h-8 w-8 rounded-full transition-all duration-300 hover:bg-primary hover:text-primary-foreground hover:shadow-md"
+                    onClick={handleImageUpload}
+                    disabled={isUploading}
                   >
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                      <polyline points="17 8 12 3 7 8" />
-                      <line x1="12" y1="3" x2="12" y2="15" />
-                    </svg>
+                    {isUploading ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <Camera className="h-4 w-4" />
+                    )}
                   </Button>
                 </div>
                 <h2 className="text-xl font-semibold">{user.name}</h2>
                 <p className="text-sm text-muted-foreground">{user.email}</p>
                 <Button 
                   variant="outline" 
-                  className="mt-4 w-full transition-colors hover:bg-primary hover:text-primary-foreground"
+                  className="mt-4 w-full transition-all duration-300 hover:bg-primary hover:text-primary-foreground hover:shadow-md"
                 >
                   Change Password
                 </Button>
               </div>
             </CardContent>
           </Card>
-        </div>
+        </motion.div>
 
-        <div className="md:col-span-2 space-y-6">
+        <motion.div 
+          initial={{ opacity: 0, x: 20 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ delay: 0.2 }}
+          className="md:col-span-2 space-y-6"
+        >
           <Card className="transition-all duration-300 hover:shadow-lg">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
@@ -113,7 +236,7 @@ export default function ProfilePage() {
                       value={formData.name}
                       onChange={handleInputChange}
                       disabled={!isEditing}
-                      className="transition-colors focus:border-primary"
+                      className="transition-all duration-300 focus:border-primary focus:ring-1 focus:ring-primary"
                     />
                   </div>
                   <div className="space-y-2">
@@ -125,7 +248,7 @@ export default function ProfilePage() {
                       value={formData.email}
                       onChange={handleInputChange}
                       disabled={!isEditing}
-                      className="transition-colors focus:border-primary"
+                      className="transition-all duration-300 focus:border-primary focus:ring-1 focus:ring-primary"
                     />
                   </div>
                 </div>
@@ -138,7 +261,7 @@ export default function ProfilePage() {
                       value={formData.phone}
                       onChange={handleInputChange}
                       disabled={!isEditing}
-                      className="transition-colors focus:border-primary"
+                      className="transition-all duration-300 focus:border-primary focus:ring-1 focus:ring-primary"
                     />
                   </div>
                 </div>
@@ -150,7 +273,7 @@ export default function ProfilePage() {
                     value={formData.address}
                     onChange={handleInputChange}
                     disabled={!isEditing}
-                    className="transition-colors focus:border-primary"
+                    className="transition-all duration-300 focus:border-primary focus:ring-1 focus:ring-primary"
                   />
                 </div>
               </CardContent>
@@ -159,7 +282,7 @@ export default function ProfilePage() {
                   <Button 
                     type="button" 
                     onClick={() => setIsEditing(true)}
-                    className="transition-colors hover:bg-primary/90"
+                    className="transition-all duration-300 hover:bg-primary/90 hover:shadow-md"
                   >
                     Edit Profile
                   </Button>
@@ -169,15 +292,23 @@ export default function ProfilePage() {
                       type="button" 
                       variant="outline" 
                       onClick={handleCancel}
-                      className="transition-colors hover:bg-primary hover:text-primary-foreground"
+                      className="transition-all duration-300 hover:bg-primary hover:text-primary-foreground hover:shadow-md"
                     >
                       Cancel
                     </Button>
                     <Button 
                       type="submit"
-                      className="transition-colors hover:bg-primary/90"
+                      disabled={isSaving}
+                      className="transition-all duration-300 hover:bg-primary/90 hover:shadow-md"
                     >
-                      Save Changes
+                      {isSaving ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          Saving...
+                        </>
+                      ) : (
+                        'Save Changes'
+                      )}
                     </Button>
                   </>
                 )}
@@ -188,38 +319,41 @@ export default function ProfilePage() {
           <Card className="transition-all duration-300 hover:shadow-lg">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M22 17H2a3 3 0 0 0 3-3V9a7 7 0 0 1 14 0v5a3 3 0 0 0 3 3zm-8.27 4a2 2 0 0 1-3.46 0" />
-                </svg>
+                <Bell className="h-5 w-5 text-primary" />
                 Notification Settings
               </CardTitle>
               <CardDescription>Manage how we contact you</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="space-y-4">
+              <div className="space-y-6">
                 <div className="flex items-center justify-between">
-                  <div>
+                  <div className="space-y-1">
                     <h4 className="font-medium">Email Notifications</h4>
                     <p className="text-sm text-muted-foreground">Receive updates about your orders and account</p>
                   </div>
-                  <Button variant="outline" size="sm" className="transition-colors hover:bg-primary hover:text-primary-foreground">
-                    Configure
-                  </Button>
+                  <Switch
+                    checked={notifications.email}
+                    onCheckedChange={() => toggleNotification('email')}
+                    className="transition-all duration-300"
+                  />
                 </div>
+                <Separator />
                 <div className="flex items-center justify-between">
-                  <div>
+                  <div className="space-y-1">
                     <h4 className="font-medium">SMS Notifications</h4>
                     <p className="text-sm text-muted-foreground">Get text messages about order status</p>
                   </div>
-                  <Button variant="outline" size="sm" className="transition-colors hover:bg-primary hover:text-primary-foreground">
-                    Configure
-                  </Button>
+                  <Switch
+                    checked={notifications.sms}
+                    onCheckedChange={() => toggleNotification('sms')}
+                    className="transition-all duration-300"
+                  />
                 </div>
               </div>
             </CardContent>
           </Card>
-        </div>
+        </motion.div>
       </div>
-    </div>
+    </motion.div>
   );
 }

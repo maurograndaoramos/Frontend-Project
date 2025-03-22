@@ -9,6 +9,7 @@ import { Product } from "@/types/product";
 import { getProducts } from "@/lib/services/productService";
 import { useToast } from "@/lib/hooks/useToast";
 import RecentlyViewedProducts from "@/components/shop/shop-components/RecentlyViewedProducts";
+import { motion, AnimatePresence } from "framer-motion";
 
 export default function ShopPageContent() {
   const searchParams = useSearchParams();
@@ -58,28 +59,44 @@ export default function ShopPageContent() {
 
   if (loading) {
     return (
-      <div>
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        transition={{ duration: 0.2 }}
+      >
         <div className="mb-6">
           <Skeleton className="h-8 w-64 mb-2" />
           <Skeleton className="h-4 w-96" />
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {Array(6).fill(0).map((_, i) => (
-            <div key={i} className="space-y-4">
-              <Skeleton className="h-64 w-full" />
+            <motion.div
+              key={i}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: i * 0.1 }}
+              className="space-y-4"
+            >
+              <Skeleton className="h-64 w-full rounded-lg" />
               <Skeleton className="h-4 w-2/3" />
               <Skeleton className="h-4 w-1/2" />
               <Skeleton className="h-8 w-full" />
-            </div>
+            </motion.div>
           ))}
         </div>
-      </div>
+      </motion.div>
     );
   }
 
   if (products.length === 0) {
     return (
-      <div className="text-center py-12">
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.3 }}
+        className="text-center py-12"
+      >
         <h2 className="text-2xl font-bold mb-4">No Products Found</h2>
         <p className="text-muted-foreground mb-6">
           We couldn't find any products matching your search.
@@ -87,24 +104,40 @@ export default function ShopPageContent() {
         <Button 
           variant="outline" 
           onClick={() => window.history.back()}
+          className="hover:bg-accent/50 transition-colors duration-200"
         >
           Go Back
         </Button>
-      </div>
+      </motion.div>
     );
   }
 
   return (
-    <>
-      <ProductGrid 
-        products={products} 
-        title="Shop All Products" 
-        description={`Browse our collection of handcrafted pottery and ceramic goods (${pagination.total} products)`}
-        pagination={pagination}
-      />
-      
-      {/* Recently viewed products section */}
-      <RecentlyViewedProducts maxItems={4} />
-    </>
+    <AnimatePresence mode="wait">
+      <motion.div
+        key={page}
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0, y: -20 }}
+        transition={{ duration: 0.3 }}
+      >
+        <ProductGrid 
+          products={products} 
+          title="Shop All Products" 
+          description={`Browse our collection of flowers and plants (${pagination.total} products)`}
+          pagination={pagination}
+        />
+        
+        {/* Recently viewed products section */}
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.2 }}
+          className="mt-12"
+        >
+          <RecentlyViewedProducts maxItems={4} />
+        </motion.div>
+      </motion.div>
+    </AnimatePresence>
   );
 }

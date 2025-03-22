@@ -29,28 +29,38 @@ const Navbar: React.FC = () => {
   const { toggleCart, getCartCount } = useCart();
   const cartCount = getCartCount();
 
+  const handleSearch = (e?: React.FormEvent) => {
+    if (e) {
+      e.preventDefault();
+    }
+    if (searchQuery.trim()) {
+      router.push(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
+      setSearchQuery(""); // Clear the search input after searching
+    }
+  };
+
   const handleSignOut = async () => {
     await signOut({ callbackUrl: '/' });
   };
 
   return (
-    <header className="w-full py-4 px-6 flex items-center justify-between border-b">
+    <header className="w-full py-4 px-6 flex items-center justify-between border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-50 transition-all duration-300 shadow-sm">
       {/* Mobile menu */}
       <Sheet>
         <SheetTrigger asChild className="md:hidden">
-          <Button variant="ghost" size="icon" aria-label="Menu">
-            <Menu />
+          <Button variant="ghost" size="icon" aria-label="Menu" className="hover:bg-accent/50 transition-colors duration-200">
+            <Menu className="h-5 w-5" />
           </Button>
         </SheetTrigger>
         <SheetContent side="left" className="w-[240px] sm:w-[300px]">
-          <nav className="flex flex-col space-y-4 mt-8">
-            <Link href="/" className="hover:text-gray-600 transition-colors text-lg">
+          <nav className="flex flex-col space-y-6 mt-8">
+            <Link href="/" className="hover:text-primary transition-colors text-lg font-medium hover:translate-x-1 duration-200">
               Home
             </Link>
-            <Link href="/shop" className="hover:text-gray-600 transition-colors text-lg">
+            <Link href="/shop" className="hover:text-primary transition-colors text-lg font-medium hover:translate-x-1 duration-200">
               Shop
             </Link>
-            <Link href="/shop/featured" className="hover:text-gray-600 transition-colors text-lg">
+            <Link href="/shop/featured" className="hover:text-primary transition-colors text-lg font-medium hover:translate-x-1 duration-200">
               Featured
             </Link>
           </nav>
@@ -59,80 +69,75 @@ const Navbar: React.FC = () => {
 
       {/* Logo */}
       <div className="flex items-center">
-        <Link href="/" className="flex items-center">
-          <Image
-            src="/vercel.svg"
-            alt="Brand Logo"
-            width={40}
-            height={40}
-            className="mr-2"
-          />
-          <span className="text-xl font-bold hidden sm:inline">Blooming Delights</span>
+        <Link href="/" className="flex items-center group">
+          <div className="w-10 h-10 rounded-full bg-accent/50 flex items-center justify-center p-1 mr-2">
+            <Image
+              src="/flower-shop-logo.svg"
+              alt="Brand Logo"
+              width={32}
+              height={32}
+              className="transition-transform duration-300 group-hover:scale-110"
+            />
+          </div>
+          <span className="text-xl font-bold hidden sm:inline bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent transition-opacity duration-200 group-hover:opacity-80">Blooming Delights</span>
         </Link>
       </div>
 
       {/* Navigation Links - Desktop */}
-      <nav className="hidden md:flex space-x-6 ml-8">
-        <Link href="/" className="hover:text-gray-600 transition-colors">
+      <nav className="hidden md:flex space-x-8 ml-8">
+        <Link href="/" className="hover:text-primary transition-all duration-200 font-medium hover:translate-y-[-1px]">
           Home
         </Link>
-        <Link href="/shop" className="hover:text-gray-600 transition-colors">
+        <Link href="/shop" className="hover:text-primary transition-all duration-200 font-medium hover:translate-y-[-1px]">
           Shop
         </Link>
-        <Link href="/shop/featured" className="hover:text-gray-600 transition-colors">
+        <Link href="/shop/featured" className="hover:text-primary transition-all duration-200 font-medium hover:translate-y-[-1px]">
           Featured
         </Link>
       </nav>
 
       {/* Search Bar */}
-      <div className="hidden md:flex items-center justify-center flex-1 max-w-md mx-4">
+      <form onSubmit={handleSearch} className="hidden md:flex items-center justify-center flex-1 max-w-md mx-4">
         <div className="relative w-full">
           <Input
-            type="text"
+            type="search"
             placeholder="Search for products..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="pr-10"
-            onKeyDown={(e) => {
-              if (e.key === "Enter") {
-                router.push(`/shop/search?q=${encodeURIComponent(searchQuery)}`);
-              }
-            }}
+            className="pr-10 focus:ring-2 focus:ring-primary/20 transition-all duration-200 hover:border-primary/50"
           />
           <Button
+            type="submit"
             variant="ghost"
             size="icon"
-            className="absolute right-0 top-0 h-full"
+            className="absolute right-0 top-0 h-full hover:bg-accent/50 transition-colors duration-200"
             aria-label="Search"
-            onClick={() =>
-              router.push(`/shop/search?q=${encodeURIComponent(searchQuery)}`)
-            }
           >
             <Search className="h-4 w-4" />
           </Button>
         </div>
-      </div>
+      </form>
 
       {/* Cart and Auth */}
-      <div className="flex items-center space-x-2">
+      <div className="flex items-center space-x-4">
         {/* Mobile Search */}
         <Sheet>
           <SheetTrigger asChild className="md:hidden">
-            <Button variant="ghost" size="icon" aria-label="Search">
-              <Search />
+            <Button variant="ghost" size="icon" aria-label="Search" className="hover:bg-accent/50 transition-colors duration-200">
+              <Search className="h-5 w-5" />
             </Button>
           </SheetTrigger>
           <SheetContent side="top">
-            <div className="mt-6">
+            <form onSubmit={handleSearch} className="mt-6">
               <Input
-                type="text"
+                type="search"
                 placeholder="Search for products..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="mb-2"
+                className="mb-2 focus:ring-2 focus:ring-primary/20 transition-all duration-200 hover:border-primary/50"
               />
-              <Button className="w-full">Search</Button>
-            </div>
+              <Button type="submit" className="w-full">Search</Button>
+            </form>
           </SheetContent>
         </Sheet>
 
@@ -142,66 +147,63 @@ const Navbar: React.FC = () => {
           size="icon"
           aria-label="Shopping Cart"
           onClick={() => toggleCart(true)}
-          className="relative"
+          className="relative hover:bg-accent/50 transition-all duration-200 hover:scale-105"
         >
-          <ShoppingCart />
+          <ShoppingCart className="h-5 w-5" />
           {cartCount > 0 && (
-            <span className="absolute -top-1 -right-1 h-5 w-5 rounded-full bg-primary text-primary-foreground text-xs flex items-center justify-center">
+            <span className="absolute -top-1 -right-1 h-5 w-5 rounded-full bg-primary text-primary-foreground text-xs flex items-center justify-center animate-in fade-in-0 zoom-in-95 shadow-sm">
               {cartCount}
             </span>
           )}
         </Button>
 
         {isLoading ? (
-          // Show loading state
           <Button variant="ghost" size="icon" disabled>
-            <Loader2 className="h-4 w-4 animate-spin" />
+            <Loader2 className="h-5 w-5 animate-spin" />
           </Button>
         ) : session?.user ? (
-          // Authenticated: show user dropdown
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="sm" className="relative">
-                <User className="h-4 w-4 mr-2" />
+              <Button variant="ghost" size="sm" className="relative hover:bg-accent/50 transition-all duration-200 hover:scale-105">
+                <User className="h-5 w-5 mr-2" />
                 <span className="hidden md:inline">{session.user.name || "Account"}</span>
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-56">
-              <DropdownMenuLabel>My Account</DropdownMenuLabel>
+              <DropdownMenuLabel className="font-medium">My Account</DropdownMenuLabel>
               <DropdownMenuSeparator />
-              <DropdownMenuItem asChild>
+              <DropdownMenuItem asChild className="cursor-pointer hover:bg-accent/50 transition-colors duration-200">
                 <Link href="/dashboard">Dashboard</Link>
               </DropdownMenuItem>
-              <DropdownMenuItem asChild>
+              <DropdownMenuItem asChild className="cursor-pointer hover:bg-accent/50 transition-colors duration-200">
                 <Link href={`/dashboard/${session.user.name?.toLowerCase().replace(/\s+/g, '-') || 'profile'}/profile`}>
                   Profile
                 </Link>
               </DropdownMenuItem>
-              <DropdownMenuItem asChild>
+              <DropdownMenuItem asChild className="cursor-pointer hover:bg-accent/50 transition-colors duration-200">
                 <Link href={`/dashboard/${session.user.name?.toLowerCase().replace(/\s+/g, '-') || 'orders'}/orders`}>
                   Orders
                 </Link>
               </DropdownMenuItem>
-              <DropdownMenuItem asChild>
+              <DropdownMenuItem asChild className="cursor-pointer hover:bg-accent/50 transition-colors duration-200">
                 <Link href={`/dashboard/${session.user.name?.toLowerCase().replace(/\s+/g, '-') || 'wishlist'}/wishlist`}>
                   Wishlist
                 </Link>
               </DropdownMenuItem>
               <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={() => signOut({ callbackUrl: '/' })}>
+              <DropdownMenuItem onClick={handleSignOut} className="cursor-pointer text-destructive focus:text-destructive hover:bg-destructive/10 transition-colors duration-200">
                 <LogOut className="h-4 w-4 mr-2" />
                 Sign out
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         ) : (
-          // Not authenticated: show login/signup buttons
-          <div className="hidden sm:flex sm:items-center sm:space-x-2">
+          <div className="hidden sm:flex sm:items-center sm:space-x-4">
             <Link href="/login" legacyBehavior>
-              <Button variant="outline" size="sm">Sign in</Button>
+              <Button variant="outline" size="sm" className="hover:bg-accent/50 transition-all duration-200">Sign in</Button>
             </Link>
             <Link href="/register" legacyBehavior>
-              <Button size="sm">Sign up</Button>
+              <Button size="sm" className="bg-primary hover:bg-primary/90 transition-all duration-200">Sign up</Button>
             </Link>
           </div>
         )}
@@ -213,15 +215,15 @@ const Navbar: React.FC = () => {
         {!session?.user && (
           <DropdownMenu>
             <DropdownMenuTrigger asChild className="sm:hidden">
-              <Button variant="ghost" size="icon">
-                <User />
+              <Button variant="ghost" size="icon" className="hover:bg-accent/50 transition-colors duration-200">
+                <User className="h-5 w-5" />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuItem asChild>
+              <DropdownMenuItem asChild className="cursor-pointer hover:bg-accent/50 transition-colors duration-200">
                 <Link href="/login">Sign in</Link>
               </DropdownMenuItem>
-              <DropdownMenuItem asChild>
+              <DropdownMenuItem asChild className="cursor-pointer hover:bg-accent/50 transition-colors duration-200">
                 <Link href="/register">Sign up</Link>
               </DropdownMenuItem>
             </DropdownMenuContent>

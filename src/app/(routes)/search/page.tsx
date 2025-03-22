@@ -3,5 +3,9 @@
 import SearchResultsPageContent from "@/components/shop/SearchResultsContent";
 
 export default function SearchResultsPage() {
-    return <SearchResultsPageContent />;
-}
+  return (
+    <div className="min-h-screen bg-background">
+      <SearchResultsPageContent />
+    </div>
+  );
+} 

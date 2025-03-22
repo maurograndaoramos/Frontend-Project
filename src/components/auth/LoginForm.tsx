@@ -67,7 +67,7 @@ export default function LoginForm() {
       
           toast({
             title: "Login successful",
-            description: "Welcome back to Mrs. Pots!",
+            description: "Welcome back to Blooming Delights!",
           });
       
           // Redirect to dashboard with a small delay for the toast to be visible

@@ -13,13 +13,14 @@ import {
 } from "@/components/ui/carousel";
 import Image from "next/image";
 import Link from "next/link";
-import { ShoppingCart, Heart } from "lucide-react";
+import { ShoppingCart, ChevronLeft, ChevronRight, ArrowRight } from "lucide-react";
 import { getProducts } from "@/lib/services/productService";
 import { useCart } from "@/lib/context/CartContext";
 import { Skeleton } from "@/components/ui/skeleton";
 import { formatPrice } from "@/lib/utils";
 import { Product } from "@/types/product";
 import { motion } from "framer-motion";
+import { toast } from "sonner";
 
 export default function FeaturedProductsCarousel() {
   const [featuredProducts, setFeaturedProducts] = useState<Product[]>([]);
@@ -37,6 +38,7 @@ export default function FeaturedProductsCarousel() {
         setFeaturedProducts(data);
       } catch (error) {
         console.error('Failed to load featured products:', error);
+        toast.error('Failed to load featured products');
       } finally {
         setLoading(false);
       }
@@ -52,6 +54,9 @@ export default function FeaturedProductsCarousel() {
     e.preventDefault();
     e.stopPropagation();
     addItem(product, 1);
+    toast.success('Added to cart', {
+      description: `${product.name} has been added to your cart.`,
+    });
   };
 
   if (loading) {
@@ -62,29 +67,34 @@ export default function FeaturedProductsCarousel() {
             <Skeleton className="h-10 w-48 mb-2" />
             <Skeleton className="h-6 w-32" />
           </div>
-          <Carousel>
-            <CarouselContent>
-              {[1, 2, 3].map((i) => (
-                <CarouselItem key={i} className="md:basis-1/2 lg:basis-1/3">
-                  <Card className="overflow-hidden">
-                    <Skeleton className="h-48 w-full" />
-                    <CardContent className="p-6">
-                      <Skeleton className="h-6 w-3/4 mb-2" />
-                      <Skeleton className="h-4 w-1/2 mb-4" />
-                      <Skeleton className="h-10 w-full" />
-                    </CardContent>
-                  </Card>
-                </CarouselItem>
-              ))}
-            </CarouselContent>
-          </Carousel>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {[1, 2, 3].map((i) => (
+              <Card key={i} className="overflow-hidden">
+                <Skeleton className="h-48 w-full" />
+                <CardContent className="p-6">
+                  <Skeleton className="h-6 w-3/4 mb-2" />
+                  <Skeleton className="h-4 w-1/2 mb-4" />
+                  <Skeleton className="h-10 w-full" />
+                </CardContent>
+              </Card>
+            ))}
+          </div>
         </div>
       </section>
     );
   }
 
   if (featuredProducts.length === 0) {
-    return null;
+    return (
+      <section className="py-16 bg-muted/30">
+        <div className="container mx-auto px-4">
+          <div className="text-center">
+            <h2 className="text-3xl font-bold mb-4">No Featured Products</h2>
+            <p className="text-muted-foreground">Check back later for our featured arrangements.</p>
+          </div>
+        </div>
+      </section>
+    );
   }
 
   return (
@@ -106,82 +116,89 @@ export default function FeaturedProductsCarousel() {
             className="text-primary mt-4 md:mt-0 hover:underline inline-flex items-center group"
           >
             View all products 
-            <span className="ml-1 transform group-hover:translate-x-1 transition-transform duration-300">→</span>
+            <ArrowRight className="h-4 w-4 ml-1 transition-transform group-hover:translate-x-1" />
           </Link>
         </motion.div>
 
-        <Carousel className="w-full">
-          <CarouselContent>
-            {featuredProducts.map((product, index) => (
-              <CarouselItem key={product.id} className="md:basis-1/2 lg:basis-1/3">
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ duration: 0.6, delay: 0.2 * index }}
-                >
-                  <Link href={`/shop/product/${product.id}`}>
-                    <Card className="overflow-hidden h-full group hover:shadow-xl transition-all duration-300">
-                      <div className="relative">
-                        <Image
-                          src={product.images && product.images.length > 0 
-                            ? product.images[0] 
-                            : "/api/placeholder/400/300?text=Beautiful+Flowers"}
-                          alt={product.name}
-                          width={400}
-                          height={300}
-                          className="w-full h-48 object-cover transition-transform duration-500 group-hover:scale-105"
-                        />
-                        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="rounded-full bg-white/90 hover:bg-white shadow-md"
-                          >
-                            <Heart className="h-4 w-4" />
-                          </Button>
-                        </div>
-                        {product.isNew && (
-                          <Badge className="absolute top-2 left-2 bg-white text-black hover:bg-white/90">
-                            New
-                          </Badge>
-                        )}
-                        {!product.inStock && (
-                          <div className="absolute inset-0 bg-background/80 flex items-center justify-center">
-                            <Badge variant="outline" className="bg-background/80">Out of Stock</Badge>
-                          </div>
-                        )}
-                      </div>
-                      <CardContent className="p-6">
-                        <h3 className="font-semibold text-lg mb-2 group-hover:text-primary transition-colors">
-                          {product.name}
-                        </h3>
-                        <div className="flex items-center mb-4">
-                          <span className="font-medium text-lg">{formatPrice(product.price)}</span>
-                          {product.originalPrice && (
-                            <span className="ml-2 text-sm text-muted-foreground line-through">
-                              {formatPrice(product.originalPrice)}
-                            </span>
+        <div className="relative">
+          <Carousel
+            opts={{
+              align: "start",
+              loop: true,
+            }}
+            className="w-full"
+          >
+            <CarouselContent className="-ml-2 md:-ml-4">
+              {featuredProducts.map((product, index) => (
+                <CarouselItem key={product.id} className="pl-2 md:pl-4 md:basis-1/2 lg:basis-1/3">
+                  <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ duration: 0.6, delay: 0.2 * index }}
+                  >
+                    <Link href={`/shop/product/${product.id}`}>
+                      <Card className="overflow-hidden h-full group hover:shadow-xl transition-all duration-300">
+                        <div className="relative">
+                          <Image
+                            src={product.images && product.images.length > 0 
+                              ? product.images[0] 
+                              : "/api/placeholder/400/300?text=Beautiful+Flowers"}
+                            alt={product.name}
+                            width={400}
+                            height={300}
+                            className="w-full h-48 object-cover transition-transform duration-500 group-hover:scale-105"
+                          />
+                          {product.isNew && (
+                            <Badge className="absolute top-2 left-2 bg-white text-black hover:bg-white/90">
+                              New
+                            </Badge>
+                          )}
+                          {!product.inStock && (
+                            <motion.div 
+                              initial={{ opacity: 0 }}
+                              animate={{ opacity: 1 }}
+                              className="absolute inset-0 bg-background/80 flex items-center justify-center"
+                            >
+                              <Badge variant="outline" className="bg-background/80">Out of Stock</Badge>
+                            </motion.div>
                           )}
                         </div>
-                        <Button 
-                          className="w-full bg-primary hover:bg-primary/90 transition-colors duration-300" 
-                          disabled={!product.inStock}
-                          onClick={(e) => handleAddToCart(e, product)}
-                        >
-                          <ShoppingCart className="h-4 w-4 mr-2" />
-                          {product.inStock ? 'Add to Cart' : 'Out of Stock'}
-                        </Button>
-                      </CardContent>
-                    </Card>
-                  </Link>
-                </motion.div>
-              </CarouselItem>
-            ))}
-          </CarouselContent>
-          <CarouselPrevious className="left-2 bg-white/80 hover:bg-white shadow-md" />
-          <CarouselNext className="right-2 bg-white/80 hover:bg-white shadow-md" />
-        </Carousel>
+                        <CardContent className="p-6">
+                          <h3 className="font-semibold text-lg mb-2 group-hover:text-primary transition-colors">
+                            {product.name}
+                          </h3>
+                          <div className="flex items-center mb-4">
+                            <span className="font-medium text-lg">{formatPrice(product.price)}</span>
+                            {product.originalPrice && (
+                              <span className="ml-2 text-sm text-muted-foreground line-through">
+                                {formatPrice(product.originalPrice)}
+                              </span>
+                            )}
+                          </div>
+                          <Button 
+                            className="w-full bg-primary hover:bg-primary/90 transition-colors duration-300 group-hover:scale-105" 
+                            disabled={!product.inStock}
+                            onClick={(e) => handleAddToCart(e, product)}
+                          >
+                            <ShoppingCart className="h-4 w-4 mr-2" />
+                            {product.inStock ? 'Add to Cart' : 'Out of Stock'}
+                          </Button>
+                        </CardContent>
+                      </Card>
+                    </Link>
+                  </motion.div>
+                </CarouselItem>
+              ))}
+            </CarouselContent>
+            <CarouselPrevious className="absolute -left-12 top-1/2 -translate-y-1/2 bg-primary hover:bg-primary/90 text-primary-foreground shadow-md hover:scale-110 transition-transform">
+              <ChevronLeft className="h-6 w-6" />
+            </CarouselPrevious>
+            <CarouselNext className="absolute -right-12 top-1/2 -translate-y-1/2 bg-primary hover:bg-primary/90 text-primary-foreground shadow-md hover:scale-110 transition-transform">
+              <ChevronRight className="h-6 w-6" />
+            </CarouselNext>
+          </Carousel>
+        </div>
       </div>
     </section>
   );

@@ -134,7 +134,7 @@ export default function RegisterForm() {
                 Create your account
             </h1>
             <p className="text-sm text-muted-foreground text-center mb-6">
-                Join Mrs. Pots to start shopping for beautiful pottery
+                Join Blooming Delights to start sh opping for beautiful flowers and plants
             </p>
 
             {/* Social login buttons */}

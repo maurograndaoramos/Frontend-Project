@@ -22,6 +22,7 @@ import {
   PaginationPrevious,
 } from "@/components/ui/pagination";
 import { Product } from "@/types/product"; 
+import { motion, AnimatePresence } from "framer-motion";
 
 interface ProductGridProps {
   products: Product[];
@@ -71,14 +72,24 @@ export default function ProductGrid({
     <div>
       {/* Title and description */}
       {(title || description) && (
-        <div className="mb-6">
+        <motion.div 
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3 }}
+          className="mb-6"
+        >
           {title && <h1 className="text-3xl font-bold tracking-tight">{title}</h1>}
           {description && <p className="text-muted-foreground mt-2">{description}</p>}
-        </div>
+        </motion.div>
       )}
 
       {/* Controls */}
-      <div className="flex flex-col sm:flex-row justify-between items-center mb-6 gap-4">
+      <motion.div 
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.3, delay: 0.1 }}
+        className="flex flex-col sm:flex-row justify-between items-center mb-6 gap-4"
+      >
         <p className="text-sm text-muted-foreground">
           Showing <span className="font-medium text-foreground">{products.length}</span> products
           {pagination && pagination.total > 0 && (
@@ -91,7 +102,7 @@ export default function ProductGrid({
             value={currentSort} 
             onValueChange={(value) => updateParams('sort', value)}
           >
-            <SelectTrigger className="w-[180px]">
+            <SelectTrigger className="w-[180px] transition-colors duration-200 hover:border-primary/50">
               <SelectValue placeholder="Sort by" />
             </SelectTrigger>
             <SelectContent>
@@ -103,11 +114,13 @@ export default function ProductGrid({
             </SelectContent>
           </Select>
 
-          <div className="flex border rounded-md">
+          <div className="flex border rounded-md overflow-hidden">
             <Button
               variant="ghost"
               size="icon"
-              className={`rounded-none rounded-l-md ${viewMode === "grid" ? "bg-muted" : ""}`}
+              className={`rounded-none rounded-l-md transition-all duration-200 hover:bg-accent/50 ${
+                viewMode === "grid" ? "bg-accent" : ""
+              }`}
               onClick={() => setViewMode("grid")}
               aria-label="Grid view"
             >
@@ -116,7 +129,9 @@ export default function ProductGrid({
             <Button
               variant="ghost"
               size="icon"
-              className={`rounded-none rounded-r-md ${viewMode === "list" ? "bg-muted" : ""}`}
+              className={`rounded-none rounded-r-md transition-all duration-200 hover:bg-accent/50 ${
+                viewMode === "list" ? "bg-accent" : ""
+              }`}
               onClick={() => setViewMode("list")}
               aria-label="List view"
             >
@@ -124,133 +139,175 @@ export default function ProductGrid({
             </Button>
           </div>
         </div>
-      </div>
+      </motion.div>
 
       {/* Products */}
-      {viewMode === "grid" ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {products.map((product) => (
-            <ProductCard key={product.id} product={product} view="grid" />
-          ))}
-        </div>
-      ) : (
-        <div className="space-y-4">
-          {products.map((product) => (
-            <ProductCard key={product.id} product={product} view="list" />
-          ))}
-        </div>
-      )}
+      <AnimatePresence mode="wait">
+        {viewMode === "grid" ? (
+          <motion.div 
+            key="grid"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6"
+          >
+            {products.map((product, index) => (
+              <motion.div
+                key={product.id}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: index * 0.1 }}
+              >
+                <ProductCard product={product} view="grid" />
+              </motion.div>
+            ))}
+          </motion.div>
+        ) : (
+          <motion.div 
+            key="list"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            className="space-y-4"
+          >
+            {products.map((product, index) => (
+              <motion.div
+                key={product.id}
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: index * 0.1 }}
+              >
+                <ProductCard product={product} view="list" />
+              </motion.div>
+            ))}
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Pagination */}
       {pagination && pagination.pages > 1 && (
-        <Pagination className="mt-8">
-          <PaginationContent>
-            <PaginationItem>
-              <PaginationPrevious 
-                href="#" 
-                onClick={(e) => {
-                  e.preventDefault();
-                  if (currentPage > 1) {
-                    updateParams('page', (currentPage - 1).toString());
-                  }
-                }}
-                className={currentPage <= 1 ? "pointer-events-none opacity-50" : ""}
-              />
-            </PaginationItem>
-            
-            {/* First page */}
-            {currentPage > 3 && (
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3, delay: 0.2 }}
+        >
+          <Pagination className="mt-8">
+            <PaginationContent>
               <PaginationItem>
-                <PaginationLink 
+                <PaginationPrevious 
                   href="#" 
                   onClick={(e) => {
                     e.preventDefault();
-                    updateParams('page', '1');
+                    if (currentPage > 1) {
+                      updateParams('page', (currentPage - 1).toString());
+                    }
                   }}
-                >
-                  1
-                </PaginationLink>
+                  className={`transition-colors duration-200 ${
+                    currentPage <= 1 
+                      ? "pointer-events-none opacity-50" 
+                      : "hover:bg-accent/50"
+                  }`}
+                />
               </PaginationItem>
-            )}
-            
-            {/* Ellipsis if needed */}
-            {currentPage > 4 && (
-              <PaginationItem>
-                <span className="flex h-9 w-9 items-center justify-center">...</span>
-              </PaginationItem>
-            )}
-            
-            {/* Pages around current page */}
-            {Array.from({ length: Math.min(5, pagination.pages) }, (_, i) => {
-              // Calculate which page numbers to show centered around current page
-              let pageNum;
-              if (currentPage <= 3) {
-                // Show first 5 pages
-                pageNum = i + 1;
-              } else if (currentPage >= pagination.pages - 2) {
-                // Show last 5 pages
-                pageNum = pagination.pages - 4 + i;
-              } else {
-                // Show 2 before and 2 after current page
-                pageNum = currentPage - 2 + i;
-              }
+              
+              {/* First page */}
+              {currentPage > 3 && (
+                <PaginationItem>
+                  <PaginationLink 
+                    href="#" 
+                    onClick={(e) => {
+                      e.preventDefault();
+                      updateParams('page', '1');
+                    }}
+                    className="transition-colors duration-200 hover:bg-accent/50"
+                  >
+                    1
+                  </PaginationLink>
+                </PaginationItem>
+              )}
+              
+              {/* Ellipsis if needed */}
+              {currentPage > 4 && (
+                <PaginationItem>
+                  <span className="flex h-9 w-9 items-center justify-center text-muted-foreground">...</span>
+                </PaginationItem>
+              )}
+              
+              {/* Pages around current page */}
+              {Array.from({ length: Math.min(5, pagination.pages) }, (_, i) => {
+                let pageNum;
+                if (currentPage <= 3) {
+                  pageNum = i + 1;
+                } else if (currentPage >= pagination.pages - 2) {
+                  pageNum = pagination.pages - 4 + i;
+                } else {
+                  pageNum = currentPage - 2 + i;
+                }
 
-              // Only show if page is within range
-              if (pageNum > 0 && pageNum <= pagination.pages) {
-                return (
-                  <PaginationItem key={pageNum}>
-                    <PaginationLink 
-                      href="#" 
-                      onClick={(e) => {
-                        e.preventDefault();
-                        updateParams('page', pageNum.toString());
-                      }}
-                      isActive={currentPage === pageNum}
-                    >
-                      {pageNum}
-                    </PaginationLink>
-                  </PaginationItem>
-                );
-              }
-              return null;
-            })}
-            
-            {/* Ellipsis if needed */}
-            {currentPage < pagination.pages - 3 && (
+                if (pageNum > 0 && pageNum <= pagination.pages) {
+                  return (
+                    <PaginationItem key={pageNum}>
+                      <PaginationLink 
+                        href="#" 
+                        onClick={(e) => {
+                          e.preventDefault();
+                          updateParams('page', pageNum.toString());
+                        }}
+                        isActive={currentPage === pageNum}
+                        className="transition-colors duration-200 hover:bg-accent/50"
+                      >
+                        {pageNum}
+                      </PaginationLink>
+                    </PaginationItem>
+                  );
+                }
+                return null;
+              })}
+              
+              {/* Ellipsis if needed */}
+              {currentPage < pagination.pages - 3 && (
+                <PaginationItem>
+                  <span className="flex h-9 w-9 items-center justify-center text-muted-foreground">...</span>
+                </PaginationItem>
+              )}
+              
+              {/* Last page */}
+              {currentPage < pagination.pages - 2 && (
+                <PaginationItem>
+                  <PaginationLink 
+                    href="#" 
+                    onClick={(e) => {
+                      e.preventDefault();
+                      updateParams('page', pagination.pages.toString());
+                    }}
+                    className="transition-colors duration-200 hover:bg-accent/50"
+                  >
+                    {pagination.pages}
+                  </PaginationLink>
+                </PaginationItem>
+              )}
+              
               <PaginationItem>
-                <span className="flex h-9 w-9 items-center justify-center">...</span>
-              </PaginationItem>
-            )}
-            
-            {/* Last page */}
-            {currentPage < pagination.pages - 2 && (
-              <PaginationItem>
-                <PaginationLink 
+                <PaginationNext 
                   href="#" 
                   onClick={(e) => {
                     e.preventDefault();
-                    updateParams('page', pagination.pages.toString());
+                    if (currentPage < pagination.pages) {
+                      updateParams('page', (currentPage + 1).toString());
+                    }
                   }}
-                >
-                  {pagination.pages}
-                </PaginationLink>
+                  className={`transition-colors duration-200 ${
+                    currentPage >= pagination.pages 
+                      ? "pointer-events-none opacity-50" 
+                      : "hover:bg-accent/50"
+                  }`}
+                />
               </PaginationItem>
-            )}
-            
-            <PaginationItem>
-              <PaginationNext 
-                href="#" 
-                onClick={(e) => {
-                  e.preventDefault();
-                  if (currentPage < pagination.pages) {
-                    updateParams('page', (currentPage + 1).toString());
-                  }
-                }}
-                className={currentPage >= pagination.pages ? "pointer-events-none opacity-50" : ""}
-              />
-            </PaginationItem>
-          </PaginationContent>
-        </Pagination>
+            </PaginationContent>
+          </Pagination>
+        </motion.div>
       )}
     </div>
   );
