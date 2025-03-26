@@ -14,16 +14,33 @@ export async function GET(request: Request) {
   const minPrice = searchParams.get("minPrice") ? parseFloat(searchParams.get("minPrice")!) : undefined;
   const maxPrice = searchParams.get("maxPrice") ? parseFloat(searchParams.get("maxPrice")!) : undefined;
   const inStock = searchParams.get("inStock") === "true";
+  const ids = searchParams.get("ids")?.split(',');
   
   try {
-    console.log("Fetching products with params:", { category, search, sort, page, limit, minPrice, maxPrice, inStock });
+    console.log("Fetching products with params:", { category, search, sort, page, limit, minPrice, maxPrice, inStock, ids });
     
     // Build where clause for filtering
     const where: any = {};
     
+    // Filter by product IDs if provided
+    if (ids && ids.length > 0) {
+      where.id = { in: ids };
+    }
+    
     if (category) {
+      // Convert hyphenated category to space-separated and capitalize
+      const readableCategory = category.replace(/-/g, ' ')
+        .split(' ')
+        .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+        .join(' ');
+      
+      console.log("Processing category filter:", {
+        originalCategory: category,
+        readableCategory
+      });
+      
       where.category = {
-        equals: category,
+        equals: readableCategory,
         mode: 'insensitive'
       };
     }
@@ -66,6 +83,8 @@ export async function GET(request: Request) {
     
     // Pagination
     const skip = (page - 1) * limit;
+    
+    console.log("Query where clause:", JSON.stringify(where, null, 2));
     
     // Execute query with count
     const [products, total] = await Promise.all([

@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
+import { useForm, Path } from "react-hook-form";
 import * as z from "zod";
 import { ArrowLeft, ArrowRight, CreditCard, Wallet } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -20,7 +20,7 @@ import { Separator } from "@/components/ui/separator";
 import Image from "next/image";
 
 const formSchema = z.object({
-  method: z.enum(["credit-card", "paypal"]),
+  method: z.enum(["credit-card", "mbway"]),
   cardHolder: z.string().min(3, "Please enter the cardholder name").optional(),
   cardNumber: z
     .string()
@@ -38,6 +38,22 @@ const formSchema = z.object({
     .max(4, "CVV must be 3-4 digits")
     .regex(/^[0-9]+$/, "CVV can only contain digits")
     .optional(),
+  mbwayPhone: z
+    .string()
+    .regex(/^9[0-9]{8}$/, "Please enter a valid Portuguese mobile number")
+    .optional(),
+}).refine((data) => {
+  // Conditionally require fields based on payment method
+  if (data.method === "credit-card") {
+    return !!data.cardHolder && !!data.cardNumber && !!data.expiryDate && !!data.cvv;
+  }
+  if (data.method === "mbway") {
+    return !!data.mbwayPhone;
+  }
+  return true;
+}, {
+  message: "Please fill in all required fields",
+  path: ["method"], // This will show the error at the payment method selection
 });
 
 type PaymentFormValues = z.infer<typeof formSchema>;
@@ -53,7 +69,27 @@ export default function PaymentForm({
   onSubmit,
   onBack,
 }: PaymentFormProps) {
-  const [paymentMethod, setPaymentMethod] = useState(initialData.method || "credit-card");
+  const [paymentMethod, setPaymentMethod] = useState<"credit-card" | "mbway">(
+    (initialData.method as "credit-card" | "mbway") || "credit-card"
+  );
+
+  // Create separate states for MBWay phone
+  const [mbwayPhone, setMbwayPhone] = useState(initialData.mbwayPhone || "");
+  const [phoneError, setPhoneError] = useState("");
+
+  // Create states for credit card
+  const [cardData, setCardData] = useState({
+    cardHolder: initialData.cardHolder || "",
+    cardNumber: initialData.cardNumber || "",
+    expiryDate: initialData.expiryDate || "",
+    cvv: initialData.cvv || "",
+  });
+  const [cardErrors, setCardErrors] = useState({
+    cardHolder: "",
+    cardNumber: "",
+    expiryDate: "",
+    cvv: "",
+  });
 
   // Define form
   const form = useForm<PaymentFormValues>({
@@ -64,11 +100,114 @@ export default function PaymentForm({
       cardNumber: initialData.cardNumber || "",
       expiryDate: initialData.expiryDate || "",
       cvv: initialData.cvv || "",
+      mbwayPhone: initialData.mbwayPhone || "",
     },
   });
 
-  const handleSubmit = (data: PaymentFormValues) => {
-    onSubmit(data);
+  // Handle payment method change
+  const handleMethodChange = (value: string) => {
+    setPaymentMethod(value as "credit-card" | "mbway");
+    form.setValue("method", value as "credit-card" | "mbway");
+  };
+
+  // Handle MBWay phone change
+  const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    // Get raw value without formatting
+    const value = e.target.value.replace(/[^\d]/g, '');
+    
+    // Format the phone number as user types (9XX XXX XXX)
+    let formattedValue = value;
+    if (value.length > 3) {
+      formattedValue = value.slice(0, 3) + ' ' + value.slice(3);
+    }
+    if (value.length > 6) {
+      formattedValue = formattedValue.slice(0, 7) + ' ' + formattedValue.slice(7);
+    }
+    
+    // Update display value with formatting
+    e.target.value = formattedValue;
+    
+    // Update state with raw value for validation
+    setMbwayPhone(value);
+    form.setValue("mbwayPhone", value);
+    
+    // Clear error when typing
+    if (phoneError) setPhoneError("");
+  };
+
+  // Handle credit card field changes
+  const handleCardChange = (field: keyof typeof cardData, value: string) => {
+    setCardData({
+      ...cardData,
+      [field]: value
+    });
+    form.setValue(field as any as Path<PaymentFormValues>, value);
+    
+    // Clear error when typing
+    if (cardErrors[field]) {
+      setCardErrors({
+        ...cardErrors,
+        [field]: ""
+      });
+    }
+  };
+
+  // Handle submit
+  const handleContinueClick = () => {
+    if (paymentMethod === "credit-card") {
+      // Validate credit card fields
+      let isValid = true;
+      const newErrors = { ...cardErrors };
+      
+      if (!cardData.cardHolder || cardData.cardHolder.length < 3) {
+        newErrors.cardHolder = "Please enter the cardholder name";
+        isValid = false;
+      }
+      
+      if (!cardData.cardNumber || cardData.cardNumber.replace(/\s/g, '').length < 16) {
+        newErrors.cardNumber = "Please enter a valid card number";
+        isValid = false;
+      }
+      
+      if (!cardData.expiryDate || !/^(0[1-9]|1[0-2])\/[0-9]{2}$/.test(cardData.expiryDate)) {
+        newErrors.expiryDate = "Please use MM/YY format";
+        isValid = false;
+      }
+      
+      if (!cardData.cvv || !/^[0-9]{3,4}$/.test(cardData.cvv)) {
+        newErrors.cvv = "CVV must be 3-4 digits";
+        isValid = false;
+      }
+      
+      setCardErrors(newErrors);
+      
+      if (isValid) {
+        onSubmit({
+          method: "credit-card",
+          cardHolder: cardData.cardHolder,
+          cardNumber: cardData.cardNumber,
+          expiryDate: cardData.expiryDate,
+          cvv: cardData.cvv,
+          mbwayPhone: undefined
+        });
+      }
+    } else if (paymentMethod === "mbway") {
+      // Validate phone number
+      if (!mbwayPhone || !/^9[0-9]{8}$/.test(mbwayPhone)) {
+        setPhoneError("Please enter a valid Portuguese mobile number");
+        return;
+      }
+      
+      // Submit MBWay payment
+      onSubmit({
+        method: "mbway",
+        mbwayPhone: mbwayPhone,
+        cardHolder: undefined,
+        cardNumber: undefined,
+        expiryDate: undefined,
+        cvv: undefined
+      });
+    }
   };
 
   return (
@@ -81,7 +220,7 @@ export default function PaymentForm({
       </div>
 
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
+        <form className="space-y-6">
           <FormField
             control={form.control}
             name="method"
@@ -89,11 +228,9 @@ export default function PaymentForm({
               <FormItem className="space-y-3">
                 <FormControl>
                   <RadioGroup
-                    onValueChange={(value) => {
-                      field.onChange(value);
-                      setPaymentMethod(value as "credit-card" | "paypal");
-                    }}
+                    onValueChange={handleMethodChange}
                     defaultValue={field.value}
+                    value={paymentMethod}
                     className="flex flex-col space-y-1"
                   >
                     <div className="flex items-center space-x-3 space-y-0 rounded-md border p-4">
@@ -139,17 +276,17 @@ export default function PaymentForm({
                     </div>
 
                     <div className="flex items-center space-x-3 space-y-0 rounded-md border p-4">
-                      <RadioGroupItem value="paypal" id="paypal" />
+                      <RadioGroupItem value="mbway" id="mbway" />
                       <div className="flex-1">
                         <label
-                          htmlFor="paypal"
+                          htmlFor="mbway"
                           className="font-medium text-sm cursor-pointer flex items-center"
                         >
                           <Wallet className="h-4 w-4 mr-2" />
-                          PayPal
+                          MBWay
                         </label>
                         <p className="text-xs text-muted-foreground mt-1">
-                          Pay with your PayPal account
+                          Pay with your MBWay account
                         </p>
                       </div>
                       <div className="h-6 w-16 rounded border flex items-center justify-center bg-white">
@@ -157,7 +294,7 @@ export default function PaymentForm({
                           src="/api/placeholder/64/40"
                           width={48}
                           height={30}
-                          alt="PayPal"
+                          alt="MBWay"
                         />
                       </div>
                     </div>
@@ -172,113 +309,130 @@ export default function PaymentForm({
 
           {paymentMethod === "credit-card" && (
             <div className="space-y-4">
-              <FormField
-                control={form.control}
-                name="cardHolder"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Cardholder Name</FormLabel>
-                    <FormControl>
-                      <Input placeholder="John Doe" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
+              <div>
+                <FormLabel htmlFor="cardHolder">Cardholder Name</FormLabel>
+                <Input 
+                  id="cardHolder"
+                  placeholder="John Doe" 
+                  value={cardData.cardHolder}
+                  onChange={(e) => handleCardChange('cardHolder', e.target.value)}
+                />
+                {cardErrors.cardHolder && (
+                  <p className="text-[0.8rem] font-medium text-destructive mt-1">{cardErrors.cardHolder}</p>
                 )}
-              />
+              </div>
 
-              <FormField
-                control={form.control}
-                name="cardNumber"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Card Number</FormLabel>
-                    <FormControl>
-                      <Input 
-                        placeholder="1234 5678 9012 3456" 
-                        {...field} 
-                        onChange={(e) => {
-                          // Format card number with spaces
-                          const value = e.target.value.replace(/\s/g, '');
-                          const formattedValue = value
-                            .replace(/[^\d]/g, '')
-                            .replace(/(.{4})/g, '$1 ')
-                            .trim();
-                          field.onChange(formattedValue);
-                        }}
-                        maxLength={19}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
+              <div>
+                <FormLabel htmlFor="cardNumber">Card Number</FormLabel>
+                <Input 
+                  id="cardNumber"
+                  placeholder="1234 5678 9012 3456" 
+                  value={cardData.cardNumber}
+                  onChange={(e) => {
+                    // Format card number with spaces
+                    const value = e.target.value.replace(/\s/g, '');
+                    const formattedValue = value
+                      .replace(/[^\d]/g, '')
+                      .replace(/(.{4})/g, '$1 ')
+                      .trim();
+                    handleCardChange('cardNumber', formattedValue);
+                  }}
+                  maxLength={19}
+                />
+                {cardErrors.cardNumber && (
+                  <p className="text-[0.8rem] font-medium text-destructive mt-1">{cardErrors.cardNumber}</p>
                 )}
-              />
+              </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <FormField
-                  control={form.control}
-                  name="expiryDate"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Expiry Date</FormLabel>
-                      <FormControl>
-                        <Input 
-                          placeholder="MM/YY" 
-                          {...field} 
-                          onChange={(e) => {
-                            const value = e.target.value.replace(/[^\d]/g, '');
-                            let formattedValue = value;
-                            if (value.length > 2) {
-                              formattedValue = `${value.slice(0, 2)}/${value.slice(2, 4)}`;
-                            }
-                            field.onChange(formattedValue);
-                          }}
-                          maxLength={5}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
+                <div>
+                  <FormLabel htmlFor="expiryDate">Expiry Date</FormLabel>
+                  <Input 
+                    id="expiryDate"
+                    placeholder="MM/YY" 
+                    value={cardData.expiryDate}
+                    onChange={(e) => {
+                      const value = e.target.value.replace(/[^\d]/g, '');
+                      let formattedValue = value;
+                      if (value.length > 2) {
+                        formattedValue = `${value.slice(0, 2)}/${value.slice(2, 4)}`;
+                      }
+                      handleCardChange('expiryDate', formattedValue);
+                    }}
+                    maxLength={5}
+                  />
+                  {cardErrors.expiryDate && (
+                    <p className="text-[0.8rem] font-medium text-destructive mt-1">{cardErrors.expiryDate}</p>
                   )}
-                />
+                </div>
 
-                <FormField
-                  control={form.control}
-                  name="cvv"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>CVV</FormLabel>
-                      <FormControl>
-                        <Input 
-                          placeholder="123" 
-                          {...field}
-                          onChange={(e) => {
-                            const value = e.target.value.replace(/[^\d]/g, '');
-                            field.onChange(value);
-                          }}
-                          maxLength={4}
-                          type="password"
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
+                <div>
+                  <FormLabel htmlFor="cvv">CVV</FormLabel>
+                  <Input 
+                    id="cvv"
+                    placeholder="123" 
+                    value={cardData.cvv}
+                    onChange={(e) => {
+                      const value = e.target.value.replace(/[^\d]/g, '');
+                      handleCardChange('cvv', value);
+                    }}
+                    maxLength={4}
+                    type="password"
+                  />
+                  {cardErrors.cvv && (
+                    <p className="text-[0.8rem] font-medium text-destructive mt-1">{cardErrors.cvv}</p>
                   )}
-                />
+                </div>
               </div>
             </div>
           )}
 
-          {paymentMethod === "paypal" && (
-            <div className="bg-muted/50 p-4 rounded-md">
-              <p className="text-center text-muted-foreground mb-4">
-                You will be redirected to PayPal to complete your payment after reviewing your order.
-              </p>
-              <div className="flex justify-center">
-                <Image
-                  src="/api/placeholder/200/60"
-                  width={180}
-                  height={50}
-                  alt="PayPal"
-                  className="h-12 w-auto"
+          {paymentMethod === "mbway" && (
+            <div className="bg-muted/50 p-4 rounded-md space-y-4">
+              <div className="flex items-center gap-3">
+                <div className="h-10 w-10 rounded flex items-center justify-center bg-[#f16e22]">
+                  <Image
+                    src="/api/placeholder/64/40"
+                    width={36}
+                    height={36}
+                    alt="MBWay"
+                    className="h-8 w-auto"
+                  />
+                </div>
+                <div>
+                  <h3 className="font-medium text-sm">MBWay Payment</h3>
+                  <p className="text-xs text-muted-foreground">Fast, secure mobile payments</p>
+                </div>
+              </div>
+              
+              <div className="rounded-md border border-muted bg-background p-3 text-sm">
+                <p className="mb-2">
+                  Once you submit your order, you'll receive a payment notification on your MBWay app. 
+                  You'll have 5 minutes to approve the payment.
+                </p>
+                <p className="text-xs font-medium mb-1">Make sure:</p>
+                <ul className="text-xs list-disc pl-4 space-y-1">
+                  <li>Your phone number is correctly entered</li>
+                  <li>You have the MBWay app installed and configured</li>
+                  <li>Your phone is nearby to approve the payment</li>
+                </ul>
+              </div>
+              
+              <div>
+                <FormLabel htmlFor="mbwayPhone">MBWay Phone Number</FormLabel>
+                <Input 
+                  id="mbwayPhone"
+                  placeholder="9XX XXX XXX" 
+                  value={mbwayPhone}
+                  onChange={handlePhoneChange}
+                  maxLength={11} // 9 digits + 2 spaces
                 />
+                {phoneError && (
+                  <p className="text-[0.8rem] font-medium text-destructive mt-1">{phoneError}</p>
+                )}
+                <p className="text-xs text-muted-foreground mt-1">
+                  Enter the phone number associated with your MBWay account
+                </p>
               </div>
             </div>
           )}
@@ -288,7 +442,10 @@ export default function PaymentForm({
               <ArrowLeft className="mr-2 h-4 w-4" /> Back to Shipping
             </Button>
 
-            <Button type="submit">
+            <Button 
+              type="button"
+              onClick={handleContinueClick}
+            >
               Continue to Review <ArrowRight className="ml-2 h-4 w-4" />
             </Button>
           </div>

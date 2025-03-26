@@ -10,6 +10,7 @@ type ProductFilters = {
   page?: number;
   limit?: number;
   inStock?: boolean;
+  ids?: string[];
 };
 
 type PaginatedResponse<T> = {
@@ -34,6 +35,7 @@ export async function getProducts(filters: ProductFilters = {}): Promise<Paginat
   if (filters.page) queryParams.set('page', filters.page.toString());
   if (filters.limit) queryParams.set('limit', filters.limit.toString());
   if (filters.inStock) queryParams.set('inStock', 'true');
+  if (filters.ids && filters.ids.length > 0) queryParams.set('ids', filters.ids.join(','));
   
   try {
     console.log(`Fetching products with params: ${queryParams.toString()}`);
@@ -77,16 +79,18 @@ export async function getProducts(filters: ProductFilters = {}): Promise<Paginat
 
 export async function getProduct(id: string): Promise<Product | null> {
   try {
+    console.log(`Attempting to fetch product with ID: ${id}`);
     const response = await fetch(`/api/products/${id}`);
     
     if (!response.ok) {
       const errorData = await response.json();
-      throw new Error(errorData.error || 'Failed to fetch product');
+      console.error(`Failed to fetch product ${id}, status: ${response.status}`);
+      return null; // Return null instead of throwing to prevent unhandled rejections
     }
     
     return await response.json();
   } catch (error) {
-    console.error('Error fetching product:', error);
+    console.error(`Error fetching product with ID ${id}:`, error);
     return null;
   }
 }

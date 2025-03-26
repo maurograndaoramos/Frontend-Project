@@ -9,9 +9,12 @@ import {
   ToastViewport,
 } from "@/components/ui/toast"
 import { useToast } from "@/components/ui/use-toast"
+import { useCart } from "@/lib/context/CartContext"
+import { cn } from "@/lib/utils"
 
 export function Toaster() {
   const { toasts } = useToast()
+  const { cart } = useCart()
 
   return (
     <ToastProvider>
@@ -29,7 +32,9 @@ export function Toaster() {
           </Toast>
         )
       })}
-      <ToastViewport />
+      <ToastViewport className={cn(
+        cart.isOpen && "sm:right-[448px]"
+      )} />
     </ToastProvider>
   )
 }

@@ -1,7 +1,7 @@
 // src/components/shop/shop-components/PriceRangeFilter.tsx
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,11 +10,21 @@ import { Label } from "@/components/ui/label";
 import { Separator } from "@radix-ui/react-dropdown-menu";
 
 const priceRanges = [
-  { label: "Under $25", min: 0, max: 25 },
-  { label: "$25 to $50", min: 25, max: 50 },
-  { label: "$50 to $100", min: 50, max: 100 },
-  { label: "Over $100", min: 100, max: null },
+  { label: "Under €25", min: 0, max: 25 },
+  { label: "€25 to €50", min: 25, max: 50 },
+  { label: "€50 to €100", min: 50, max: 100 },
+  { label: "Over €100", min: 100, max: null },
 ];
+
+// Debounce function to limit how often a function is called
+function debounce<T extends (...args: any[]) => void>(func: T, wait: number): (...args: Parameters<T>) => void {
+  let timeout: NodeJS.Timeout | null = null;
+  
+  return function(...args: Parameters<T>) {
+    if (timeout) clearTimeout(timeout);
+    timeout = setTimeout(() => func(...args), wait);
+  };
+}
 
 export default function PriceRangeFilter() {
   const router = useRouter();
@@ -28,6 +38,9 @@ export default function PriceRangeFilter() {
     parseInt(searchParams.get("maxPrice") || "500")
   );
   
+  // Store initialization flag to prevent auto-applying on initial render
+  const isInitialized = useRef(false);
+  
   // When URL params change, update the state
   useEffect(() => {
     const minFromUrl = searchParams.get("minPrice");
@@ -35,12 +48,28 @@ export default function PriceRangeFilter() {
     
     if (minFromUrl) {
       setMinPrice(parseInt(minFromUrl));
+    } else if (searchParams.toString()) {
+      // Only reset if there are other search params
+      setMinPrice(0);
     }
     
     if (maxFromUrl) {
       setMaxPrice(parseInt(maxFromUrl));
+    } else if (searchParams.toString()) {
+      // Only reset if there are other search params
+      setMaxPrice(500);
     }
+    
+    // Set initialized after first render
+    isInitialized.current = true;
   }, [searchParams]);
+  
+  // Debounced version of applyPriceFilter
+  const debouncedApplyPriceFilter = useRef(
+    debounce(() => {
+      applyPriceFilter();
+    }, 500)
+  ).current;
   
   const applyPriceFilter = () => {
     const params = new URLSearchParams(searchParams.toString());
@@ -104,6 +133,26 @@ export default function PriceRangeFilter() {
   const handleSliderChange = (value: number[]) => {
     setMinPrice(value[0]);
     setMaxPrice(value[1]);
+    
+    // Auto-apply the filter after a short delay
+    if (isInitialized.current) {
+      debouncedApplyPriceFilter();
+    }
+  };
+  
+  const handleInputChange = (type: 'min' | 'max', value: string) => {
+    const numValue = parseInt(value) || 0;
+    
+    if (type === 'min') {
+      setMinPrice(numValue);
+    } else {
+      setMaxPrice(numValue);
+    }
+    
+    // Auto-apply the filter after a short delay
+    if (isInitialized.current) {
+      debouncedApplyPriceFilter();
+    }
   };
   
   return (
@@ -145,7 +194,7 @@ export default function PriceRangeFilter() {
               id="minPrice"
               type="number"
               value={minPrice}
-              onChange={(e) => setMinPrice(parseInt(e.target.value) || 0)}
+              onChange={(e) => handleInputChange('min', e.target.value)}
               className="h-8"
             />
           </div>
@@ -156,7 +205,7 @@ export default function PriceRangeFilter() {
               id="maxPrice"
               type="number"
               value={maxPrice}
-              onChange={(e) => setMaxPrice(parseInt(e.target.value) || 0)}
+              onChange={(e) => handleInputChange('max', e.target.value)}
               className="h-8"
             />
           </div>

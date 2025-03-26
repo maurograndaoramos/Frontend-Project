@@ -4,59 +4,60 @@
 
 @layer base {
   :root {
-    /* Creamy light mode theme based on #DAD7CD */
-    --background: 46 15% 83%;
-    --foreground: 46 15% 15%;
-    --card: 46 15% 90%;
-    --card-foreground: 46 15% 15%;
-    --popover: 46 15% 90%;
-    --popover-foreground: 46 15% 15%;
-    --primary: 46 15% 70%;
-    --primary-foreground: 46 15% 15%;
-    --secondary: 46 15% 75%;
-    --secondary-foreground: 46 15% 15%;
-    --muted: 46 15% 88%;
-    --muted-foreground: 46 15% 30%;
-    --accent: 46 15% 65%;
-    --accent-foreground: 46 15% 15%;
-    --destructive: 46 15% 55%;
-    --destructive-foreground: 46 15% 15%;
-    --border: 46 15% 80%;
-    --input: 46 15% 80%;
-    --ring: 46 15% 50%;
-    --chart-1: 30 20% 50%;
-    --chart-2: 40 20% 50%;
-    --chart-3: 50 20% 50%;
-    --chart-4: 60 20% 50%;
-    --chart-5: 70 20% 50%;
+    /* Light theme with natural, botanical colors */
+    --background: 60 30% 98%;
+    --foreground: 148 25% 15%;
+    --card: 60 25% 96%;
+    --card-foreground: 148 25% 15%;
+    --popover: 60 25% 96%;
+    --popover-foreground: 148 25% 15%;
+    --primary: 148 45% 45%;
+    --primary-foreground: 148 45% 98%;
+    --secondary: 80 55% 45%;
+    --secondary-foreground: 80 55% 98%;
+    --muted: 60 15% 90%;
+    --muted-foreground: 148 15% 35%;
+    --accent: 35 85% 65%;
+    --accent-foreground: 35 85% 15%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 148 15% 85%;
+    --input: 148 15% 85%;
+    --ring: 148 45% 45%;
+    --chart-1: 148 45% 45%;
+    --chart-2: 80 55% 45%;
+    --chart-3: 35 85% 65%;
+    --chart-4: 168 45% 45%;
+    --chart-5: 123 45% 45%;
     --radius: 0.5rem;
   }
+  
   .dark {
-    /* Dark green mode theme based on #18392B */
-    --background: 155 41% 16%;
-    --foreground: 155 41% 90%;
-    --card: 155 41% 20%;
-    --card-foreground: 155 41% 90%;
-    --popover: 155 41% 20%;
-    --popover-foreground: 155 41% 90%;
-    --primary: 155 41% 25%;
-    --primary-foreground: 155 41% 95%;
-    --secondary: 155 41% 18%;
-    --secondary-foreground: 155 41% 95%;
-    --muted: 155 30% 25%;
-    --muted-foreground: 155 30% 85%;
-    --accent: 155 41% 27%;
-    --accent-foreground: 155 41% 95%;
-    --destructive: 155 60% 30%;
-    --destructive-foreground: 155 60% 95%;
-    --border: 155 41% 22%;
-    --input: 155 41% 22%;
-    --ring: 155 41% 50%;
-    --chart-1: 100 50% 40%;
-    --chart-2: 120 50% 40%;
-    --chart-3: 140 50% 40%;
-    --chart-4: 160 50% 40%;
-    --chart-5: 180 50% 40%;
+    /* Dark theme with rich forest and earth tones */
+    --background: 148 30% 8%;
+    --foreground: 148 15% 98%;
+    --card: 148 30% 12%;
+    --card-foreground: 148 15% 98%;
+    --popover: 148 30% 12%;
+    --popover-foreground: 148 15% 98%;
+    --primary: 148 55% 45%;
+    --primary-foreground: 148 55% 98%;
+    --secondary: 80 45% 45%;
+    --secondary-foreground: 80 45% 98%;
+    --muted: 148 25% 20%;
+    --muted-foreground: 148 15% 90%;
+    --accent: 35 75% 55%;
+    --accent-foreground: 35 75% 98%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 148 30% 20%;
+    --input: 148 30% 20%;
+    --ring: 148 55% 45%;
+    --chart-1: 148 55% 45%;
+    --chart-2: 80 45% 45%;
+    --chart-3: 35 75% 55%;
+    --chart-4: 168 45% 50%;
+    --chart-5: 123 45% 50%;
   }
 }
 
@@ -67,5 +68,28 @@
   body {
     @apply bg-background text-foreground;
     font-family: Arial, Helvetica, sans-serif;
+  }
+}
+
+/* Enhanced component styles */
+@layer components {
+  .card {
+    @apply transition-all duration-300 hover:shadow-lg hover:shadow-primary/10;
+  }
+  
+  .button-primary {
+    @apply bg-primary hover:bg-primary/90 text-primary-foreground shadow-sm hover:shadow-md transition-all duration-300;
+  }
+  
+  .button-secondary {
+    @apply bg-secondary hover:bg-secondary/90 text-secondary-foreground shadow-sm hover:shadow-md transition-all duration-300;
+  }
+  
+  .gradient-text {
+    @apply bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent;
+  }
+  
+  .gradient-border {
+    @apply relative before:absolute before:inset-0 before:rounded-lg before:p-[1px] before:bg-gradient-to-r before:from-primary/20 before:to-primary/10 before:-z-10;
   }
 }

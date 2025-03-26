@@ -111,15 +111,15 @@ export default function ProductDetail({ product }: ProductDetailProps) {
             <h1 className="text-3xl font-bold mt-2">{product.name}</h1>
 
             <div className="flex items-center mt-4">
-              <span className="text-2xl font-bold">${product.price.toFixed(2)}</span>
-              {product.originalPrice && (
+              <span className="text-2xl font-bold">€{product.price.toFixed(2)}</span>
+              {product.hasDiscount && product.originalPrice && (
                 <span className="ml-3 text-lg text-muted-foreground line-through">
-                  ${product.originalPrice.toFixed(2)}
+                  €{product.originalPrice.toFixed(2)}
                 </span>
               )}
-              {product.originalPrice && (
+              {product.hasDiscount && product.originalPrice && (
                 <Badge variant="secondary" className="ml-3">
-                  Save ${(product.originalPrice - product.price).toFixed(2)}
+                  Save €{(product.originalPrice - product.price).toFixed(2)}
                 </Badge>
               )}
             </div>
@@ -195,7 +195,7 @@ export default function ProductDetail({ product }: ProductDetailProps) {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="flex items-center space-x-2">
               <Truck className="h-5 w-5 text-muted-foreground" />
-              <span className="text-sm">Free shipping on orders over $50</span>
+              <span className="text-sm">Free shipping on orders over €50</span>
             </div>
             <div className="flex items-center space-x-2">
               <ShieldCheck className="h-5 w-5 text-muted-foreground" />

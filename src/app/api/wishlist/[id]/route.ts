@@ -1,4 +1,4 @@
-// src/app/api/wishlist/[productId]/route.ts
+// src/app/api/wishlist/[id]/route.ts
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
@@ -8,10 +8,10 @@ import {
   isInWishlist
 } from "@/lib/services/wishlistService";
 
-// GET /api/wishlist/[productId] - Check if product is in wishlist
+// GET /api/wishlist/[id] - Check if product is in wishlist
 export async function GET(
   req: Request,
-  { params }: { params: { productId: string } }
+  { params }: { params: { id: string } }
 ) {
   try {
     // Check if user is authenticated
@@ -24,7 +24,7 @@ export async function GET(
       );
     }
     
-    const productId = params.productId;
+    const productId = params.id;
     
     // Check if product is in wishlist
     const inWishlist = await isInWishlist(session.user.id, productId);
@@ -40,10 +40,10 @@ export async function GET(
   }
 }
 
-// PUT /api/wishlist/[productId] - Add product to wishlist
+// PUT /api/wishlist/[id] - Add product to wishlist
 export async function PUT(
   req: Request,
-  { params }: { params: { productId: string } }
+  { params }: { params: { id: string } }
 ) {
   try {
     // Check if user is authenticated
@@ -56,7 +56,7 @@ export async function PUT(
       );
     }
     
-    const productId = params.productId;
+    const productId = params.id;
     
     // Add product to wishlist
     await addToWishlist(session.user.id, productId);
@@ -81,10 +81,10 @@ export async function PUT(
   }
 }
 
-// DELETE /api/wishlist/[productId] - Remove product from wishlist
+// DELETE /api/wishlist/[id] - Remove product from wishlist
 export async function DELETE(
   req: Request,
-  { params }: { params: { productId: string } }
+  { params }: { params: { id: string } }
 ) {
   try {
     // Check if user is authenticated
@@ -97,7 +97,7 @@ export async function DELETE(
       );
     }
     
-    const productId = params.productId;
+    const productId = params.id;
     
     // Remove product from wishlist
     await removeFromWishlist(session.user.id, productId);

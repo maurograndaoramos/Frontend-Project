@@ -3,6 +3,7 @@
 import React, { createContext, useContext, useReducer, useEffect } from 'react';
 import { Product } from '@/types/product';
 import { useToast } from '@/lib/hooks/useToast';
+import { useSession } from 'next-auth/react';
 
 // Define cart item type (product with quantity)
 export interface CartItem {
@@ -25,7 +26,8 @@ type CartAction =
   | { type: 'REMOVE_ITEM'; payload: string }
   | { type: 'UPDATE_QUANTITY'; payload: { id: string; quantity: number } }
   | { type: 'CLEAR_CART' }
-  | { type: 'TOGGLE_CART'; payload?: boolean };
+  | { type: 'TOGGLE_CART'; payload?: boolean }
+  | { type: 'SET_ITEMS'; payload: CartItem[] };
 
 // Define context type
 interface CartContextType {
@@ -93,6 +95,8 @@ function cartReducer(state: CartState, action: CartAction): CartState {
       return { ...state, items: [] };
     case 'TOGGLE_CART':
       return { ...state, isOpen: action.payload !== undefined ? action.payload : !state.isOpen };
+    case 'SET_ITEMS':
+      return { ...state, items: action.payload };
     default:
       return state;
   }
@@ -104,26 +108,50 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
 }) => {
   const [cart, dispatch] = useReducer(cartReducer, initialState);
   const { toast } = useToast();
+  const { data: session, status } = useSession();
 
-  // Load cart from localStorage on mount
+  // Get current user ID or generate a temporary one for anonymous users
+  const getUserKey = () => {
+    if (session?.user?.id) {
+      return `cart_${session.user.id}`;
+    }
+    
+    // For anonymous users, create a temporary ID if needed
+    let anonymousId = localStorage.getItem('anonymous_cart_id');
+    if (!anonymousId) {
+      anonymousId = `anonymous_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+      localStorage.setItem('anonymous_cart_id', anonymousId);
+    }
+    return `cart_${anonymousId}`;
+  };
+
+  // Load cart from localStorage on mount or when user session changes
   useEffect(() => {
-    const savedCart = localStorage.getItem('cart');
+    // Clear cart state first to avoid mixing data
+    dispatch({ type: 'CLEAR_CART' });
+    
+    const userKey = getUserKey();
+    const savedCart = localStorage.getItem(userKey);
+    
     if (savedCart) {
       try {
         const parsedCart = JSON.parse(savedCart);
-        parsedCart.items.forEach((item: CartItem) => {
-          dispatch({ type: 'ADD_ITEM', payload: item });
-        });
+        if (parsedCart.items && Array.isArray(parsedCart.items)) {
+          dispatch({ type: 'SET_ITEMS', payload: parsedCart.items });
+        }
       } catch (error) {
         console.error('Failed to parse cart from localStorage:', error);
       }
     }
-  }, []);
+  }, [session?.user?.id, status]);
 
   // Save cart to localStorage when it changes
   useEffect(() => {
-    localStorage.setItem('cart', JSON.stringify(cart));
-  }, [cart]);
+    if (cart.items.length > 0) {
+      const userKey = getUserKey();
+      localStorage.setItem(userKey, JSON.stringify({ items: cart.items }));
+    }
+  }, [cart.items, session?.user?.id]);
 
   // Add item to cart
   const addItem = (product: Product, quantity: number) => {
@@ -153,8 +181,8 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
       description: `${product.name} added to your cart`,
     });
     
-    // Open cart sidebar when adding items
-    dispatch({ type: 'TOGGLE_CART', payload: true });
+    // Don't automatically open cart sidebar when adding items
+    // Removed: dispatch({ type: 'TOGGLE_CART', payload: true });
   };
 
   // Remove item from cart
@@ -174,6 +202,11 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
   // Clear cart
   const clearCart = () => {
     dispatch({ type: 'CLEAR_CART' });
+    
+    // Also clear from localStorage
+    const userKey = getUserKey();
+    localStorage.removeItem(userKey);
+    
     toast({
       title: "Cart cleared",
       description: "All items have been removed from your cart",

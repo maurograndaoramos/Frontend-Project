@@ -4,6 +4,10 @@ export interface Product {
   description: string;
   price: number;
   originalPrice?: number;
+  hasDiscount: boolean;
+  discountPercent?: number;
+  discountStart?: Date;
+  discountEnd?: Date;
   images: string[];
   inStock: boolean;
   quantity?: number;
@@ -26,5 +30,30 @@ export interface Product {
   care?: string[];
   createdAt: Date;
   updatedAt: Date;
-  relatedProducts?: string[]; 
+  relatedProducts?: string[];
+  productType?: ProductType;
+  productTypeId?: string;
+  collections?: Collection[];
+}
+
+export interface ProductType {
+  id: string;
+  name: string;
+  description?: string;
+  products?: Product[];
+  createdAt?: Date;
+  updatedAt?: Date;
+}
+
+export interface Collection {
+  id: string;
+  name: string;
+  slug: string;
+  description?: string;
+  heroImage?: string;
+  features: string[];
+  isActive: boolean;
+  products?: Product[];
+  createdAt?: Date;
+  updatedAt?: Date;
 }
