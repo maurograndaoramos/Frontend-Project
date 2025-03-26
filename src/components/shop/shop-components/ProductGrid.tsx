@@ -110,7 +110,6 @@ export default function ProductGrid({
               <SelectItem value="newest">Newest</SelectItem>
               <SelectItem value="price-low">Price: Low to High</SelectItem>
               <SelectItem value="price-high">Price: High to Low</SelectItem>
-              <SelectItem value="rating">Top Rated</SelectItem>
             </SelectContent>
           </Select>
 

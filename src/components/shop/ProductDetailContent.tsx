@@ -208,18 +208,30 @@ export default function ProductDetailContent() {
               />
             </motion.div>
             <AnimatePresence>
-              {product.isNew && (
-                <motion.div
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: -20 }}
-                  className="absolute top-4 left-4"
-                >
-                  <Badge className="bg-primary text-primary-foreground">
-                    New
-                  </Badge>
-                </motion.div>
-              )}
+              <div className="absolute top-4 left-4 flex gap-2">
+                {product.isNew && (
+                  <motion.div
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: -20 }}
+                  >
+                    <Badge className="bg-primary text-primary-foreground">
+                      New
+                    </Badge>
+                  </motion.div>
+                )}
+                {product.hasDiscount && (
+                  <motion.div
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: -20 }}
+                  >
+                    <Badge className="bg-red-500/95 text-white">
+                      Discount
+                    </Badge>
+                  </motion.div>
+                )}
+              </div>
             </AnimatePresence>
             <div className="absolute inset-0 bg-black/0 group-hover:bg-black/5 transition-colors duration-300" />
           </div>
@@ -272,15 +284,15 @@ export default function ProductDetailContent() {
             <h1 className="text-3xl font-bold mt-2">{product.name}</h1>
 
             <div className="flex items-center mt-4">
-              <span className="text-2xl font-bold">${product.price.toFixed(2)}</span>
-              {product.originalPrice && (
+              <span className="text-2xl font-bold">€{product.price.toFixed(2)}</span>
+              {product.hasDiscount && product.originalPrice && (
                 <span className="ml-3 text-lg text-muted-foreground line-through">
-                  ${product.originalPrice.toFixed(2)}
+                  €{product.originalPrice.toFixed(2)}
                 </span>
               )}
-              {product.originalPrice && (
+              {product.hasDiscount && product.originalPrice && (
                 <Badge variant="secondary" className="ml-3">
-                  Save ${(product.originalPrice - product.price).toFixed(2)}
+                  Save €{(product.originalPrice - product.price).toFixed(2)}
                 </Badge>
               )}
             </div>
@@ -396,7 +408,7 @@ export default function ProductDetailContent() {
               {
                 icon: <Truck className="h-5 w-5" />,
                 title: "Free Shipping",
-                description: "On orders over $200"
+                description: "On orders over €200"
               },
               {
                 icon: <ShieldCheck className="h-5 w-5" />,

@@ -1,8 +1,8 @@
 "use client";
 
 import * as React from "react";
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useEffect } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { signIn } from "next-auth/react";
 import * as z from "zod";
@@ -35,6 +35,27 @@ export default function LoginForm() {
     const router = useRouter();
     const [isLoading, setIsLoading] = useState(false);
     const { toast } = useToast();
+    const searchParams = useSearchParams();
+    const error = searchParams.get("error");
+    
+    useEffect(() => {
+        // Handle errors from OAuth providers
+        if (error) {
+            if (error === "OAuthAccountNotLinked") {
+                toast({
+                    title: "Email already registered",
+                    description: "This email is already registered with another provider. Please sign in using your original method.",
+                    variant: "destructive",
+                });
+            } else if (error) {
+                toast({
+                    variant: "destructive",
+                    title: "Authentication failed",
+                    description: "There was a problem signing in with this provider.",
+                });
+            }
+        }
+    }, [error, toast]);
 
     const form = useForm<z.infer<typeof loginSchema>>({
         resolver: zodResolver(loginSchema),
@@ -49,17 +70,28 @@ export default function LoginForm() {
         setIsLoading(true);
       
         try {
+          // Pass the remember me value to NextAuth
           const result = await signIn("credentials", {
             email: values.email,
             password: values.password,
             redirect: false,
+            callbackUrl: "/dashboard",
+            // This is the key parameter for "remember me" functionality
+            remember: values.rememberMe,
           });
       
           if (result?.error) {
+            let errorMessage = "Please try again later.";
+            
+            // Custom error message based on error code
+            if (result.error === "CredentialsSignin") {
+              errorMessage = "Invalid email or password. Please try again.";
+            }
+            
             toast({
               variant: "destructive",
               title: "Login failed",
-              description: result.error,
+              description: errorMessage,
             });
             setIsLoading(false);
             return;
@@ -96,17 +128,22 @@ export default function LoginForm() {
                 title: "Something went wrong",
                 description: "Please try again later.",
             });
-        } finally {
             setIsLoading(false);
         }
     };
 
-    const signInWithFacebook = () => {
-        // Implement Facebook login if you add a Facebook provider
-        toast({
-            title: "Coming soon",
-            description: "Facebook login will be available soon.",
-        });
+    const signInWithFacebook = async () => {
+        setIsLoading(true);
+        try {
+            await signIn("facebook", { callbackUrl: "/dashboard" });
+        } catch (error) {
+            toast({
+                variant: "destructive",
+                title: "Something went wrong",
+                description: "Please try again later.",
+            });
+            setIsLoading(false);
+        }
     };
 
     return (

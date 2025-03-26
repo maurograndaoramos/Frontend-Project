@@ -38,26 +38,28 @@ model User {
   id             String         @id @default(cuid())
   name           String?
   email          String?        @unique
+  phone          String?
+  address        String?
   emailVerified  DateTime?
   image          String?
+  role           Role          @default(user)
   createdAt      DateTime       @default(now())
   updatedAt      DateTime       @updatedAt
   hashedPassword String?
+  resetToken     String?
+  resetTokenExpiry DateTime?
   accounts       Account[]
   orders         Order[]
   sessions       Session[]
   wishlistItems  WishlistItem[]
+
+  @@index([resetToken])
 }
 
-model VerificationRequest {
-  id         String   @id @default(cuid())
-  identifier String
-  token      String   @unique
-  expires    DateTime
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
-
-  @@unique([identifier, token])
+enum Role {
+  user
+  seller
+  admin
 }
 
 model Product {
@@ -82,6 +84,24 @@ model Product {
   updatedAt     DateTime       @updatedAt
   orderItems    OrderItem[]
   wishlistItems WishlistItem[]
+  season        Season[]
+  productType   ProductType?   @relation(fields: [productTypeId], references: [id])
+  productTypeId String?
+  collections   Collection[]   @relation("ProductToCollection")
+  hasDiscount      Boolean   @default(false)
+  discountPercent  Float?
+  discountStart    DateTime?
+  discountEnd      DateTime?
+
+  @@index([productTypeId])
+}
+
+enum Season {
+  SPRING
+  SUMMER
+  FALL
+  WINTER
+  ANY
 }
 
 model OrderItem {
@@ -123,4 +143,26 @@ model Order {
   items           OrderItem[]
 
   @@index([userId])
+}
+
+model ProductType {
+  id          String    @id @default(cuid())
+  name        String    @unique
+  description String?
+  products    Product[]
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+model Collection {
+  id          String    @id @default(cuid())
+  name        String    @unique
+  slug        String    @unique
+  description String?
+  heroImage   String?
+  features    String[]
+  isActive    Boolean   @default(true)
+  products    Product[] @relation("ProductToCollection")
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
 }

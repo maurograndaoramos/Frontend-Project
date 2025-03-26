@@ -61,7 +61,7 @@ export async function GET() {
       status: order.status as "Delivered" | "Processing" | "Shipped",
       total: new Intl.NumberFormat('en-US', {
         style: 'currency',
-        currency: 'USD'
+        currency: 'EUR'
       }).format(order.total)
     }));
 

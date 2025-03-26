@@ -1,13 +1,13 @@
 "use client";
 
 import { useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import { Search, ChevronDown, Mail, Phone, MessageSquare } from "lucide-react";
+import { motion } from "framer-motion";
+import { Search, Mail } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Badge } from "@/components/ui/badge";
-import { Skeleton } from "@/components/ui/skeleton";
+import Link from "next/link";
 
 const faqCategories = [
   "General",
@@ -193,18 +193,12 @@ export default function FAQPageContent() {
               Can't find what you're looking for? Our team is here to help.
             </p>
             <div className="flex flex-wrap justify-center gap-4">
-              <Button variant="outline" className="gap-2">
-                <Mail className="h-4 w-4" />
-                Email Us
-              </Button>
-              <Button variant="outline" className="gap-2">
-                <Phone className="h-4 w-4" />
-                Call Us
-              </Button>
-              <Button variant="outline" className="gap-2">
-                <MessageSquare className="h-4 w-4" />
-                Live Chat
-              </Button>
+              <Link href="/contact">
+                <Button variant="outline" className="gap-2">
+                  <Mail className="h-4 w-4" />
+                  Email Us
+                </Button>
+              </Link>
             </div>
           </div>
         </div>

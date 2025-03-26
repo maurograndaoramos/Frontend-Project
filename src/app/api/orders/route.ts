@@ -1,62 +1,56 @@
 // src/app/api/orders/route.ts
 import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth/next";
-import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import { prisma } from "@/lib/prisma";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
 import { createOrder, getUserOrders } from "@/lib/services/orderService";
 
 // POST /api/orders - Create a new order
 export async function POST(req: Request) {
   try {
-    // Check if user is authenticated
     const session = await getServerSession(authOptions);
     
-    if (!session?.user) {
+    if (!session?.user?.email) {
       return NextResponse.json(
-        { error: "Unauthorized" },
+        { error: "You must be logged in to create an order" },
         { status: 401 }
       );
     }
     
-    // Parse request body
-    const body = await req.json();
-    const { items, total, shippingAddress, paymentMethod, paymentIntent } = body;
-    
-    // Basic validation
-    if (!items || !Array.isArray(items) || items.length === 0) {
-      return NextResponse.json(
-        { error: "Order must contain at least one item" },
-        { status: 400 }
-      );
-    }
-    
-    if (!shippingAddress) {
-      return NextResponse.json(
-        { error: "Shipping address is required" },
-        { status: 400 }
-      );
-    }
-    
-    // Create the order with user's ID
-    const order = await createOrder({
-      userId: session.user.id,
-      items,
-      total,
-      shippingAddress,
-      status: "pending",
-      paymentMethod,
-      paymentIntent
+    const user = await prisma.user.findUnique({
+      where: { email: session.user.email },
     });
     
-    return NextResponse.json(
-      { 
-        message: "Order created successfully", 
-        orderId: order.id 
-      },
-      { status: 201 }
-    );
-  } catch (error) {
-    console.error("Order creation error:", error);
+    if (!user) {
+      return NextResponse.json(
+        { error: "User not found" },
+        { status: 404 }
+      );
+    }
+
+    const body = await req.json();
+    const { items, shippingAddress, total } = body;
     
+    // Create the order
+    const order = await prisma.order.create({
+      data: {
+        userId: user.id,
+        status: "pending",
+        total,
+        shippingAddress,
+        items: {
+          create: items.map((item: any) => ({
+            quantity: item.quantity,
+            price: item.price,
+            productId: item.id,
+          })),
+        },
+      },
+    });
+
+    return NextResponse.json({ orderId: order.id }, { status: 201 });
+  } catch (error) {
+    console.error("Error creating order:", error);
     return NextResponse.json(
       { error: "Failed to create order" },
       { status: 500 }

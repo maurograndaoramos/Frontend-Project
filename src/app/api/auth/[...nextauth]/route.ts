@@ -22,14 +22,20 @@ import { PrismaAdapter } from "@next-auth/prisma-adapter";
 import { prisma } from "@/lib/prisma";
 import CredentialsProvider from "next-auth/providers/credentials";
 import GoogleProvider from "next-auth/providers/google";
+import FacebookProvider from "next-auth/providers/facebook";
 import bcrypt from "bcrypt";
+import { CustomPrismaAdapter } from "@/lib/auth-adapter";
 
 export const authOptions: NextAuthOptions = {
-  adapter: PrismaAdapter(prisma),
+  adapter: CustomPrismaAdapter(),
   providers: [
     GoogleProvider({
       clientId: process.env.GOOGLE_CLIENT_ID || "",
       clientSecret: process.env.GOOGLE_CLIENT_SECRET || "",
+    }),
+    FacebookProvider({
+      clientId: process.env.FACEBOOK_CLIENT_ID || "",
+      clientSecret: process.env.FACEBOOK_CLIENT_SECRET || "",
     }),
     CredentialsProvider({
       name: "credentials",
@@ -68,7 +74,9 @@ export const authOptions: NextAuthOptions = {
   session: {
     strategy: "jwt",
   },
-  secret: process.env.NEXTAUTH_SECRET,
+  jwt: {
+    maxAge: 30 * 24 * 60 * 60, // 30 days
+  },
   pages: {
     signIn: "/login",
   },
@@ -79,13 +87,35 @@ export const authOptions: NextAuthOptions = {
       }
       return session;
     },
-    async jwt({ token, user }: { token: JWT; user?: any }) {
+    async jwt({ token, user, account, profile, trigger, session }: { token: JWT; user?: any; account?: any; profile?: any; trigger?: any; session?: any }) {
       if (user) {
         token.id = user.id;
       }
       return token;
     },
+    async signIn({ user, account, profile, email, credentials }: any) {
+      // NextAuth will automatically handle the OAuthAccountNotLinked error
+      // when a user tries to sign in with a provider that doesn't match their existing account
+      return true;
+    },
   },
+  events: {
+    signIn: ({ user, account, isNewUser, profile }) => {
+      // Event occurs on sign in
+    }
+  },
+  cookies: {
+    sessionToken: {
+      name: `next-auth.session-token`,
+      options: {
+        httpOnly: true,
+        sameSite: 'lax',
+        path: '/',
+        secure: process.env.NODE_ENV === 'production',
+      }
+    }
+  },
+  secret: process.env.NEXTAUTH_SECRET,
 };
 
 

@@ -49,69 +49,7 @@ import {
 import { motion, AnimatePresence } from "framer-motion";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
-
-// Sample order data (would come from API in a real app)
-const orders = [
-  {
-    id: "ORD-001",
-    date: "March 14, 2025",
-    status: "Delivered",
-    total: "$120.50",
-    items: [
-      { name: "Ceramic Plant Pot (Medium)", price: "$24.99", quantity: 2 },
-      { name: "Ceramic Tea Kettle", price: "$70.52", quantity: 1 },
-    ],
-    address: "123 Main St, Anytown, CA 12345",
-    trackingNumber: "TRK9876543210",
-  },
-  {
-    id: "ORD-002",
-    date: "March 8, 2025",
-    status: "Processing",
-    total: "$75.20",
-    items: [
-      { name: "Coffee Mug Set", price: "$35.99", quantity: 1 },
-      { name: "Ceramic Serving Platter", price: "$39.21", quantity: 1 },
-    ],
-    address: "123 Main St, Anytown, CA 12345",
-    trackingNumber: null,
-  },
-  {
-    id: "ORD-003",
-    date: "February 27, 2025",
-    status: "Shipped",
-    total: "$240.00",
-    items: [
-      { name: "Ceramic Dinner Set (4 Person)", price: "$199.99", quantity: 1 },
-      { name: "Serving Spoons", price: "$40.01", quantity: 1 },
-    ],
-    address: "123 Main St, Anytown, CA 12345",
-    trackingNumber: "TRK1234567890",
-  },
-  {
-    id: "ORD-004",
-    date: "February 12, 2025",
-    status: "Delivered",
-    total: "$89.95",
-    items: [
-      { name: "Glazed Flower Pots (3 Pack)", price: "$59.95", quantity: 1 },
-      { name: "Plant Nutrients", price: "$15.00", quantity: 2 },
-    ],
-    address: "123 Main St, Anytown, CA 12345",
-    trackingNumber: "TRK5678901234",
-  },
-  {
-    id: "ORD-005",
-    date: "January 30, 2025",
-    status: "Delivered",
-    total: "$129.99",
-    items: [
-      { name: "Decorative Wall Plates (Set of 4)", price: "$129.99", quantity: 1 },
-    ],
-    address: "123 Main St, Anytown, CA 12345",
-    trackingNumber: "TRK0987654321",
-  },
-];
+import { useSession } from "next-auth/react";
 
 // Type for the Order details
 interface OrderItem {
@@ -132,23 +70,63 @@ interface Order {
 
 export default function OrdersPage() {
   const router = useRouter();
+  const { data: session, status } = useSession();
   const [expandedOrder, setExpandedOrder] = useState<string | null>(null);
   const [filterStatus, setFilterStatus] = useState<string>("all");
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [orders, setOrders] = useState<Order[]>([]);
+  
+  // Fetch orders from the API
+  useEffect(() => {
+    if (status === "loading") return;
+    
+    if (!session) {
+      router.push("/login");
+      return;
+    }
+    
+    fetchOrders();
+  }, [session, status, router]);
+  
+  const fetchOrders = async () => {
+    try {
+      const response = await fetch('/api/orders');
+      
+      if (!response.ok) {
+        throw new Error('Failed to fetch orders');
+      }
+      
+      const data = await response.json();
+      
+      // Transform the API response to match our Order interface
+      const formattedOrders: Order[] = data.orders.map((order: any) => ({
+        id: order.id,
+        date: order.date,
+        status: order.status,
+        total: order.total,
+        items: order.items.map((item: any) => ({
+          name: item.product?.name || "Unknown Product",
+          price: item.price,
+          quantity: item.quantity
+        })) || [],
+        address: order.shippingAddress?.address || "No address provided",
+        trackingNumber: order.trackingNumber || null,
+      }));
+      
+      setOrders(formattedOrders);
+      setIsLoading(false);
+    } catch (error) {
+      console.error('Error fetching orders:', error);
+      toast.error("Could not load orders");
+      setIsLoading(false);
+    }
+  };
   
   // Filter orders based on status
   const filteredOrders = filterStatus === "all" 
     ? orders 
     : orders.filter(order => order.status.toLowerCase() === filterStatus.toLowerCase());
-
-  useEffect(() => {
-    // Simulate loading data
-    const timer = setTimeout(() => {
-      setIsLoading(false);
-    }, 1000);
-    return () => clearTimeout(timer);
-  }, []);
 
   const toggleOrderDetails = (orderId: string) => {
     if (expandedOrder === orderId) {
@@ -161,8 +139,7 @@ export default function OrdersPage() {
   const handleRefresh = async () => {
     setIsRefreshing(true);
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      await fetchOrders();
       toast.success("Orders refreshed successfully");
     } catch (error) {
       toast.error("Failed to refresh orders");
@@ -416,7 +393,7 @@ export default function OrdersPage() {
                                           <div className="space-y-2">
                                             {order.items.map((item, i) => (
                                               <div key={i} className="flex justify-between text-sm">
-                                                <span>{item.name} x {item.quantity}</span>
+                                                <span>x {item.quantity} {item.name}</span>
                                                 <span>{item.price}</span>
                                               </div>
                                             ))}

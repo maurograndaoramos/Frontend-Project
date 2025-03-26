@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { useCart } from "@/lib/context/CartContext";
@@ -13,15 +13,44 @@ import PaymentForm from "@/components/checkout/checkout-components/PaymentForm";
 import OrderSummary from "@/components/checkout/checkout-components/OrderSummary";
 import OrderReview from "@/components/checkout/checkout-components/OrderReview";
 import { motion, AnimatePresence } from 'framer-motion';
-import { Package, CreditCard, CheckCircle2, ArrowLeft } from 'lucide-react';
+import { Package, CreditCard, CheckCircle2, ArrowLeft, Gift, User } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { useSession } from "next-auth/react";
 
-type CheckoutStep = "shipping" | "payment" | "review";
+// Add "recipient" to the checkout steps
+type CheckoutStep = "recipient" | "shipping" | "payment" | "review";
+
+// Define Algarve municipalities
+const ALGARVE_MUNICIPALITIES = [
+  "Albufeira",
+  "Alcoutim",
+  "Aljezur",
+  "Castro Marim",
+  "Faro",
+  "Lagoa",
+  "Lagos",
+  "Loulé",
+  "Monchique",
+  "Olhão",
+  "Portimão",
+  "São Brás de Alportel",
+  "Silves",
+  "Tavira",
+  "Vila do Bispo",
+  "Vila Real de Santo António"
+];
 
 export default function CheckoutPageContent() {
   const router = useRouter();
+  const { data: session, status } = useSession();
   const { cart, getCartTotal, clearCart } = useCart();
-  const [currentStep, setCurrentStep] = useState<CheckoutStep>("shipping");
+  
+  // Change initial step to "recipient"
+  const [currentStep, setCurrentStep] = useState<CheckoutStep>("recipient");
+  const [userProfile, setUserProfile] = useState<any>(null);
+  const [isForMe, setIsForMe] = useState<boolean | null>(null);
+  const [isLoadingProfile, setIsLoadingProfile] = useState(false);
+  
   const [orderData, setOrderData] = useState({
     shipping: {
       firstName: "",
@@ -30,11 +59,12 @@ export default function CheckoutPageContent() {
       phone: "",
       address: "",
       city: "",
-      state: "",
-      zipCode: "",
-      country: "US",
-      shippingMethod: "standard" as "standard",
+      municipality: "", // Changed from state to municipality
+      postalCode: "", // Changed from zipCode to postalCode
       deliveryNotes: "",
+      shippingMethod: "standard" as "standard" | "express",
+      deliveryDate: undefined as Date | undefined, // Add delivery date
+      coordinates: undefined as {lat: number, lng: number} | undefined, // Add coordinates
     },
     billing: {
       sameAsShipping: true,
@@ -42,9 +72,8 @@ export default function CheckoutPageContent() {
       lastName: "",
       address: "",
       city: "",
-      state: "",
-      zipCode: "",
-      country: "US",
+      municipality: "", // Changed from state to municipality
+      postalCode: "", // Changed from zipCode to postalCode
     },
     payment: {
       method: "credit-card" as "credit-card",
@@ -55,26 +84,179 @@ export default function CheckoutPageContent() {
     },
     items: cart.items,
     subtotal: getCartTotal(),
-    shippingCost: 0,
-    tax: getCartTotal() * 0.08, // 8% tax rate
-    total: getCartTotal() + (getCartTotal() * 0.08),
+    shippingCost: 19.99, // Default shipping cost
+    tax: getCartTotal() * 0.23 / 1.23, // VAT amount (already included in price)
+    total: getCartTotal(), // Total is just subtotal initially (VAT already included)
     orderId: `ORD-${Math.floor(100000 + Math.random() * 900000)}`,
     date: new Date().toISOString(),
   });
 
+  // Fetch user profile if the user is authenticated
+  useEffect(() => {
+    if (status === "loading") return;
+    
+    if (session?.user) {
+      fetchUserProfile();
+    }
+  }, [session, status]);
+
+  // Function to fetch user profile
+  const fetchUserProfile = async () => {
+    setIsLoadingProfile(true);
+    try {
+      const response = await fetch('/api/users/profile');
+      
+      if (!response.ok) {
+        throw new Error('Failed to fetch profile');
+      }
+      
+      const data = await response.json();
+      setUserProfile(data);
+    } catch (error) {
+      console.error('Error fetching profile:', error);
+    } finally {
+      setIsLoadingProfile(false);
+    }
+  };
+
+  // Helper function to check if it's before 2PM cutoff
+  const isBeforeCutoff = () => {
+    const now = new Date();
+    return now.getHours() < 14;
+  };
+
+  // Handler for recipient selection
+  const handleRecipientSelection = (isForSelf: boolean) => {
+    setIsForMe(isForSelf);
+    
+    // If "This is for me" and we have user profile data, pre-fill the shipping form
+    if (isForSelf && userProfile) {
+      // Extract first and last name from full name
+      const nameParts = userProfile.name ? userProfile.name.split(' ') : ['', ''];
+      const firstName = nameParts[0] || '';
+      const lastName = nameParts.slice(1).join(' ') || '';
+      
+      // Extract address parts - this depends on how your address is stored
+      // This is a simple implementation assuming address is a single string
+      const addressParts = userProfile.address ? userProfile.address.split(',') : [];
+      const streetAddress = addressParts[0] || '';
+      const city = addressParts[1]?.trim() || '';
+      const municipalityPostal = addressParts[2]?.trim().split(' ') || ['', ''];
+      const municipality = municipalityPostal[0] || '';
+      const postalCode = municipalityPostal[1] || '';
+      
+      setOrderData({
+        ...orderData,
+        shipping: {
+          ...orderData.shipping,
+          firstName,
+          lastName,
+          email: userProfile.email || '',
+          phone: userProfile.phone || '',
+          address: streetAddress,
+          city,
+          municipality,
+          postalCode,
+          deliveryDate: isBeforeCutoff() ? new Date() : undefined,
+          coordinates: userProfile.coordinates || undefined
+        }
+      });
+    }
+    
+    setCurrentStep("shipping");
+  };
+
   const updateShippingData = (data: any) => {
+    // Check if this is a delivery date update only
+    if (data.action === "updateDeliveryDateOnly") {
+      // Calculate shipping cost based on delivery date
+      const isToday = data.deliveryDate && 
+                     data.deliveryDate.getDate() === new Date().getDate() &&
+                     data.deliveryDate.getMonth() === new Date().getMonth() &&
+                     data.deliveryDate.getFullYear() === new Date().getFullYear();
+                     
+      const sameDayAvailable = isBeforeCutoff();
+      const shippingCost = (isToday && sameDayAvailable) ? 29.99 : 19.99;
+      const total = orderData.subtotal + shippingCost;
+      
+      setOrderData({
+        ...orderData,
+        shipping: {
+          ...orderData.shipping,
+          deliveryDate: data.deliveryDate,
+          shippingMethod: (isToday && sameDayAvailable) ? "express" : "standard"
+        },
+        shippingCost: shippingCost,
+        total: total,
+      });
+      
+      return; // Don't proceed with the validation or navigation
+    }
+    
+    // Check if this is a shipping method update only (keeping this for backward compatibility)
+    if (data.action === "updateShippingMethodOnly") {
+      // Just update the shipping cost and total based on shipping method
+      const shippingCost = data.shippingMethod === "express" ? 29.99 : 19.99;
+      const total = orderData.subtotal + shippingCost;
+      
+      setOrderData({
+        ...orderData,
+        shipping: {
+          ...orderData.shipping,
+          shippingMethod: data.shippingMethod
+        },
+        shippingCost: shippingCost,
+        total: total,
+      });
+      
+      return; // Don't proceed with the validation or navigation
+    }
+    
+    // Regular form submission - perform validation
+    // Check if the selected municipality is in Algarve
+    if (!ALGARVE_MUNICIPALITIES.includes(data.municipality)) {
+      alert("We apologize, but our flower delivery is currently limited to the Algarve region in Portugal.");
+      return;
+    }
+    
+    // Validate Portuguese postal code format (4 digits - 3 digits)
+    const postalCodePattern = /^\d{4}-\d{3}$/;
+    if (!postalCodePattern.test(data.postalCode)) {
+      alert("Please enter a valid Portuguese postal code in the format 0000-000");
+      return;
+    }
+
+    // Calculate shipping cost based on delivery date
+    const isToday = data.deliveryDate && 
+                   data.deliveryDate.getDate() === new Date().getDate() &&
+                   data.deliveryDate.getMonth() === new Date().getMonth() &&
+                   data.deliveryDate.getFullYear() === new Date().getFullYear();
+                   
+    const sameDayAvailable = isBeforeCutoff();
+    const shippingCost = (isToday && sameDayAvailable) ? 29.99 : 19.99;
+    
+    // Calculate total (subtotal + shipping cost)
+    const total = orderData.subtotal + shippingCost;
+
+    // Set the shipping method based on the delivery date
+    const shippingMethod = (isToday && sameDayAvailable) ? "express" : "standard";
+
     setOrderData({
       ...orderData,
-      shipping: { ...data },
+      shipping: { 
+        ...data,
+        shippingMethod // Override any selected shipping method with the one derived from the date
+      },
+      shippingCost: shippingCost,
+      total: total,
       billing: {
         ...orderData.billing,
         firstName: data.sameAsShipping ? data.firstName : orderData.billing.firstName,
         lastName: data.sameAsShipping ? data.lastName : orderData.billing.lastName,
         address: data.sameAsShipping ? data.address : orderData.billing.address,
         city: data.sameAsShipping ? data.city : orderData.billing.city,
-        state: data.sameAsShipping ? data.state : orderData.billing.state,
-        zipCode: data.sameAsShipping ? data.zipCode : orderData.billing.zipCode,
-        country: data.sameAsShipping ? data.country : orderData.billing.country,
+        municipality: data.sameAsShipping ? data.municipality : orderData.billing.municipality,
+        postalCode: data.sameAsShipping ? data.postalCode : orderData.billing.postalCode,
       },
     });
     setCurrentStep("payment");
@@ -88,16 +270,91 @@ export default function CheckoutPageContent() {
     setCurrentStep("review");
   };
 
-  const placeOrder = () => {
+  const placeOrder = async () => {
     // In a real implementation, this would call an API to create the order
     console.log("Placing order:", orderData);
     
-    // Mock order placement - in a real app this would be an API call
-    setTimeout(() => {
-      // Redirect to thank you page with order ID
+    // Calculate final shipping cost and total
+    const isToday = orderData.shipping.deliveryDate && 
+                   orderData.shipping.deliveryDate.getDate() === new Date().getDate() &&
+                   orderData.shipping.deliveryDate.getMonth() === new Date().getMonth() &&
+                   orderData.shipping.deliveryDate.getFullYear() === new Date().getFullYear();
+                   
+    const sameDayAvailable = isBeforeCutoff();
+    const shippingCost = (isToday && sameDayAvailable) ? 29.99 : 19.99;
+    const finalTotal = orderData.subtotal + shippingCost;
+    
+    try {
+      // Create the order via API
+      const response = await fetch('/api/orders', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          items: cart.items.map(item => ({
+            id: item.id,
+            quantity: item.quantity,
+            price: item.price
+          })),
+          total: finalTotal,
+          shippingCost: shippingCost,
+          tax: orderData.tax,
+          shippingAddress: {
+            firstName: orderData.shipping.firstName,
+            lastName: orderData.shipping.lastName,
+            address: orderData.shipping.address,
+            city: orderData.shipping.city,
+            municipality: orderData.shipping.municipality,
+            postalCode: orderData.shipping.postalCode,
+            phone: orderData.shipping.phone,
+            email: orderData.shipping.email,
+            deliveryNotes: orderData.shipping.deliveryNotes,
+            shippingMethod: orderData.shipping.shippingMethod,
+            deliveryDate: orderData.shipping.deliveryDate,
+            coordinates: orderData.shipping.coordinates
+          }
+        }),
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to create order');
+      }
+      
+      const { orderId } = await response.json();
+      
+      // Set a flag in localStorage that the cart should be cleared
+      localStorage.setItem('orderCompleted', 'true');
+      
+      // Clear the cart immediately
       clearCart();
-      router.push(`/checkout/confirmation?orderId=${orderData.orderId}`);
-    }, 1500);
+      
+      // Navigate to the confirmation page
+      window.location.href = `/checkout/confirmation?orderId=${orderId}`;
+    } catch (error) {
+      console.error('Error creating order:', error);
+      // Handle error (show message to user)
+    }
+  };
+
+  // Handler for step navigation
+  const handleStepClick = (step: number) => {
+    const stepMap = {
+      0: "recipient",
+      1: "shipping", 
+      2: "payment",
+      3: "review"
+    } as const;
+    
+    const currentStepNumber = 
+      currentStep === "recipient" ? 0 :
+      currentStep === "shipping" ? 1 :
+      currentStep === "payment" ? 2 : 3;
+
+    // Only allow going backwards
+    if (step < currentStepNumber) {
+      setCurrentStep(stepMap[step]);
+    }
   };
 
   return (
@@ -116,10 +373,15 @@ export default function CheckoutPageContent() {
         >
           <Card className="mb-8">
             <CardContent className="p-6">
-              <Steps currentStep={
-                currentStep === "shipping" ? 0 : 
-                currentStep === "payment" ? 1 : 2
-              }>
+              <Steps 
+                currentStep={
+                  currentStep === "recipient" ? 0 :
+                  currentStep === "shipping" ? 1 : 
+                  currentStep === "payment" ? 2 : 3
+                }
+                onStepClick={handleStepClick}
+              >
+                <Step title="Recipient" />
                 <Step title="Shipping" />
                 <Step title="Payment" />
                 <Step title="Review" />
@@ -138,8 +400,53 @@ export default function CheckoutPageContent() {
           >
             <Card>
               <CardContent className="p-6">
+                {currentStep === "recipient" && (
+                  <div className="space-y-6">
+                    <div className="mb-6">
+                      <h2 className="text-xl font-semibold mb-2">Who is this order for?</h2>
+                      <p className="text-muted-foreground">
+                        Let us know if these flowers are for you or a gift for someone else.
+                      </p>
+                    </div>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <Button
+                        onClick={() => handleRecipientSelection(true)}
+                        variant="outline"
+                        size="lg"
+                        className="h-auto p-6 flex flex-col items-center justify-center space-y-3 transition-all duration-300 hover:border-primary hover:shadow-md"
+                        disabled={isLoadingProfile}
+                      >
+                        <User className="h-10 w-10 text-primary mb-2" />
+                        <span className="font-medium text-lg">This is for me</span>
+                      </Button>
+                      
+                      <Button
+                        onClick={() => handleRecipientSelection(false)}
+                        variant="outline"
+                        size="lg"
+                        className="h-auto p-6 flex flex-col items-center justify-center space-y-3 transition-all duration-300 hover:border-primary hover:shadow-md"
+                        disabled={isLoadingProfile}
+                      >
+                        <Gift className="h-10 w-10 text-primary mb-2" />
+                        <span className="font-medium text-lg">This is a gift</span>
+                      </Button>
+                    </div>
+                  </div>
+                )}
+
                 {currentStep === "shipping" && (
                   <div>
+                    {isForMe && (
+                      <div className="mb-6 p-4 bg-primary/10 rounded-md">
+                        <div className="flex items-center space-x-2">
+                          <CheckCircle2 className="h-5 w-5 text-primary" />
+                          <p className="text-sm font-medium">
+                            Shipping to you. Your information has been pre-filled.
+                          </p>
+                        </div>
+                      </div>
+                    )}
                     <ShippingForm 
                       initialData={orderData.shipping} 
                       onSubmit={updateShippingData} 
@@ -203,7 +510,8 @@ export default function CheckoutPageContent() {
           items={cart.items} 
           subtotal={getCartTotal()} 
           tax={orderData.tax}
-          shipping={orderData.shippingCost}
+          shipping={orderData.shipping}
+          shippingCost={orderData.shippingCost}
           total={orderData.total}
         />
       </motion.div>

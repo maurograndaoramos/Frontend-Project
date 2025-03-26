@@ -34,7 +34,7 @@ const Navbar: React.FC = () => {
       e.preventDefault();
     }
     if (searchQuery.trim()) {
-      router.push(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
+      router.push(`/shop?search=${encodeURIComponent(searchQuery.trim())}&page=1`);
       setSearchQuery(""); // Clear the search input after searching
     }
   };
@@ -60,8 +60,8 @@ const Navbar: React.FC = () => {
             <Link href="/shop" className="hover:text-primary transition-colors text-lg font-medium hover:translate-x-1 duration-200">
               Shop
             </Link>
-            <Link href="/shop/featured" className="hover:text-primary transition-colors text-lg font-medium hover:translate-x-1 duration-200">
-              Featured
+            <Link href="/collections" className="hover:text-primary transition-colors text-lg font-medium hover:translate-x-1 duration-200">
+              Collections
             </Link>
           </nav>
         </SheetContent>
@@ -91,8 +91,8 @@ const Navbar: React.FC = () => {
         <Link href="/shop" className="hover:text-primary transition-all duration-200 font-medium hover:translate-y-[-1px]">
           Shop
         </Link>
-        <Link href="/shop/featured" className="hover:text-primary transition-all duration-200 font-medium hover:translate-y-[-1px]">
-          Featured
+        <Link href="/collections" className="hover:text-primary transition-all duration-200 font-medium hover:translate-y-[-1px]">
+          Collections
         </Link>
       </nav>
 

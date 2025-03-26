@@ -14,9 +14,10 @@ export default function CheckoutLayout({
   const { cart } = useCart();
   const router = useRouter();
   
-  // Redirect to the cart if there are no items
+  // Redirect to the cart if there are no items and not on confirmation page
   useEffect(() => {
-    if (cart.items.length === 0) {
+    const isConfirmationPage = window.location.pathname.includes('/confirmation');
+    if (cart.items.length === 0 && !isConfirmationPage) {
       router.push("/shop");
     }
   }, [cart.items.length, router]);

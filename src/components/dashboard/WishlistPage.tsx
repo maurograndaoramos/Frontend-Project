@@ -34,64 +34,13 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-
-// Sample wishlist data (would come from API in a real app)
-const wishlistItems = [
-  {
-    id: "PROD-001",
-    name: "Handcrafted Ceramic Vase",
-    price: "$45.99",
-    originalPrice: "$59.99",
-    image: "/api/placeholder/400/320",
-    inStock: true,
-    category: "Home Decor",
-    addedDate: "March 10, 2025",
-  },
-  {
-    id: "PROD-002",
-    name: "Pottery Coffee Mug Set (Set of 4)",
-    price: "$35.50",
-    originalPrice: null,
-    image: "/api/placeholder/400/320",
-    inStock: true,
-    category: "Kitchenware",
-    addedDate: "March 8, 2025",
-  },
-  {
-    id: "PROD-003",
-    name: "Glazed Plant Pot - Large",
-    price: "$29.99",
-    originalPrice: "$39.99",
-    image: "/api/placeholder/400/320",
-    inStock: false,
-    category: "Garden",
-    addedDate: "March 5, 2025",
-  },
-  {
-    id: "PROD-004",
-    name: "Ceramic Dinner Plates (Set of 6)",
-    price: "$85.00",
-    originalPrice: null,
-    image: "/api/placeholder/400/320",
-    inStock: true,
-    category: "Kitchenware",
-    addedDate: "February 28, 2025",
-  },
-  {
-    id: "PROD-005",
-    name: "Handmade Clay Serving Bowl",
-    price: "$65.99",
-    originalPrice: "$75.99",
-    image: "/api/placeholder/400/320",
-    inStock: true,
-    category: "Kitchenware",
-    addedDate: "February 20, 2025",
-  },
-];
+import { useSession } from "next-auth/react";
+import { useCart } from "@/lib/context/CartContext";
 
 // Type definitions
 interface WishlistItem {
   id: string;
+  productId: string;
   name: string;
   price: string;
   originalPrice: string | null;
@@ -99,24 +48,80 @@ interface WishlistItem {
   inStock: boolean;
   category: string;
   addedDate: string;
+  isNew?: boolean;
+  hasDiscount?: boolean;
 }
 
 export default function WishlistPage() {
   const router = useRouter();
+  const { data: session, status } = useSession();
   const [isLoading, setIsLoading] = useState(true);
   const [isAddingToCart, setIsAddingToCart] = useState(false);
   const [isRemoving, setIsRemoving] = useState<string | null>(null);
   const [categoryFilter, setCategoryFilter] = useState<string>("all");
-  const [items, setItems] = useState<WishlistItem[]>(wishlistItems);
+  const [items, setItems] = useState<WishlistItem[]>([]);
   const [showClearDialog, setShowClearDialog] = useState(false);
+  const { addItem } = useCart();
   
+  // Fetch wishlist items when component mounts
   useEffect(() => {
-    // Simulate loading data
-    const timer = setTimeout(() => {
+    if (status === "loading") return;
+    
+    if (!session) {
+      router.push("/login");
+      return;
+    }
+    
+    fetchWishlist();
+  }, [session, status, router]);
+  
+  const fetchWishlist = async () => {
+    try {
+      const response = await fetch('/api/wishlist');
+      
+      if (!response.ok) {
+        throw new Error('Failed to fetch wishlist');
+      }
+      
+      const data = await response.json();
+      
+      // Transform the API response to match our WishlistItem interface
+      const formattedItems: WishlistItem[] = data.wishlist.map((item: any) => ({
+        id: item.id,
+        productId: item.productId,
+        name: item.product.name,
+        price: new Intl.NumberFormat('en-US', {
+          style: 'currency',
+          currency: 'EUR'
+        }).format(item.product.price),
+        originalPrice: item.product.originalPrice 
+          ? new Intl.NumberFormat('en-US', {
+              style: 'currency',
+              currency: 'EUR'
+            }).format(item.product.originalPrice)
+          : null,
+        image: item.product.images && item.product.images.length > 0 
+          ? item.product.images[0] 
+          : '/api/placeholder/400/320',
+        inStock: item.product.inStock,
+        category: item.product.category,
+        addedDate: new Date(item.addedAt).toLocaleDateString('en-US', {
+          month: 'long',
+          day: 'numeric',
+          year: 'numeric'
+        }),
+        isNew: item.product.isNew || false,
+        hasDiscount: item.product.hasDiscount || false
+      }));
+      
+      setItems(formattedItems);
       setIsLoading(false);
-    }, 1000);
-    return () => clearTimeout(timer);
-  }, []);
+    } catch (error) {
+      console.error('Error fetching wishlist:', error);
+      toast.error("Could not load wishlist");
+      setIsLoading(false);
+    }
+  };
   
   // Filter items based on category
   const filteredItems = categoryFilter === "all" 
@@ -129,25 +134,87 @@ export default function WishlistPage() {
   const removeFromWishlist = async (itemId: string) => {
     setIsRemoving(itemId);
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 500));
+      const item = items.find(i => i.id === itemId);
+      if (!item) return;
+      
+      const response = await fetch(`/api/wishlist/${item.productId}`, {
+        method: 'DELETE',
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to remove item');
+      }
+      
       setItems(items.filter(item => item.id !== itemId));
       toast.success("Item removed from wishlist");
     } catch (error) {
+      console.error('Error removing item:', error);
       toast.error("Failed to remove item");
     } finally {
       setIsRemoving(null);
     }
   };
   
+  const addToCart = async (productId: string) => {
+    try {
+      // Find the product in our wishlist items
+      const item = items.find(item => item.productId === productId);
+      if (!item) {
+        throw new Error('Product not found');
+      }
+      
+      if (!item.inStock) {
+        toast.error("This item is out of stock");
+        return;
+      }
+      
+      // Get the product details from the API
+      const response = await fetch(`/api/products/${productId}`);
+      
+      if (!response.ok) {
+        throw new Error('Failed to fetch product details');
+      }
+      
+      const product = await response.json();
+      
+      // Add the item to cart using CartContext
+      addItem(product, 1);
+      
+    } catch (error) {
+      console.error('Error adding to cart:', error);
+      toast.error("Failed to add item to cart");
+    }
+  };
+  
   const addAllToCart = async () => {
     setIsAddingToCart(true);
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1500));
       const inStockItems = filteredItems.filter(item => item.inStock);
+      
+      if (inStockItems.length === 0) {
+        toast.error("No items in stock to add to cart");
+        return;
+      }
+      
+      // Fetch all products in parallel
+      const productPromises = inStockItems.map(item => 
+        fetch(`/api/products/${item.productId}`)
+          .then(res => {
+            if (!res.ok) throw new Error(`Failed to fetch product ${item.productId}`);
+            return res.json();
+          })
+      );
+      
+      const products = await Promise.all(productPromises);
+      
+      // Add all products to cart
+      products.forEach(product => {
+        addItem(product, 1);
+      });
+      
       toast.success(`${inStockItems.length} items added to cart`);
     } catch (error) {
+      console.error('Error adding items to cart:', error);
       toast.error("Failed to add items to cart");
     } finally {
       setIsAddingToCart(false);
@@ -156,13 +223,21 @@ export default function WishlistPage() {
   
   const clearWishlist = async () => {
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      const response = await fetch('/api/wishlist', {
+        method: 'DELETE',
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to clear wishlist');
+      }
+      
       setItems([]);
       toast.success("Wishlist cleared");
       setShowClearDialog(false);
     } catch (error) {
+      console.error('Error clearing wishlist:', error);
       toast.error("Failed to clear wishlist");
+      setShowClearDialog(false);
     }
   };
 
@@ -355,26 +430,34 @@ export default function WishlistPage() {
                     transition={{ delay: index * 0.1 }}
                   >
                     <Card className="overflow-hidden h-full flex flex-col transition-all duration-300 hover:shadow-lg">
-                      <div className="relative group">
-                        <Image
-                          src={item.image}
-                          alt={item.name}
-                          width={400}
-                          height={320}
-                          className="w-full h-48 object-cover transition-transform duration-300 group-hover:scale-105"
-                        />
-                        {!item.inStock && (
-                          <motion.div 
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
-                            className="absolute inset-0 bg-background/80 flex items-center justify-center"
-                          >
-                            <Badge variant="outline" className="bg-background/80">
-                              <AlertCircle className="h-4 w-4 mr-1" />
-                              Out of Stock
-                            </Badge>
-                          </motion.div>
-                        )}
+                      <div className="relative group cursor-pointer" onClick={() => router.push(`/shop/product/${item.productId}`)}>
+                        <div className="relative aspect-[4/3] overflow-hidden rounded-t-md">
+                          <Image
+                            src={item.image}
+                            alt={item.name}
+                            fill
+                            className="object-cover transition-transform duration-500 group-hover:scale-105"
+                          />
+                          <div className="absolute top-2 left-2 flex gap-2">
+                            {item.isNew && (
+                              <Badge className="bg-primary text-primary-foreground">
+                                New
+                              </Badge>
+                            )}
+                            {item.hasDiscount && (
+                              <Badge className="bg-red-500/95 text-white">
+                                Discount
+                              </Badge>
+                            )}
+                          </div>
+                          {!item.inStock && (
+                            <div className="absolute inset-0 bg-background/80 backdrop-blur-[2px] flex items-center justify-center">
+                              <Badge variant="outline" className="bg-background/80">
+                                Out of Stock
+                              </Badge>
+                            </div>
+                          )}
+                        </div>
                         <Button
                           variant="ghost"
                           size="icon"
@@ -390,7 +473,7 @@ export default function WishlistPage() {
                         </Button>
                       </div>
                       <CardContent className="flex flex-col flex-grow p-4">
-                        <div className="mb-2">
+                        <div className="mb-2 cursor-pointer" onClick={() => router.push(`/shop/product/${item.productId}`)}>
                           <Badge variant="secondary" className="mb-2 transition-all duration-300">
                             {item.category}
                           </Badge>
@@ -407,6 +490,7 @@ export default function WishlistPage() {
                         <Button 
                           className="w-full transition-all duration-300 hover:bg-primary/90 hover:shadow-md"
                           disabled={!item.inStock}
+                          onClick={() => addToCart(item.productId)}
                         >
                           {item.inStock ? (
                             <>

@@ -12,35 +12,98 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
 import { Switch } from "@/components/ui/switch";
+import { useSession } from "next-auth/react";
+
+// Define interfaces for our data structure
+interface UserProfile {
+  name: string;
+  email: string;
+  phone: string;
+  address: string;
+}
+
+interface NotificationSettings {
+  email: boolean;
+  sms: boolean;
+}
 
 export default function ProfilePage() {
   const router = useRouter();
+  const { data: session, status } = useSession();
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
+  const [isChangingPassword, setIsChangingPassword] = useState(false);
+  const [passwordEmailSent, setPasswordEmailSent] = useState(false);
   
-  // Mock user data - in a real app, this would come from an API or context
-  const [user, setUser] = useState({
-    name: "Jane Doe",
-    email: "jane.doe@example.com",
-    phone: "+1 (555) 123-4567",
-    address: "123 Main St, Anytown, CA 12345",
+  // User data state
+  const [user, setUser] = useState<UserProfile>({
+    name: "",
+    email: "",
+    phone: "",
+    address: "",
   });
 
   const [isEditing, setIsEditing] = useState(false);
-  const [formData, setFormData] = useState(user);
-  const [notifications, setNotifications] = useState({
+  const [formData, setFormData] = useState<UserProfile>(user);
+  const [notifications, setNotifications] = useState<NotificationSettings>({
     email: true,
     sms: false,
   });
 
+  // Fetch user data
   useEffect(() => {
-    // Simulate loading data
-    const timer = setTimeout(() => {
-      setIsLoading(false);
-    }, 1000);
-    return () => clearTimeout(timer);
-  }, []);
+    if (status === "loading") return;
+    
+    if (!session) {
+      router.push("/login");
+      return;
+    }
+
+    console.log("Session data:", session);
+
+    const fetchUserProfile = async () => {
+      try {
+        const response = await fetch('/api/users/profile');
+        
+        if (!response.ok) {
+          throw new Error('Failed to fetch profile');
+        }
+        
+        const data = await response.json();
+        console.log("API Response:", data);
+        
+        setUser({
+          name: data.name || "",
+          email: data.email || "",
+          phone: data.phone || "",
+          address: data.address || "",
+        });
+        
+        setFormData({
+          name: data.name || "",
+          email: data.email || "",
+          phone: data.phone || "",
+          address: data.address || "",
+        });
+        
+        if (data.notifications) {
+          setNotifications({
+            email: data.notifications.email ?? true,
+            sms: data.notifications.sms ?? false,
+          });
+        }
+        
+        setIsLoading(false);
+      } catch (error) {
+        console.error('Error fetching profile:', error);
+        toast.error("Could not load profile data");
+        setIsLoading(false);
+      }
+    };
+
+    fetchUserProfile();
+  }, [session, status, router]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -53,14 +116,34 @@ export default function ProfilePage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSaving(true);
+    
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      setUser(formData);
+      const response = await fetch('/api/users/profile', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(formData),
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to update profile');
+      }
+      
+      const updatedUser = await response.json();
+      setUser({
+        name: updatedUser.name || "",
+        email: updatedUser.email || "",
+        phone: updatedUser.phone || "",
+        address: updatedUser.address || "",
+      });
+      
       setIsEditing(false);
       toast.success("Profile updated successfully");
     } catch (error) {
-      toast.error("Failed to update profile");
+      console.error('Error updating profile:', error);
+      toast.error(error instanceof Error ? error.message : "Failed to update profile");
     } finally {
       setIsSaving(false);
     }
@@ -74,7 +157,8 @@ export default function ProfilePage() {
   const handleImageUpload = async () => {
     setIsUploading(true);
     try {
-      // Simulate image upload
+      // In a real implementation, you would use FormData to upload the image
+      // For now, we'll simulate a successful upload
       await new Promise(resolve => setTimeout(resolve, 1500));
       toast.success("Profile picture updated successfully");
     } catch (error) {
@@ -84,11 +168,63 @@ export default function ProfilePage() {
     }
   };
 
-  const toggleNotification = (type: 'email' | 'sms') => {
-    setNotifications(prev => ({
-      ...prev,
-      [type]: !prev[type]
-    }));
+  const toggleNotification = async (type: 'email' | 'sms') => {
+    const newSettings = {
+      ...notifications,
+      [type]: !notifications[type]
+    };
+    
+    setNotifications(newSettings);
+    
+    try {
+      const response = await fetch('/api/users/notifications', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(newSettings),
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to update notification settings');
+      }
+      
+      toast.success("Notification settings updated");
+    } catch (error) {
+      // Revert state if failed
+      setNotifications(notifications);
+      toast.error("Failed to update notification settings");
+    }
+  };
+
+  const handleChangePassword = async () => {
+    setIsChangingPassword(true);
+    
+    try {
+      // Call the API to send a reset email
+      const response = await fetch('/api/auth/reset-password', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email: user.email,
+        }),
+      });
+      
+      const data = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(data.message || 'Failed to send reset email');
+      }
+      
+      setPasswordEmailSent(true);
+      toast.success("Password reset email sent successfully");
+    } catch (error) {
+      toast.error("Failed to send password reset email");
+    } finally {
+      setIsChangingPassword(false);
+    }
   };
 
   if (isLoading) {
@@ -182,7 +318,15 @@ export default function ProfilePage() {
                     whileHover={{ scale: 1.05 }}
                     className="h-24 w-24 rounded-full bg-primary/10 flex items-center justify-center mb-4"
                   >
-                    <UserCircle className="h-20 w-20 text-primary" />
+                    {session?.user?.image ? (
+                      <img 
+                        src={session.user.image}
+                        alt={user.name || "User"}
+                        className="h-24 w-24 rounded-full object-cover"
+                      />
+                    ) : (
+                      <UserCircle className="h-20 w-20 text-primary" />
+                    )}
                   </motion.div>
                   <Button 
                     variant="outline" 
@@ -203,8 +347,22 @@ export default function ProfilePage() {
                 <Button 
                   variant="outline" 
                   className="mt-4 w-full transition-all duration-300 hover:bg-primary hover:text-primary-foreground hover:shadow-md"
+                  onClick={handleChangePassword}
+                  disabled={isChangingPassword || passwordEmailSent}
                 >
-                  Change Password
+                  {isChangingPassword ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Sending...
+                    </>
+                  ) : passwordEmailSent ? (
+                    <>
+                      <CheckCircle2 className="mr-2 h-4 w-4" />
+                      Email Sent
+                    </>
+                  ) : (
+                    'Change Password'
+                  )}
                 </Button>
               </div>
             </CardContent>
@@ -224,6 +382,9 @@ export default function ProfilePage() {
                 Personal Information
               </CardTitle>
               <CardDescription>Update your account details</CardDescription>
+              <p className="text-xs text-muted-foreground mt-1">
+                Note: In this demo, profile changes are saved for the current session only
+              </p>
             </CardHeader>
             <form onSubmit={handleSubmit}>
               <CardContent className="space-y-4">
@@ -258,6 +419,7 @@ export default function ProfilePage() {
                     <Input
                       id="phone"
                       name="phone"
+                      type="tel"
                       value={formData.phone}
                       onChange={handleInputChange}
                       disabled={!isEditing}

@@ -9,6 +9,7 @@ import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
+import { useSession } from "next-auth/react";
 
 interface Order {
   id: string;
@@ -33,6 +34,9 @@ interface DashboardData {
 export default function DashboardPage() {
   const [dashboardData, setDashboardData] = useState<DashboardData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const { data: session } = useSession();
+  
+  const username = session?.user?.name?.toLowerCase().replace(/\s+/g, '-') || '';
 
   useEffect(() => {
     async function loadDashboardData() {
@@ -193,7 +197,7 @@ export default function DashboardPage() {
                 className="w-full transition-all duration-300 hover:bg-primary hover:text-primary-foreground group-hover:shadow-md" 
                 asChild
               >
-                <Link href={`/dashboard/${user.name.toLowerCase().replace(/\s+/g, '-')}/profile`}>
+                <Link href={`/dashboard/${username}/profile`}>
                   Manage Profile
                 </Link>
               </Button>
@@ -230,7 +234,7 @@ export default function DashboardPage() {
                 className="w-full transition-all duration-300 hover:bg-primary hover:text-primary-foreground group-hover:shadow-md" 
                 asChild
               >
-                <Link href={`/dashboard/${user.name.toLowerCase().replace(/\s+/g, '-')}/orders`}>
+                <Link href={`/dashboard/${username}/orders`}>
                   View All Orders
                 </Link>
               </Button>
@@ -267,7 +271,7 @@ export default function DashboardPage() {
                 className="w-full transition-all duration-300 hover:bg-primary hover:text-primary-foreground group-hover:shadow-md" 
                 asChild
               >
-                <Link href={`/dashboard/${user.name.toLowerCase().replace(/\s+/g, '-')}/wishlist`}>
+                <Link href={`/dashboard/${username}/wishlist`}>
                   View Wishlist
                 </Link>
               </Button>

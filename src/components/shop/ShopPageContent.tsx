@@ -10,6 +10,7 @@ import { getProducts } from "@/lib/services/productService";
 import { useToast } from "@/lib/hooks/useToast";
 import RecentlyViewedProducts from "@/components/shop/shop-components/RecentlyViewedProducts";
 import { motion, AnimatePresence } from "framer-motion";
+import { getViewingHistory } from "@/lib/services/recommendationService";
 
 export default function ShopPageContent() {
   const searchParams = useSearchParams();
@@ -28,18 +29,64 @@ export default function ShopPageContent() {
   const search = searchParams.get('search') || undefined;
   const sort = searchParams.get('sort') || 'featured';
   const page = parseInt(searchParams.get('page') || '1');
+  const minPrice = searchParams.get('minPrice') ? parseFloat(searchParams.get('minPrice') || '0') : undefined;
+  const maxPrice = searchParams.get('maxPrice') ? parseFloat(searchParams.get('maxPrice') || '500') : undefined;
+  const inStock = searchParams.get('inStock') === 'true';
+  
+  // New parameters
+  const isRecentlyViewed = searchParams.get('recent') === 'true';
+  const isRecommended = searchParams.get('recommended') === 'true';
 
   useEffect(() => {
     async function loadProducts() {
       setLoading(true);
       try {
-        const result = await getProducts({
-          category,
-          search,
-          sort,
-          page,
-          limit: 12,
-        });
+        console.log('Loading products with filters:', { category, search, sort, page, minPrice, maxPrice, inStock, isRecentlyViewed, isRecommended });
+        
+        let result;
+        
+        if (isRecentlyViewed) {
+          // Get recently viewed products IDs from local storage
+          const recentProductIds = getViewingHistory();
+          if (recentProductIds.length > 0) {
+            // Fetch products by IDs
+            result = await getProducts({
+              ids: recentProductIds,
+              page,
+              limit: 12,
+              sort
+            });
+          } else {
+            // If no recent products, show featured products instead
+            result = await getProducts({
+              sort: 'featured',
+              page,
+              limit: 12
+            });
+          }
+        } else if (isRecommended) {
+          // Get recommended products
+          // Since we don't have a specific product context here, 
+          // we'll get recommendations based on category if available
+          result = await getProducts({
+            category,
+            page,
+            limit: 12,
+            sort: 'featured' // Recommended products usually sorted by featured
+          });
+        } else {
+          // Normal search/filter
+          result = await getProducts({
+            category,
+            search,
+            sort,
+            page,
+            limit: 12,
+            minPrice,
+            maxPrice,
+            inStock,
+          });
+        }
         
         setProducts(result.data);
         setPagination(result.pagination);
@@ -55,7 +102,7 @@ export default function ShopPageContent() {
     }
     
     loadProducts();
-  }, [category, search, sort, page, toast]);
+  }, [category, search, sort, page, minPrice, maxPrice, inStock, isRecentlyViewed, isRecommended, toast]);
 
   if (loading) {
     return (
@@ -123,20 +170,34 @@ export default function ShopPageContent() {
       >
         <ProductGrid 
           products={products} 
-          title="Shop All Products" 
-          description={`Browse our collection of flowers and plants (${pagination.total} products)`}
+          title={
+            isRecentlyViewed 
+              ? "Recently Viewed Products"
+              : isRecommended 
+                ? "Recommended Products"
+                : "Shop All Products"
+          } 
+          description={`Browse our collection of ${
+            isRecentlyViewed 
+              ? "recently viewed" 
+              : isRecommended 
+                ? "recommended" 
+                : ""
+          } products (${pagination.total} products)`}
           pagination={pagination}
         />
         
-        {/* Recently viewed products section */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.2 }}
-          className="mt-12"
-        >
-          <RecentlyViewedProducts maxItems={4} />
-        </motion.div>
+        {/* Only show recently viewed section if not already viewing recently viewed products */}
+        {!isRecentlyViewed && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.2 }}
+            className="mt-12"
+          >
+            <RecentlyViewedProducts maxItems={4} />
+          </motion.div>
+        )}
       </motion.div>
     </AnimatePresence>
   );

@@ -1,5 +1,6 @@
 "use client";
 
+import React, { useMemo } from 'react';
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { motion } from "framer-motion";
@@ -10,12 +11,15 @@ import {
   Twitter, 
   Mail, 
   Bell,
-  ArrowRight
+  ArrowRight,
+  Flower2
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { Separator } from '@/components/ui/separator';
+import { cn } from '@/lib/utils';
 
 // Page titles mapping
 const pageTitles: Record<string, string> = {
@@ -179,12 +183,16 @@ export default function MarketingLayout({
             {/* Call to action section */}
             {!isLegalPage && (
               <div className="mt-16 bg-gradient-to-br from-primary/5 to-primary/10 rounded-2xl p-8 text-center">
-                <h2 className="text-2xl font-semibold mb-4">Ready to explore our collection?</h2>
-                <p className="text-muted-foreground mb-6 max-w-2xl mx-auto">
-                  Discover fresh floral arrangements that bring natural beauty and fragrance to your home.
+                <Badge variant="secondary" className="mb-4">Visit Us</Badge>
+                <h2 className="text-3xl font-bold mb-6">Explore Our Collection</h2>
+                <p className="text-xl text-muted-foreground mb-8 max-w-2xl mx-auto">
+                  Discover our handcrafted arrangements and find the perfect blooms for your special moments.
                 </p>
-                <Button size="lg" className="bg-primary hover:bg-primary/90">
-                  <Link href="/shop">Shop Our Collection</Link>
+                <Button size="lg" asChild className="gap-2">
+                  <Link href="/shop">
+                    Browse Collection
+                    <Flower2 className="w-4 h-4" />
+                  </Link>
                 </Button>
               </div>
             )}
@@ -279,16 +287,14 @@ export default function MarketingLayout({
               transition={{ duration: 0.5, delay: 0.5 }}
               className="bg-gradient-to-br from-primary/5 to-primary/10 rounded-2xl p-6"
             >
-              <Badge variant="secondary" className="mb-4">Follow Us</Badge>
-              <div className="flex space-x-3">
+              <Badge variant="secondary" className="mb-4">Socials</Badge>
+              <p className="text-sm text-muted-foreground mb-4">Follow us on:</p>
+              <div className="flex space-x-3 justify-center">
                 <Button variant="outline" size="icon" className="hover:bg-accent/50">
                   <Instagram className="h-4 w-4" />
                 </Button>
                 <Button variant="outline" size="icon" className="hover:bg-accent/50">
                   <Facebook className="h-4 w-4" />
-                </Button>
-                <Button variant="outline" size="icon" className="hover:bg-accent/50">
-                  <Twitter className="h-4 w-4" />
                 </Button>
               </div>
             </motion.div>

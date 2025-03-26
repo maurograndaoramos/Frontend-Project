@@ -2,12 +2,15 @@
 
 import { Heart } from "lucide-react";
 import { motion } from "framer-motion";
+import { useSession } from "next-auth/react";
 
 export default function DashboardLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const { data: session } = useSession();
+
   return (
     <motion.div 
       initial={{ opacity: 0 }}

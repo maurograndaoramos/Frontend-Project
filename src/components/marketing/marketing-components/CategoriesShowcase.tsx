@@ -7,10 +7,11 @@ import Link from "next/link";
 import { ArrowRight, Flower2 } from "lucide-react";
 // import { Button } from "@/components/ui/button";
 import { AspectRatio } from "@/components/ui/aspect-ratio";
-import { getCategories } from "@/lib/services/productService";
+import { getProducts } from "@/lib/services/productService";
 import { Skeleton } from "@/components/ui/skeleton";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
+import { Product } from "@/types/product";
 
 interface Category {
   id: string;
@@ -27,9 +28,38 @@ export default function CategoriesShowcase() {
     async function loadCategories() {
       setLoading(true);
       try {
-        const categoryData = await getCategories();
-        // Take only first 3 categories or fewer if less exist
-        setCategories(categoryData.slice(0, 3));
+        // Fetch all products to extract categories
+        const { data: products } = await getProducts({ limit: 100 });
+        
+        // Extract unique categories from products and create count map
+        const categoryMap = new Map<string, { name: string, count: number }>();
+        
+        products.forEach(product => {
+          const categoryName = product.category;
+          if (!categoryMap.has(categoryName)) {
+            categoryMap.set(categoryName, { 
+              name: categoryName, 
+              count: 1 
+            });
+          } else {
+            const current = categoryMap.get(categoryName)!;
+            categoryMap.set(categoryName, { 
+              ...current, 
+              count: current.count + 1 
+            });
+          }
+        });
+        
+        // Convert to array and format
+        const categoryData = Array.from(categoryMap.entries()).map(([id, data]) => ({
+          id,
+          name: data.name,
+          count: data.count
+        }));
+        
+        // Randomly select up to 3 categories
+        const shuffledCategories = [...categoryData].sort(() => Math.random() - 0.5);
+        setCategories(shuffledCategories.slice(0, 3));
       } catch (error) {
         console.error('Failed to load categories:', error);
         toast.error('Failed to load categories', {
@@ -81,28 +111,10 @@ export default function CategoriesShowcase() {
     );
   }
 
-  // Map of category names to appropriate floral images
-  const categoryImages: Record<string, string> = {
-    "floral": "/api/placeholder/600/400?text=Beautiful+Arrangements",
-    "roses": "/api/placeholder/600/400?text=Elegant+Roses",
-    "mixed arrangements": "/api/placeholder/600/400?text=Mixed+Arrangements",
-    "seasonal": "/api/placeholder/600/400?text=Seasonal+Flowers",
-    "bouquets": "/api/placeholder/600/400?text=Fresh+Bouquets",
-  };
-
-  // Function to get the best image for a category
+  // Function to get category image path
   const getCategoryImage = (category: Category) => {
-    const lowerCaseName = category.name.toLowerCase();
-    
-    // Look for specific matches first
-    for (const [key, imageUrl] of Object.entries(categoryImages)) {
-      if (lowerCaseName.includes(key)) {
-        return imageUrl;
-      }
-    }
-    
-    // Fallback to default with category name
-    return `/api/placeholder/600/400?text=${encodeURIComponent(category.name)}`;
+    // Use category name directly for image path, ensuring proper casing
+    return `/images/categories/${category.name}.jpg`;
   };
 
   return (

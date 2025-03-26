@@ -61,17 +61,17 @@ export default function AboutPage() {
               <h2 className="text-3xl font-bold mb-6">Our Journey</h2>
               <div className="space-y-4 text-muted-foreground">
                 <p>
-                  Founded in 2015, Blooming Delights began as a small flower shop with a mission to create beautiful, 
+                  Founded in 1990, Blooming Delights began as a small flower shop in the Algarve with a mission to create beautiful, 
                   memorable floral arrangements that bring joy to every occasion.
                 </p>
                 <p>
-                  Our founder, Eleanor Bloom, discovered her passion for floral design while traveling through rural 
-                  villages in the Netherlands, where she was captivated by the traditional techniques passed down through 
-                  generations of artisans.
+                  Our founder, Maria Flores, discovered her passion for floral design while growing up surrounded by the 
+                  vibrant flora of the Algarve region, where she learned traditional Portuguese techniques passed down through 
+                  generations.
                 </p>
                 <p>
-                  Today, our studio has grown into a team of skilled florists dedicated to creating stunning 
-                  arrangements using both traditional methods and contemporary designs.
+                  Today, our shop has grown into a team of skilled florists dedicated to creating stunning 
+                  arrangements and delivering them across the entire Algarve region.
                 </p>
               </div>
             </motion.div>
@@ -84,7 +84,7 @@ export default function AboutPage() {
             >
               <div className="rounded-lg overflow-hidden shadow-xl">
                 <Image 
-                  src="/api/placeholder/600/400" 
+                  src="/images/about/about-1.jpg"
                   alt="Our flower studio" 
                   width={600} 
                   height={400}
@@ -152,7 +152,7 @@ export default function AboutPage() {
         </div>
       </section>
 
-      {/* Team section */}
+      {/* Map Section */}
       <section className="py-20">
         <div className="container mx-auto px-4">
           <motion.div
@@ -160,79 +160,21 @@ export default function AboutPage() {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.6 }}
-            className="text-center mb-16"
+            className="text-center mb-12"
           >
-            <Badge variant="secondary" className="mb-4">Our Team</Badge>
-            <h2 className="text-3xl font-bold">Meet the People Behind the Blooms</h2>
-          </motion.div>
-          <motion.div
-            variants={staggerContainer}
-            initial="initial"
-            whileInView="animate"
-            viewport={{ once: true }}
-            className="grid md:grid-cols-3 gap-8"
-          >
-            {[
-              { name: "Eleanor Bloom", role: "Founder & Lead Florist", image: "/api/placeholder/300/300" },
-              { name: "Michael Rivera", role: "Master Florist", image: "/api/placeholder/300/300" },
-              { name: "Sophia Chen", role: "Design Director", image: "/api/placeholder/300/300" },
-            ].map((member, index) => (
-              <motion.div
-                key={index}
-                variants={fadeInUp}
-                className="group relative"
-              >
-                <div className="relative rounded-xl overflow-hidden mb-6">
-                  <Image 
-                    src={member.image} 
-                    alt={member.name} 
-                    width={300} 
-                    height={300}
-                    className="w-full h-[300px] object-cover transition-transform duration-300 group-hover:scale-105"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                </div>
-                <h3 className="text-xl font-bold mb-2">{member.name}</h3>
-                <p className="text-muted-foreground mb-4">{member.role}</p>
-                <div className="flex gap-4 justify-center">
-                  <Button variant="ghost" size="icon">
-                    <Instagram className="w-4 h-4" />
-                  </Button>
-                  <Button variant="ghost" size="icon">
-                    <Facebook className="w-4 h-4" />
-                  </Button>
-                  <Button variant="ghost" size="icon">
-                    <Twitter className="w-4 h-4" />
-                  </Button>
-                </div>
-              </motion.div>
-            ))}
-          </motion.div>
-        </div>
-      </section>
-
-      {/* CTA section */}
-      <section className="py-20 bg-primary/5">
-        <div className="container mx-auto px-4">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.6 }}
-            className="max-w-3xl mx-auto text-center"
-          >
-            <Badge variant="secondary" className="mb-4">Visit Us</Badge>
-            <h2 className="text-3xl font-bold mb-6">Explore Our Collection</h2>
-            <p className="text-xl text-muted-foreground mb-8">
-              Discover our handcrafted arrangements and find the perfect blooms for your special moments.
+            <Badge variant="secondary" className="mb-4">Our Location</Badge>
+            <h2 className="text-3xl font-bold">Serving the Algarve Since 1990</h2>
+            <p className="text-xl text-muted-foreground max-w-3xl mx-auto mt-4">
+              We deliver beautiful flower arrangements to all areas across the Algarve region.
             </p>
-            <Button size="lg" asChild className="gap-2">
-              <Link href="/shop">
-                Browse Collection
-                <Flower2 className="w-4 h-4" />
-              </Link>
-            </Button>
           </motion.div>
+          <div className="aspect-video rounded-xl overflow-hidden shadow-lg">
+            <img 
+              src="https://maps.googleapis.com/maps/api/staticmap?center=Algarve,Portugal&zoom=9&size=1200x600&maptype=roadmap&path=color:0xDA0A0A66|weight:3|fillcolor:0xDA0A0A33|37.3406,-8.8034|37.1880,-8.5961|37.1377,-8.4515|37.1006,-8.2711|37.0135,-7.9347|37.1258,-7.6494|37.1983,-7.3992|37.4174,-7.5275|37.3508,-7.9825|37.3041,-8.1001|37.3053,-8.5527|37.3175,-8.8034&key=AIzaSyBFw0Qbyq9zTFTd-tUY6dZWTgaQzuU17R8" 
+              alt="Map of Algarve region" 
+              className="w-full h-auto"
+            />
+          </div>
         </div>
       </section>
     </div>

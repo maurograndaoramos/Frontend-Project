@@ -235,9 +235,6 @@ export default function ContactPageContent() {
                   <Button variant="outline" size="icon">
                     <Facebook className="w-4 h-4" />
                   </Button>
-                  <Button variant="outline" size="icon">
-                    <Twitter className="w-4 h-4" />
-                  </Button>
                 </div>
               </div>
             </motion.div>
@@ -256,11 +253,11 @@ export default function ContactPageContent() {
             className="text-center mb-12"
           >
             <Badge variant="secondary" className="mb-4">Visit Us</Badge>
-            <h2 className="text-3xl font-bold">Find Our Shop</h2>
+            <h2 className="text-3xl font-bold">Serving the Algarve Since 1990</h2>
           </motion.div>
           <div className="aspect-video rounded-xl overflow-hidden shadow-lg">
             <iframe
-              src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d387193.30591910525!2d-74.25986532962815!3d40.69714941699943!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x89c24fa5d33f083b%3A0xc80b8f06e177fe62!2sNew%20York%2C%20NY%2C%20USA!5e0!3m2!1sen!2s!4v1647891234567!5m2!1sen!2s"
+              src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d405342.31432931227!2d-8.671549467968073!3d37.17525232271542!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0xd0554ee55d1cfef%3A0x80e2652e12191ce1!2sAlgarve%2C%20Portugal!5e0!3m2!1sen!2s!4v1700580963852!5m2!1sen!2s"
               width="100%"
               height="100%"
               style={{ border: 0 }}

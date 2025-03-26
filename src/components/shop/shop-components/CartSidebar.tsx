@@ -130,6 +130,14 @@ const CartSidebar: React.FC = () => {
                               <Plus className="h-3 w-3" />
                             </Button>
                           </div>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-full"
+                            onClick={() => removeItem(item.id)}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
                         </div>
                       </div>
                     </motion.li>
@@ -165,7 +173,7 @@ const CartSidebar: React.FC = () => {
                 
                 <div className="space-y-3">
                   <Button className="w-full" asChild>
-                    <Link href="/checkout">
+                    <Link href="/checkout" onClick={() => toggleCart(false)}>
                       Checkout <ArrowRight className="ml-2 h-4 w-4" />
                     </Link>
                   </Button>

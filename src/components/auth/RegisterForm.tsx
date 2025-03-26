@@ -1,8 +1,8 @@
 "use client"
 
 import * as React from "react"
-import { useState } from "react";
-import { useRouter } from "next/navigation"
+import { useState, useEffect } from "react";
+import { useRouter, useSearchParams } from "next/navigation"
 import { useForm } from "react-hook-form"
 import { signIn } from "next-auth/react";
 import * as z from "zod"
@@ -38,7 +38,33 @@ export default function RegisterForm() {
     const router = useRouter();
     const [isLoading, setIsLoading] = useState(false);
     const { toast } = useToast();
+    const searchParams = useSearchParams();
+    const error = searchParams.get("error");
     
+    useEffect(() => {
+        // Handle errors from OAuth providers
+        if (error) {
+            if (error === "OAuthAccountNotLinked") {
+                toast({
+                    title: "Email already registered",
+                    description: "This email is already registered with another provider. Please sign in using your original method.",
+                    variant: "destructive",
+                });
+                
+                // Redirect to login page after a short delay
+                setTimeout(() => {
+                    router.push("/login");
+                }, 2000);
+            } else if (error) {
+                toast({
+                    variant: "destructive",
+                    title: "Authentication failed",
+                    description: "There was a problem signing in with this provider.",
+                });
+            }
+        }
+    }, [error, toast, router]);
+
     const form = useForm<z.infer<typeof formSchema>>({
         resolver: zodResolver(formSchema),
         defaultValues: {
@@ -115,17 +141,22 @@ export default function RegisterForm() {
                 title: "Something went wrong",
                 description: "Please try again later.",
             });
-        } finally {
             setIsLoading(false);
         }
     };
 
-    const signUpWithFacebook = () => {
-        // Implement Facebook login if you add a Facebook provider
-        toast({
-            title: "Coming soon",
-            description: "Facebook signup will be available soon.",
-        });
+    const signUpWithFacebook = async () => {
+        setIsLoading(true);
+        try {
+            await signIn("facebook", { callbackUrl: "/dashboard" });
+        } catch (error) {
+            toast({
+                variant: "destructive",
+                title: "Something went wrong",
+                description: "Please try again later.",
+            });
+            setIsLoading(false);
+        }
     };
 
     return (
@@ -134,7 +165,7 @@ export default function RegisterForm() {
                 Create your account
             </h1>
             <p className="text-sm text-muted-foreground text-center mb-6">
-                Join Blooming Delights to start sh opping for beautiful flowers and plants
+                Join Blooming Delights to start shopping for beautiful flowers and plants
             </p>
 
             {/* Social login buttons */}

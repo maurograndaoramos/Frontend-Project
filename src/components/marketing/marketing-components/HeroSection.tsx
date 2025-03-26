@@ -10,19 +10,19 @@ import { useState, useEffect } from "react";
 
 const heroImages = [
   {
-    src: "/api/placeholder/1600/800?text=Beautiful+Flower+Arrangements",
+    src: "/images/hero/hero-1.jpg",
     alt: "Flower arrangement collection",
     title: "Beautiful Flowers for Every Occasion",
     subtitle: "Handcrafted arrangements that bring natural beauty and fragrance to your special moments.",
   },
   {
-    src: "/api/placeholder/1600/800?text=Seasonal+Collections",
+    src: "/images/hero/hero-2.jpg",
     alt: "Seasonal flower collections",
     title: "Seasonal Collections",
     subtitle: "Discover our curated selection of flowers for every season and celebration.",
   },
   {
-    src: "/api/placeholder/1600/800?text=Custom+Arrangements",
+    src: "/images/hero/hero-3.jpg",
     alt: "Custom flower arrangements",
     title: "Custom Arrangements",
     subtitle: "Let us create the perfect arrangement for your special moments.",
@@ -36,7 +36,7 @@ export default function HeroSection() {
   useEffect(() => {
     const timer = setInterval(() => {
       setCurrentImageIndex((prev) => (prev + 1) % heroImages.length);
-    }, 5000);
+    }, 10000);
 
     return () => clearInterval(timer);
   }, []);
@@ -54,7 +54,7 @@ export default function HeroSection() {
           initial={{ opacity: 0, scale: 1.1 }}
           animate={{ opacity: 1, scale: 1 }}
           exit={{ opacity: 0, scale: 0.9 }}
-          transition={{ duration: 1 }}
+          transition={{ duration: 0.5 }}
           className="absolute inset-0 z-0"
         >
           <Image
@@ -109,29 +109,22 @@ export default function HeroSection() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.5 }}
-            className="flex flex-col sm:flex-row gap-4"
+            className="flex flex-col sm:flex-row gap-4 relative z-30"
           >
-            <Button 
-              size="lg" 
-              className="group bg-white text-black hover:bg-white/90 transition-all duration-300 shadow-lg hover:shadow-xl"
-              asChild
+            <Link 
+              href="/shop" 
+              className="inline-flex items-center justify-center gap-2 rounded-md text-sm font-medium bg-white text-black hover:bg-white/90 transition-all duration-300 shadow-lg hover:shadow-xl h-10 rounded-md px-8 py-2"
             >
-              <Link href="/shop" className="flex items-center gap-2">
-                Shop Collection
-                <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
-              </Link>
-            </Button>
-            <Button 
-              size="lg" 
-              variant="outline" 
-              className="group bg-transparent text-white border-white/30 hover:bg-white/10 hover:border-white/50 transition-all duration-300"
-              asChild
+              Shop Collection
+              <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+            </Link>
+            <Link 
+              href="/about"
+              className="inline-flex items-center justify-center gap-2 rounded-md text-sm font-medium bg-transparent text-white border border-white/30 hover:bg-white/10 hover:border-white/50 transition-all duration-300 h-10 rounded-md px-8 py-2"
             >
-              <Link href="/about" className="flex items-center gap-2">
-                Our Story
-                <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
-              </Link>
-            </Button>
+              Our Story
+              <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+            </Link>
           </motion.div>
         </motion.div>
       </div>
@@ -164,18 +157,18 @@ export default function HeroSection() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="absolute inset-y-0 left-0 right-0 flex items-center justify-between px-4 z-20"
+            className="absolute inset-y-0 left-0 right-0 flex items-center justify-between px-4 z-20 pointer-events-none"
           >
             <button
               onClick={() => setCurrentImageIndex((prev) => (prev - 1 + heroImages.length) % heroImages.length)}
-              className="p-2 rounded-full bg-black/30 hover:bg-black/50 text-white transition-colors"
+              className="p-2 rounded-full bg-black/30 hover:bg-black/50 text-white transition-colors pointer-events-auto"
               aria-label="Previous slide"
             >
               <ArrowRight className="h-6 w-6 rotate-180" />
             </button>
             <button
               onClick={() => setCurrentImageIndex((prev) => (prev + 1) % heroImages.length)}
-              className="p-2 rounded-full bg-black/30 hover:bg-black/50 text-white transition-colors"
+              className="p-2 rounded-full bg-black/30 hover:bg-black/50 text-white transition-colors pointer-events-auto"
               aria-label="Next slide"
             >
               <ArrowRight className="h-6 w-6" />

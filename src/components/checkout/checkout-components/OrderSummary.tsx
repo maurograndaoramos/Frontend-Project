@@ -7,6 +7,7 @@ import { CartItem } from "@/lib/context/CartContext";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { isToday } from "date-fns";
 
 interface OrderSummaryProps {
   items: CartItem[];
@@ -14,6 +15,7 @@ interface OrderSummaryProps {
   shipping: any;
   tax: number;
   total: number;
+  shippingCost?: number;
 }
 
 export default function OrderSummary({
@@ -22,12 +24,17 @@ export default function OrderSummary({
   shipping,
   tax,
   total,
+  shippingCost: externalShippingCost,
 }: OrderSummaryProps) {
-  // Calculate shipping cost based on method
-  const shippingCost = shipping?.shippingMethod === "express" ? 12.99 : 0;
+  // Calculate shipping cost based on delivery date if available
+  const shippingCost = externalShippingCost !== undefined 
+    ? externalShippingCost 
+    : (shipping?.deliveryDate && isToday(new Date(shipping.deliveryDate))) 
+      ? 29.99 
+      : 19.99;
   
-  // Calculate final total with shipping cost
-  const finalTotal = subtotal + tax + shippingCost;
+  // Calculate final total with shipping cost (VAT already included in subtotal)
+  const finalTotal = subtotal + shippingCost;
 
   return (
     <Card>
@@ -72,10 +79,13 @@ export default function OrderSummary({
           </div>
           <div className="flex items-center justify-between text-sm">
             <span>Shipping</span>
-            <span>{shippingCost > 0 ? formatPrice(shippingCost) : "Free"}</span>
+            <span>{formatPrice(shippingCost)}</span>
           </div>
-          <div className="flex items-center justify-between text-sm">
-            <span>Tax (8%)</span>
+          <div className="flex items-start justify-between text-sm">
+            <div>
+              <span>VAT (23%)</span>
+              <div className="text-xs text-muted-foreground mt-0.5">Already included in product price</div>
+            </div>
             <span>{formatPrice(tax)}</span>
           </div>
         </div>
@@ -97,7 +107,7 @@ export default function OrderSummary({
             <a href="/privacy" className="underline text-primary">
               Privacy Policy
             </a>
-            .
+            . We currently only deliver to the Algarve region in Portugal.
           </p>
         </div>
       </CardContent>

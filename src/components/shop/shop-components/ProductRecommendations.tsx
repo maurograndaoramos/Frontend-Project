@@ -11,6 +11,7 @@ import { ChevronLeft, ChevronRight, Sparkles, ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { toast } from "sonner";
+import Link from 'next/link';
 
 interface ProductRecommendationsProps {
   currentProductId?: string;
@@ -157,9 +158,11 @@ export default function ProductRecommendations({
               <ChevronRight className="h-4 w-4" />
             </Button>
           </div>
-          <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-primary">
-            View All <ArrowRight className="ml-2 h-4 w-4" />
-          </Button>
+          <Link href={`/shop?recommended=true${category ? `&category=${category}` : ''}&page=1`}>
+            <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-primary">
+              View All <ArrowRight className="ml-2 h-4 w-4" />
+            </Button>
+          </Link>
         </div>
       </div>
       <div 

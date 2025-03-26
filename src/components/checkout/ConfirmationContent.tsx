@@ -1,7 +1,7 @@
 "use client";
 
-import React, { useEffect } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import React, { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { CheckCircle2, ArrowRight, CalendarCheck, Clock, Home, Package, Mail } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -10,19 +10,52 @@ import { Separator } from "@/components/ui/separator";
 import { cn, formatPrice } from "@/lib/utils";
 import confetti from "canvas-confetti";
 import { motion, AnimatePresence } from 'framer-motion';
+import { useCart } from "@/lib/context/CartContext";
 
-export default function OrderConfirmationPageContent() {
-  const searchParams = useSearchParams();
+export default function OrderConfirmationPageContent({ orderId }: { orderId: string }) {
   const router = useRouter();
-  
-  const orderId = searchParams.get("orderId");
+  const [orderDetails, setOrderDetails] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const { clearCart } = useCart();
   
   // If no order ID, redirect to shop
   useEffect(() => {
     if (!orderId) {
       router.push("/shop");
+    } else {
+      // Fetch order details
+      fetchOrderDetails(orderId);
     }
   }, [orderId, router]);
+
+  // Check if orderCompleted flag exists and clear cart if needed
+  useEffect(() => {
+    const orderCompleted = localStorage.getItem('orderCompleted');
+    if (orderCompleted === 'true') {
+      // Clear the flag
+      localStorage.removeItem('orderCompleted');
+      // Clear the cart again to be sure
+      clearCart();
+    }
+  }, [clearCart]);
+  
+  // Fetch order details from API
+  const fetchOrderDetails = async (id) => {
+    try {
+      const response = await fetch(`/api/orders/${id}`);
+      
+      if (!response.ok) {
+        throw new Error('Failed to fetch order details');
+      }
+      
+      const data = await response.json();
+      setOrderDetails(data.order);
+    } catch (error) {
+      console.error('Error fetching order:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   // Trigger confetti effect when page loads
   useEffect(() => {
@@ -40,8 +73,8 @@ export default function OrderConfirmationPageContent() {
     }
   }, []);
 
-  // Mock order data - in real app, this would be fetched from API
-  const orderDetails = {
+  // Fallback order details if API call fails
+  const fallbackOrderDetails = {
     id: orderId || "ORDER-XXXXX",
     date: new Date().toLocaleDateString(),
     expectedDelivery: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000).toLocaleDateString(),
@@ -53,8 +86,19 @@ export default function OrderConfirmationPageContent() {
     total: 97.17,
   };
 
+  // Use the fetched order details or fallback
+  const order = orderDetails || fallbackOrderDetails;
+
   if (!orderId) {
     return null;
+  }
+
+  if (isLoading) {
+    return (
+      <div className="flex justify-center items-center min-h-[50vh]">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+      </div>
+    );
   }
 
   return (
@@ -106,7 +150,7 @@ export default function OrderConfirmationPageContent() {
                 className="text-left"
               >
                 <p className="text-sm text-muted-foreground mb-1">Order Number</p>
-                <p className="font-medium">{orderDetails.id}</p>
+                <p className="font-medium">{order.id}</p>
               </motion.div>
               <motion.div 
                 initial={{ opacity: 0, x: 20 }}
@@ -115,7 +159,7 @@ export default function OrderConfirmationPageContent() {
                 className="text-left"
               >
                 <p className="text-sm text-muted-foreground mb-1">Order Date</p>
-                <p className="font-medium">{orderDetails.date}</p>
+                <p className="font-medium">{order.date}</p>
               </motion.div>
             </div>
 
@@ -126,7 +170,7 @@ export default function OrderConfirmationPageContent() {
                 {
                   icon: <CalendarCheck className="h-6 w-6 text-primary mb-3" />,
                   title: "Estimated Delivery",
-                  content: orderDetails.expectedDelivery,
+                  content: order.expectedDelivery,
                   delay: 0.5
                 },
                 {
@@ -138,7 +182,7 @@ export default function OrderConfirmationPageContent() {
                 {
                   icon: <Home className="h-6 w-6 text-primary mb-3" />,
                   title: "Shipping To",
-                  content: orderDetails.address,
+                  content: order.address,
                   delay: 0.7
                 }
               ].map((item, index) => (
@@ -166,20 +210,20 @@ export default function OrderConfirmationPageContent() {
             >
               <div className="flex justify-between text-sm mb-2">
                 <span>Subtotal</span>
-                <span>{formatPrice(orderDetails.subtotal)}</span>
+                <span>{formatPrice(order.subtotal)}</span>
               </div>
               <div className="flex justify-between text-sm mb-2">
                 <span>Shipping</span>
-                <span>{orderDetails.shipping === 0 ? "Free" : formatPrice(orderDetails.shipping)}</span>
+                <span>{order.shipping === 0 ? "Free" : formatPrice(order.shipping)}</span>
               </div>
               <div className="flex justify-between text-sm mb-2">
                 <span>Tax</span>
-                <span>{formatPrice(orderDetails.tax)}</span>
+                <span>{formatPrice(order.tax)}</span>
               </div>
               <Separator className="my-2" />
               <div className="flex justify-between font-medium">
                 <span>Total</span>
-                <span>{formatPrice(orderDetails.total)}</span>
+                <span>{formatPrice(order.total)}</span>
               </div>
             </motion.div>
           </CardContent>
@@ -196,7 +240,7 @@ export default function OrderConfirmationPageContent() {
           <div className="flex items-center justify-center gap-2 mb-2">
             <Mail className="h-4 w-4 text-primary" />
             <p className="text-sm text-muted-foreground">
-              We've sent a confirmation to {orderDetails.email} with all the details of your order.
+              We've sent a confirmation to {order.email} with all the details of your order.
             </p>
           </div>
           <p className="text-sm text-muted-foreground">

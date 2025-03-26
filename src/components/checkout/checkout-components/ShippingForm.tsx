@@ -1,10 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, Calendar, Info, MapPin, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Form,
@@ -13,6 +13,7 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
+  useFormField,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -24,22 +25,127 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Separator } from "@/components/ui/separator";
+import { DatePicker } from "@/components/ui/date-picker";
+import { addDays, format, isToday, isSaturday, isSunday } from "date-fns";
+import { cn } from "@/lib/utils";
+import dynamic from 'next/dynamic';
+
+// Dynamically import the GoogleAlgarveMap component with no SSR
+// This is necessary because Google Maps requires browser APIs
+const GoogleAlgarveMap = dynamic(
+  () => import('./GoogleAlgarveMap'),
+  { ssr: false }
+);
+
+// Custom FormDescriptionInline component to avoid nesting issues
+const FormDescriptionInline = React.forwardRef<
+  HTMLDivElement,
+  React.HTMLAttributes<HTMLDivElement>
+>(({ className, ...props }, ref) => {
+  const { formDescriptionId } = useFormField();
+
+  return (
+    <div
+      ref={ref}
+      id={formDescriptionId}
+      className={cn("text-[0.8rem] text-muted-foreground", className)}
+      {...props}
+    />
+  );
+});
+FormDescriptionInline.displayName = "FormDescriptionInline";
+
+// List of Algarve municipalities
+const ALGARVE_MUNICIPALITIES = [
+  "Albufeira",
+  "Alcoutim",
+  "Aljezur",
+  "Castro Marim",
+  "Faro",
+  "Lagoa",
+  "Lagos",
+  "Loulé",
+  "Monchique",
+  "Olhão",
+  "Portimão",
+  "São Brás de Alportel",
+  "Silves",
+  "Tavira",
+  "Vila do Bispo",
+  "Vila Real de Santo António"
+];
+
+// National holidays in Portugal (2024)
+const PORTUGAL_HOLIDAYS_2024 = [
+  new Date(2024, 0, 1),  // New Year's Day
+  new Date(2024, 1, 13), // Carnival
+  new Date(2024, 2, 29), // Good Friday
+  new Date(2024, 2, 31), // Easter
+  new Date(2024, 3, 25), // Liberty Day
+  new Date(2024, 4, 1),  // Labor Day
+  new Date(2024, 5, 10), // Portugal Day
+  new Date(2024, 5, 13), // Santo António
+  new Date(2024, 7, 15), // Assumption Day
+  new Date(2024, 9, 5),  // Republic Day
+  new Date(2024, 10, 1), // All Saints' Day
+  new Date(2024, 11, 1), // Independence Restoration Day
+  new Date(2024, 11, 8), // Immaculate Conception
+  new Date(2024, 11, 25) // Christmas Day
+];
+
+// Check if a date is a holiday
+const isHoliday = (date: Date) => {
+  return PORTUGAL_HOLIDAYS_2024.some(holiday => 
+    holiday.getFullYear() === date.getFullYear() &&
+    holiday.getMonth() === date.getMonth() &&
+    holiday.getDate() === date.getDate()
+  );
+};
+
+// Check if current time is before 2PM (14:00) Portugal time
+const isBeforeCutoff = () => {
+  const now = new Date();
+  return now.getHours() < 14;
+};
 
 const formSchema = z.object({
-  firstName: z.string().min(2, "First name must be at least 2 characters"),
-  lastName: z.string().min(2, "Last name must be at least 2 characters"),
-  email: z.string().email("Please enter a valid email address"),
-  phone: z.string().min(10, "Please enter a valid phone number"),
-  address: z.string().min(5, "Please enter your street address"),
-  city: z.string().min(2, "Please enter your city"),
-  state: z.string().min(2, "Please enter your state/province"),
-  zipCode: z.string().min(5, "Please enter a valid ZIP or postal code"),
-  country: z.string(),
-  shippingMethod: z.enum(["standard", "express"]),
+  firstName: z.string().min(1, "First name is required"),
+  lastName: z.string().min(1, "Last name is required"),
+  email: z.string().email("Invalid email address"),
+  phone: z.string().min(9, "Phone number must be at least 9 digits"),
+  address: z.string().min(1, "Address is required"),
+  city: z.string().min(1, "City is required"),
+  municipality: z.string().min(1, "Municipality is required"),
+  postalCode: z.string().min(8, "Postal code must be at least 8 characters"),
+  deliveryDate: z.date().nullable(),
   deliveryNotes: z.string().optional(),
+  coordinates: z.object({
+    lat: z.number(),
+    lng: z.number()
+  }).optional(),
   sameAsShipping: z.boolean().default(true),
+  // Billing address fields
+  billingFirstName: z.string().optional(),
+  billingLastName: z.string().optional(),
+  billingAddress: z.string().optional(),
+  billingCity: z.string().optional(),
+  billingMunicipality: z.string().optional(),
+  billingPostalCode: z.string().optional(),
+}).refine((data) => {
+  // If sameAsShipping is false, all billing fields are required
+  if (!data.sameAsShipping) {
+    return data.billingFirstName && 
+           data.billingLastName && 
+           data.billingAddress && 
+           data.billingCity && 
+           data.billingMunicipality && 
+           data.billingPostalCode;
+  }
+  return true;
+}, {
+  message: "All billing address fields are required when billing address is different from shipping address",
+  path: ["billingFirstName"]
 });
 
 type ShippingFormValues = z.infer<typeof formSchema>;
@@ -53,6 +159,25 @@ export default function ShippingForm({
   initialData = {},
   onSubmit,
 }: ShippingFormProps) {
+  // Store delivery date
+  const [deliveryDate, setDeliveryDate] = useState<Date | null>(initialData.deliveryDate || null);
+  
+  // Initialize coordinates with undefined instead of null to match the type
+  const [coordinates, setCoordinates] = useState<{lat: number, lng: number} | undefined>(
+    initialData.coordinates && 
+    typeof initialData.coordinates.lat === 'number' && 
+    typeof initialData.coordinates.lng === 'number' 
+      ? initialData.coordinates as {lat: number, lng: number} 
+      : undefined
+  );
+  
+  // Add state for showing/hiding sections
+  const [showMap, setShowMap] = useState(false);
+  const [showDeliveryOptions, setShowDeliveryOptions] = useState(false);
+  
+  // Check if same-day delivery is available
+  const sameDayAvailable = isBeforeCutoff();
+  
   // Define form
   const form = useForm<ShippingFormValues>({
     resolver: zodResolver(formSchema),
@@ -63,237 +188,273 @@ export default function ShippingForm({
       phone: initialData.phone || "",
       address: initialData.address || "",
       city: initialData.city || "",
-      state: initialData.state || "",
-      zipCode: initialData.zipCode || "",
-      country: initialData.country || "US",
-      shippingMethod: initialData.shippingMethod || "standard",
+      municipality: initialData.municipality || "",
+      postalCode: initialData.postalCode || "",
+      deliveryDate: initialData.deliveryDate || undefined,
       deliveryNotes: initialData.deliveryNotes || "",
+      coordinates: coordinates,
       sameAsShipping: initialData.sameAsShipping !== false,
+      billingFirstName: initialData.billingFirstName || "",
+      billingLastName: initialData.billingLastName || "",
+      billingAddress: initialData.billingAddress || "",
+      billingCity: initialData.billingCity || "",
+      billingMunicipality: initialData.billingMunicipality || "",
+      billingPostalCode: initialData.billingPostalCode || "",
     },
   });
 
-  const handleSubmit = (data: ShippingFormValues) => {
-    onSubmit(data);
+  // Effect to handle delivery date changes
+  useEffect(() => {
+    if (deliveryDate) {
+      form.setValue("deliveryDate", deliveryDate, { shouldValidate: false });
+      
+      // We no longer want to auto-submit the form when date is selected
+      // Just update the form value
+    }
+  }, [deliveryDate, form]);
+
+  // Calculate shipping cost based on selected date
+  const getShippingCost = () => {
+    if (!deliveryDate) return null;
+    return isToday(deliveryDate) && sameDayAvailable ? 29.99 : 19.99;
+  };
+
+  // Get formatted delivery date for display
+  const getFormattedDeliveryDate = () => {
+    if (!deliveryDate) return null;
+    return format(deliveryDate, 'EEEE, MMMM do, yyyy');
+  };
+
+  // Check if the delivery date is today
+  const isDeliveryDateToday = () => {
+    if (!deliveryDate) return false;
+    return isToday(deliveryDate);
+  };
+
+  // Shipping cost based on selected date
+  const shippingCost = getShippingCost();
+  const formattedDeliveryDate = getFormattedDeliveryDate();
+  const isDeliveryToday = isDeliveryDateToday();
+
+  const handleLocationConfirmed = (coords: {lat: number, lng: number}) => {
+    setCoordinates(coords);
+    form.setValue('coordinates', coords);
+    setShowDeliveryOptions(true);
+  };
+
+  const handleSaveAddress = async () => {
+    // Trigger validation on the required shipping fields
+    const result = await form.trigger([
+      "firstName", 
+      "lastName", 
+      "email", 
+      "phone", 
+      "address", 
+      "city", 
+      "municipality", 
+      "postalCode"
+    ]);
+    
+    // Show the map regardless of validation
+    setShowMap(true);
+    
+    // If billing address is different, validate those fields too
+    if (!form.getValues().sameAsShipping) {
+      form.trigger([
+        "billingFirstName", 
+        "billingLastName", 
+        "billingAddress", 
+        "billingCity",
+        "billingMunicipality",
+        "billingPostalCode"
+      ]);
+    }
+  };
+
+  const handleProceedToPayment = () => {
+    const data = form.getValues();
+    onSubmit({
+      ...data,
+      coordinates: coordinates,
+      deliveryDate: deliveryDate
+    });
   };
 
   return (
-    <div>
-      <div className="mb-6">
-        <h2 className="text-xl font-semibold mb-2">Shipping Information</h2>
-        <p className="text-muted-foreground">
-          Please provide your shipping details so we can deliver your flowers.
-        </p>
-      </div>
-
-      <Form {...form}>
-        <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <FormField
-              control={form.control}
-              name="firstName"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>First Name</FormLabel>
-                  <FormControl>
-                    <Input placeholder="John" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="lastName"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Last Name</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Doe" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+    <Form {...form}>
+      <div className="space-y-8">
+        {/* Shipping Information Section */}
+        <div>
+          <div className="mb-6">
+            <h2 className="text-xl font-semibold mb-2">Shipping Information</h2>
+            <p className="text-muted-foreground">
+              Please provide your shipping details so we can deliver your flowers in the Algarve region.
+            </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <form className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <FormField
+                control={form.control}
+                name="firstName"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>First Name</FormLabel>
+                    <FormControl>
+                      <Input placeholder="João" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="lastName"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Last Name</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Silva" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <FormField
+                control={form.control}
+                name="email"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Email</FormLabel>
+                    <FormControl>
+                      <Input placeholder="seu@exemplo.pt" type="email" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="phone"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Phone Number</FormLabel>
+                    <FormControl>
+                      <Input placeholder="9XXXXXXXX or 2XXXXXXXX" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+
             <FormField
               control={form.control}
-              name="email"
+              name="address"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Email</FormLabel>
+                  <FormLabel>Street Address</FormLabel>
                   <FormControl>
-                    <Input placeholder="you@example.com" type="email" {...field} />
+                    <Input placeholder="Rua Principal, 123" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
 
-            <FormField
-              control={form.control}
-              name="phone"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Phone Number</FormLabel>
-                  <FormControl>
-                    <Input placeholder="(123) 456-7890" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <FormField
+                control={form.control}
+                name="city"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>City</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Cidade" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="municipality"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Municipality</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select municipality" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {ALGARVE_MUNICIPALITIES.map((municipality) => (
+                          <SelectItem key={municipality} value={municipality}>
+                            {municipality}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="postalCode"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Postal Code</FormLabel>
+                    <FormControl>
+                      <Input placeholder="8000-000" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+
+            <div className="flex justify-end">
+              <Button 
+                type="button" 
+                onClick={handleSaveAddress}
+              >
+                Confirm Address
+              </Button>
+            </div>
+          </form>
+        </div>
+
+        {/* Map Section - Moved above billing address */}
+        {showMap && (
+          <div>
+            <div className="mb-6">
+              <h2 className="text-xl font-semibold mb-2">Delivery Location</h2>
+              <p className="text-muted-foreground">
+                Please confirm your exact location on the map to ensure accurate delivery.
+              </p>
+            </div>
+            
+            <GoogleAlgarveMap 
+              address={form.watch('address')}
+              city={form.watch('city')}
+              municipality={form.watch('municipality')}
+              postalCode={form.watch('postalCode')}
+              onLocationConfirmed={handleLocationConfirmed}
             />
           </div>
+        )}
 
-          <FormField
-            control={form.control}
-            name="address"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Street Address</FormLabel>
-                <FormControl>
-                  <Input placeholder="123 Main St" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <FormField
-              control={form.control}
-              name="city"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>City</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Anytown" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="state"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>State/Province</FormLabel>
-                  <FormControl>
-                    <Input placeholder="CA" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="zipCode"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>ZIP/Postal Code</FormLabel>
-                  <FormControl>
-                    <Input placeholder="12345" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </div>
-
-          <FormField
-            control={form.control}
-            name="country"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Country</FormLabel>
-                <Select onValueChange={field.onChange} defaultValue={field.value}>
-                  <FormControl>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select a country" />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    <SelectItem value="US">United States</SelectItem>
-                    <SelectItem value="CA">Canada</SelectItem>
-                    <SelectItem value="UK">United Kingdom</SelectItem>
-                    <SelectItem value="AU">Australia</SelectItem>
-                  </SelectContent>
-                </Select>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <Separator />
-
-          <div className="space-y-3">
-            <h3 className="font-medium">Shipping Options</h3>
-            <FormField
-              control={form.control}
-              name="shippingMethod"
-              render={({ field }) => (
-                <FormItem className="space-y-3">
-                  <FormControl>
-                    <RadioGroup
-                      onValueChange={field.onChange}
-                      defaultValue={field.value}
-                      className="flex flex-col space-y-1"
-                    >
-                      <div className="flex items-center space-x-3 space-y-0">
-                        <RadioGroupItem value="standard" id="standard" />
-                        <div className="flex-1 flex items-center justify-between">
-                          <label
-                            htmlFor="standard"
-                            className="font-medium text-sm cursor-pointer"
-                          >
-                            Standard Shipping (2-3 days)
-                          </label>
-                          <span className="text-sm font-medium">Free</span>
-                        </div>
-                      </div>
-                      <div className="flex items-center space-x-3 space-y-0">
-                        <RadioGroupItem value="express" id="express" />
-                        <div className="flex-1 flex items-center justify-between">
-                          <label
-                            htmlFor="express"
-                            className="font-medium text-sm cursor-pointer"
-                          >
-                            Express Shipping (1-2 days)
-                          </label>
-                          <span className="text-sm font-medium">$12.99</span>
-                        </div>
-                      </div>
-                    </RadioGroup>
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </div>
-
-          <FormField
-            control={form.control}
-            name="deliveryNotes"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Delivery Instructions (Optional)</FormLabel>
-                <FormControl>
-                  <Textarea
-                    placeholder="Add any special instructions for delivery"
-                    className="resize-none"
-                    {...field}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
+        {/* Billing Address Section - Moved below map */}
+        <div>
           <FormField
             control={form.control}
             name="sameAsShipping"
@@ -314,13 +475,222 @@ export default function ShippingForm({
             )}
           />
 
-          <div className="flex justify-end">
-            <Button type="submit">
-              Continue to Payment <ArrowRight className="ml-2 h-4 w-4" />
-            </Button>
+          {!form.watch('sameAsShipping') && (
+            <div className="mt-6 space-y-6">
+              <h3 className="text-lg font-medium">Billing Information</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <FormField
+                  control={form.control}
+                  name="billingFirstName"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>First Name</FormLabel>
+                      <FormControl>
+                        <Input placeholder="João" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="billingLastName"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Last Name</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Silva" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+
+              <FormField
+                control={form.control}
+                name="billingAddress"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Street Address</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Rua Principal, 123" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <FormField
+                  control={form.control}
+                  name="billingCity"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>City</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Cidade" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="billingMunicipality"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Municipality</FormLabel>
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select municipality" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {ALGARVE_MUNICIPALITIES.map((municipality) => (
+                            <SelectItem key={municipality} value={municipality}>
+                              {municipality}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="billingPostalCode"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Postal Code</FormLabel>
+                      <FormControl>
+                        <Input placeholder="8000-000" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Delivery Options Section */}
+        {showDeliveryOptions && (
+          <div>
+            <div className="mb-6">
+              <h2 className="text-xl font-semibold mb-2">Delivery Options</h2>
+              <p className="text-muted-foreground">
+                Choose your preferred delivery date and add any special instructions.
+              </p>
+            </div>
+
+            <div className="space-y-6">
+              <div className="rounded-md border p-4">
+                <div className="flex justify-between items-start mb-4">
+                  <div>
+                    <h4 className="font-medium text-sm">Select Your Delivery Date</h4>
+                    <p className="text-muted-foreground text-xs mt-1">
+                      We deliver Monday-Friday, excluding holidays
+                    </p>
+                  </div>
+                  
+                  {shippingCost && (
+                    <span className="font-medium text-sm">
+                      {shippingCost === 29.99 ? "€29.99" : "€19.99"}
+                    </span>
+                  )}
+                </div>
+                
+                <FormField
+                  control={form.control}
+                  name="deliveryDate"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormControl>
+                        <DatePicker
+                          date={field.value}
+                          setDate={(date) => setDeliveryDate(date)}
+                          placeholderText="Select delivery date"
+                          disablePastDates={true}
+                          disableWeekends={true}
+                          disabledDates={PORTUGAL_HOLIDAYS_2024}
+                          isSameDay={true}
+                        />
+                      </FormControl>
+                      
+                      {formattedDeliveryDate && (
+                        <div className="mt-2 p-2 bg-muted rounded-md">
+                          <p className="text-sm font-medium flex items-center">
+                            <Calendar className="h-4 w-4 mr-2 text-primary" />
+                            Date selected: {formattedDeliveryDate}
+                          </p>
+                          <p className="text-xs mt-1">
+                            Shipping method: {isDeliveryToday && sameDayAvailable ? 
+                              "Same-day delivery (€29.99)" : 
+                              "Standard delivery (€19.99)"}
+                          </p>
+                        </div>
+                      )}
+                      
+                      <FormDescriptionInline className="mt-2">
+                        <span className="flex flex-col space-y-1 text-xs">
+                          <span className="flex items-center">
+                            <span className="inline-block w-3 h-3 rounded-full bg-green-500 mr-2"></span>
+                            <span>Same day delivery before 2PM: <strong>€29.99</strong></span>
+                          </span>
+                          <span className="flex items-center">
+                            <span className="inline-block w-3 h-3 rounded-full bg-blue-500 mr-2"></span>
+                            <span>Any other date: <strong>€19.99</strong></span>
+                          </span>
+                        </span>
+                      </FormDescriptionInline>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+
+              <FormField
+                control={form.control}
+                name="deliveryNotes"
+                render={({ field }) => (
+                  <FormItem className="border p-4 rounded-md bg-muted/20">
+                    <FormLabel className="text-lg font-medium">Delivery Notes (Optional)</FormLabel>
+                    <p className="text-muted-foreground text-sm mb-3">
+                      Help us deliver your flowers perfectly by providing additional details
+                    </p>
+                    <FormControl>
+                      <Textarea
+                        placeholder="Add special instructions for delivery (e.g., gate code, delivery preferences, specific location details)"
+                        className="resize-none min-h-[120px]"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <div className="flex justify-end">
+                <Button 
+                  type="button" 
+                  onClick={handleProceedToPayment}
+                  disabled={!deliveryDate}
+                >
+                  Next
+                  <ArrowRight className="ml-2 h-4 w-4" />
+                </Button>
+              </div>
+            </div>
           </div>
-        </form>
-      </Form>
-    </div>
+        )}
+      </div>
+    </Form>
   );
 }

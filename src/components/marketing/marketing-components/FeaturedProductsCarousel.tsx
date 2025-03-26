@@ -149,11 +149,18 @@ export default function FeaturedProductsCarousel() {
                             height={300}
                             className="w-full h-48 object-cover transition-transform duration-500 group-hover:scale-105"
                           />
-                          {product.isNew && (
-                            <Badge className="absolute top-2 left-2 bg-white text-black hover:bg-white/90">
-                              New
-                            </Badge>
-                          )}
+                          <div className="absolute top-2 left-2 flex gap-2">
+                            {product.isNew && (
+                              <Badge className="bg-primary/95 backdrop-blur-sm shadow-sm">
+                                New
+                              </Badge>
+                            )}
+                            {product.hasDiscount && (
+                              <Badge className="bg-red-500/95 text-white backdrop-blur-sm shadow-sm">
+                                Discount
+                              </Badge>
+                            )}
+                          </div>
                           {!product.inStock && (
                             <motion.div 
                               initial={{ opacity: 0 }}
@@ -170,7 +177,7 @@ export default function FeaturedProductsCarousel() {
                           </h3>
                           <div className="flex items-center mb-4">
                             <span className="font-medium text-lg">{formatPrice(product.price)}</span>
-                            {product.originalPrice && (
+                            {product.hasDiscount && product.originalPrice && (
                               <span className="ml-2 text-sm text-muted-foreground line-through">
                                 {formatPrice(product.originalPrice)}
                               </span>

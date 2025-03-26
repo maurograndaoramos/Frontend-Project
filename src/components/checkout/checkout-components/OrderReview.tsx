@@ -2,10 +2,11 @@
 
 import { useState } from "react";
 import { formatPrice } from "@/lib/utils";
-import { ArrowLeft, Check, CreditCard, MapPin, Truck, Wallet } from "lucide-react";
+import { ArrowLeft, Check, CreditCard, MapPin, Truck, Wallet, Calendar } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Card, CardContent } from "@/components/ui/card";
+import { format, isToday } from "date-fns";
 
 interface OrderReviewProps {
   orderData: any;
@@ -25,11 +26,13 @@ export default function OrderReview({
     onPlaceOrder();
   };
 
-  // Calculate shipping cost based on method
-  const shippingCost = orderData.shipping.shippingMethod === "express" ? 12.99 : 0;
+  // Calculate shipping cost based on delivery date
+  const isDeliveryToday = orderData.shipping.deliveryDate && 
+                         isToday(new Date(orderData.shipping.deliveryDate));
+  const shippingCost = isDeliveryToday ? 29.99 : 19.99;
   
-  // Calculate final total with shipping cost
-  const finalTotal = orderData.subtotal + orderData.tax + shippingCost;
+  // Calculate final total with shipping cost (VAT already included in subtotal)
+  const finalTotal = orderData.subtotal + shippingCost;
 
   return (
     <div className="space-y-6">
@@ -52,10 +55,10 @@ export default function OrderReview({
               <br />
               {orderData.shipping.address}
               <br />
-              {orderData.shipping.city}, {orderData.shipping.state}{" "}
-              {orderData.shipping.zipCode}
+              {orderData.shipping.city}, {orderData.shipping.municipality}{" "}
+              {orderData.shipping.postalCode}
               <br />
-              {orderData.shipping.country}
+              Portugal
               <br />
               {orderData.shipping.phone}
               <br />
@@ -71,10 +74,19 @@ export default function OrderReview({
               <h3 className="font-medium">Shipping Method</h3>
             </div>
             <p className="text-sm">
-              {orderData.shipping.shippingMethod === "standard"
-                ? "Standard Shipping (2-3 days)"
-                : "Express Shipping (1-2 days)"}
+              {isDeliveryToday
+                ? "Same-day Express Delivery"
+                : "Standard Delivery"}
+              <span className="ml-2 font-medium">
+                {formatPrice(shippingCost)}
+              </span>
             </p>
+            {orderData.shipping.deliveryDate && (
+              <div className="flex items-center mt-2 text-sm">
+                <Calendar className="h-4 w-4 text-primary mr-2" />
+                <span>Delivery on {format(new Date(orderData.shipping.deliveryDate), "dd/MM/yyyy")}</span>
+              </div>
+            )}
             {orderData.shipping.deliveryNotes && (
               <div className="mt-2 p-2 bg-muted/50 rounded-md text-xs">
                 <strong>Delivery Notes:</strong> {orderData.shipping.deliveryNotes}
@@ -107,7 +119,10 @@ export default function OrderReview({
               Expires: {orderData.payment.expiryDate}
             </p>
           ) : (
-            <p className="text-sm">PayPal</p>
+            <p className="text-sm">
+              MBWay<br />
+              Phone: {orderData.payment.mbwayPhone}
+            </p>
           )}
         </CardContent>
       </Card>
@@ -123,10 +138,13 @@ export default function OrderReview({
             </div>
             <div className="flex items-center justify-between text-sm">
               <span>Shipping</span>
-              <span>{shippingCost > 0 ? formatPrice(shippingCost) : "Free"}</span>
+              <span>{formatPrice(shippingCost)}</span>
             </div>
-            <div className="flex items-center justify-between text-sm">
-              <span>Tax (8%)</span>
+            <div className="flex items-start justify-between text-sm">
+              <div>
+                <span>VAT (23%)</span>
+                <div className="text-xs text-muted-foreground mt-0.5">Already included in product price</div>
+              </div>
               <span>{formatPrice(orderData.tax)}</span>
             </div>
 
@@ -157,6 +175,7 @@ export default function OrderReview({
             </p>
             <p>
               All flowers are subject to availability. In some cases, substitutions of equal or greater value may be necessary.
+              We currently only deliver to the Algarve region in Portugal.
             </p>
           </div>
         </div>
