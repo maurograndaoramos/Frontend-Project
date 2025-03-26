@@ -397,50 +397,6 @@ export default function GoogleAlgarveMap({
               )}
             </div>
           </div>
-          
-          {/* Enhanced debug info */}
-          <Accordion type="single" collapsible className="mt-2">
-            <AccordionItem value="debug">
-              <AccordionTrigger onClick={toggleDebugMode} className="text-xs font-medium text-gray-700">
-                {debugMode ? "Hide Debug Info" : "Show Debug Info"}
-              </AccordionTrigger>
-              <AccordionContent>
-                {debugMode && (
-                  <div className="space-y-2 text-xs font-mono bg-gray-100 p-2 rounded">
-                    <p>API Key Available: {apiKey ? "✓" : "✗"}</p>
-                    {apiKey && <p>API Key: {apiKey.substring(0, 5)}...{apiKey.substring(apiKey.length - 5)}</p>}
-                    <p>Domain: {currentDomain}</p>
-                    <p>Environment: {process.env.NODE_ENV}</p>
-                    <p>Error Type: {isDomainError ? "Domain/Referrer Restriction" : loadError.name}</p>
-                    <p className="whitespace-pre-wrap break-words">Full Error: {JSON.stringify(loadError, null, 2)}</p>
-                  </div>
-                )}
-              </AccordionContent>
-            </AccordionItem>
-            
-            <AccordionItem value="solutions">
-              <AccordionTrigger className="text-xs font-medium text-gray-700">
-                Possible solutions
-              </AccordionTrigger>
-              <AccordionContent>
-                <ul className="list-disc pl-5 space-y-1 text-xs text-gray-600">
-                  <li>Check that you have a valid Google Maps API key in your .env file</li>
-                  <li>Make sure the Maps JavaScript API is enabled in your Google Cloud Console</li>
-                  {isDomainError && (
-                    <li className="text-red-600 font-medium">
-                      Your key is likely restricted to specific domains. Add '{currentDomain}' to your authorized domains in the API key restrictions.
-                    </li>
-                  )}
-                  <li>Verify that your API key has the proper restrictions set</li>
-                  <li>Clear browser cache and cookies, or try in an incognito window</li>
-                  <li>Check for any browser console errors (F12) with more specific details</li>
-                </ul>
-                <p className="text-xs text-gray-600 mt-2">
-                  See GOOGLE_MAPS_SETUP.md for detailed setup instructions.
-                </p>
-              </AccordionContent>
-            </AccordionItem>
-          </Accordion>
         </div>
         
         {/* Manual coordinates fallback */}
