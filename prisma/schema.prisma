@@ -35,73 +35,59 @@ model Session {
 }
 
 model User {
-  id             String         @id @default(cuid())
-  name           String?
-  email          String?        @unique
-  phone          String?
-  address        String?
-  emailVerified  DateTime?
-  image          String?
-  role           Role          @default(user)
-  createdAt      DateTime       @default(now())
-  updatedAt      DateTime       @updatedAt
-  hashedPassword String?
-  resetToken     String?
+  id               String         @id @default(cuid())
+  name             String?
+  email            String?        @unique
+  phone            String?
+  address          String?
+  emailVerified    DateTime?
+  image            String?
+  role             Role           @default(user)
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+  hashedPassword   String?
+  resetToken       String?
   resetTokenExpiry DateTime?
-  accounts       Account[]
-  orders         Order[]
-  sessions       Session[]
-  wishlistItems  WishlistItem[]
+  accounts         Account[]
+  orders           Order[]
+  sessions         Session[]
+  wishlistItems    WishlistItem[]
 
   @@index([resetToken])
 }
 
-enum Role {
-  user
-  seller
-  admin
-}
-
 model Product {
-  id            String         @id @default(cuid())
-  name          String
-  description   String
-  price         Float
-  originalPrice Float?
-  images        String[]
-  inStock       Boolean        @default(true)
-  quantity      Int            @default(0)
-  category      String
-  subcategory   String?
-  tags          String[]
-  isNew         Boolean        @default(false)
-  isFeatured    Boolean        @default(false)
-  dimensions    Json?
-  weight        Json?
-  material      String?
-  care          String[]
-  createdAt     DateTime       @default(now())
-  updatedAt     DateTime       @updatedAt
-  orderItems    OrderItem[]
-  wishlistItems WishlistItem[]
-  season        Season[]
-  productType   ProductType?   @relation(fields: [productTypeId], references: [id])
-  productTypeId String?
-  collections   Collection[]   @relation("ProductToCollection")
-  hasDiscount      Boolean   @default(false)
-  discountPercent  Float?
-  discountStart    DateTime?
-  discountEnd      DateTime?
+  id              String         @id @default(cuid())
+  name            String
+  description     String
+  price           Float
+  originalPrice   Float?
+  images          String[]
+  inStock         Boolean        @default(true)
+  quantity        Int            @default(0)
+  category        String
+  subcategory     String?
+  tags            String[]
+  isNew           Boolean        @default(false)
+  isFeatured      Boolean        @default(false)
+  dimensions      Json?
+  weight          Json?
+  material        String?
+  care            String[]
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+  season          Season[]
+  productTypeId   String?
+  discountEnd     DateTime?
+  discountPercent Float?
+  discountStart   DateTime?
+  hasDiscount     Boolean        @default(false)
+  orderItems      OrderItem[]
+  productType     ProductType?   @relation(fields: [productTypeId], references: [id])
+  wishlistItems   WishlistItem[]
+  collections     Collection[]   @relation("ProductToCollection")
 
   @@index([productTypeId])
-}
-
-enum Season {
-  SPRING
-  SUMMER
-  FALL
-  WINTER
-  ANY
 }
 
 model OrderItem {
@@ -149,9 +135,9 @@ model ProductType {
   id          String    @id @default(cuid())
   name        String    @unique
   description String?
-  products    Product[]
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
+  products    Product[]
 }
 
 model Collection {
@@ -162,7 +148,21 @@ model Collection {
   heroImage   String?
   features    String[]
   isActive    Boolean   @default(true)
-  products    Product[] @relation("ProductToCollection")
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
+  products    Product[] @relation("ProductToCollection")
+}
+
+enum Role {
+  user
+  seller
+  admin
+}
+
+enum Season {
+  SPRING
+  SUMMER
+  FALL
+  WINTER
+  ANY
 }

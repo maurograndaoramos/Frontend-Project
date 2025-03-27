@@ -83,15 +83,44 @@ export async function getProducts(filters: ProductFilters = {}): Promise<Paginat
       throw new Error(responseData.error || `API returned status ${response.status}`);
     }
     
-    const result = {
-      data: responseData.products || [],
-      pagination: responseData.pagination || {
-        total: 0,
-        page: 1,
-        limit: 10,
-        pages: 0,
-      },
-    };
+    // Handle both old and new response formats
+    let result: PaginatedResponse<Product>;
+    
+    if (responseData.data) {
+      // New response format
+      result = {
+        data: responseData.data,
+        pagination: responseData.pagination || {
+          total: 0,
+          page: 1,
+          limit: 10,
+          pages: 0,
+        },
+      };
+    } else if (responseData.products) {
+      // Old response format
+      result = {
+        data: responseData.products,
+        pagination: responseData.pagination || {
+          total: 0,
+          page: 1,
+          limit: 10,
+          pages: 0,
+        },
+      };
+    } else {
+      // Fallback for unexpected format
+      console.error('Unexpected API response format:', responseData);
+      result = {
+        data: Array.isArray(responseData) ? responseData : [],
+        pagination: {
+          total: Array.isArray(responseData) ? responseData.length : 0,
+          page: 1,
+          limit: 10,
+          pages: 1,
+        },
+      };
+    }
     
     // Store in cache
     productCache.set(cacheKey, { data: result, timestamp: now });

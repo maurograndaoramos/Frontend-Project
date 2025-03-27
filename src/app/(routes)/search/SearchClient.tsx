@@ -33,6 +33,7 @@ export default function SearchClient() {
     includeFullData: false
   });
   
+  // Support both old and new API response formats
   const products = data?.data || [];
 
   if (isLoading) {

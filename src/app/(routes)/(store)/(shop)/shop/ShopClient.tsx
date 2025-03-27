@@ -69,6 +69,7 @@ export default function ShopClient() {
   // Use React Query hook with optimized data loading
   const { data, isLoading, isError } = useProducts(getQueryFilters());
   
+  // Support both old and new API response formats
   const products = data?.data || [];
 
   if (isLoading) {
@@ -98,6 +99,22 @@ export default function ShopClient() {
             </motion.div>
           ))}
         </div>
+      </motion.div>
+    );
+  }
+
+  if (isError) {
+    return (
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.3 }}
+        className="container mx-auto px-4 py-8"
+      >
+        <h1 className="text-3xl font-bold mb-4">Error Loading Products</h1>
+        <p className="text-muted-foreground mb-6">
+          There was an error loading products. Please try refreshing the page.
+        </p>
       </motion.div>
     );
   }

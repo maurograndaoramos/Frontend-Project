@@ -42,6 +42,7 @@ export function useProducts(filters: ProductFilters = {}) {
   return useQuery({
     queryKey: productKeys.list(filters),
     queryFn: () => {
+      console.log('Fetching products with filters:', filters);
       return getProducts({
         ...filters,
         // Only include related data if specifically requested
@@ -63,9 +64,11 @@ export function useProducts(filters: ProductFilters = {}) {
       // Special handling for database connection errors
       if (
         error?.message?.includes('concurrent connections limit exceeded') ||
-        error?.details?.includes('concurrent connections limit exceeded')
+        error?.details?.includes('concurrent connections limit exceeded') ||
+        error?.message?.includes('Prisma query error') ||
+        error?.message?.includes('Invalid invocation')
       ) {
-        console.log(`Retrying product fetch due to connection issue (attempt ${failureCount})`);
+        console.log(`Retrying product fetch due to database issue (attempt ${failureCount})`);
         return true;
       }
       
@@ -85,9 +88,28 @@ export function useProduct(id: string | undefined, includeRelated = false) {
   
   return useQuery({
     queryKey: enabled ? productKeys.detail(id as string, includeRelated) : ['products', 'detail', 'invalid'],
-    queryFn: () => getProduct(id as string, includeRelated),
+    queryFn: () => {
+      console.log(`Fetching product ${id} with includeRelated=${includeRelated}`);
+      return getProduct(id as string, includeRelated);
+    },
     enabled: enabled,
     staleTime: 10 * 60 * 1000, // 10 minutes
+    retry: (failureCount, error: any) => {
+      if (failureCount >= 3) return false;
+      
+      // Special handling for database connection errors
+      if (
+        error?.message?.includes('concurrent connections limit exceeded') ||
+        error?.details?.includes('concurrent connections limit exceeded') ||
+        error?.message?.includes('Prisma query error') ||
+        error?.message?.includes('Invalid invocation')
+      ) {
+        console.log(`Retrying product detail fetch due to database issue (attempt ${failureCount})`);
+        return true;
+      }
+      
+      return failureCount < 1;
+    },
   });
 }
 
