@@ -95,20 +95,20 @@ export default function CategoryFilter({ categories }: CategoryFilterProps) {
   return (
     <div className="space-y-2">
       {categories.map((category) => (
-        <div key={category.id} className="space-y-1">
+        <div key={category?.id || `category-${category?.name}`} className="space-y-1">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-2">
               <Checkbox
-                id={`category-${category.id}`}
-                checked={checkedCategories[category.id] || false}
-                onCheckedChange={() => handleCategoryChange(category.id)}
+                id={`category-${category?.id || category?.name}`}
+                checked={checkedCategories[category?.id || ''] || false}
+                onCheckedChange={() => category?.id && handleCategoryChange(category.id)}
               />
               <label
-                htmlFor={`category-${category.id}`}
+                htmlFor={`category-${category?.id || category?.name}`}
                 className="text-sm flex items-center cursor-pointer"
               >
-                <span className="capitalize">{category.name}</span>
-                <span className="text-muted-foreground text-xs ml-2">({category.count})</span>
+                <span className="capitalize">{category?.name || 'Unknown Category'}</span>
+                <span className="text-muted-foreground text-xs ml-2">({category?.count || 0})</span>
               </label>
             </div>
             
@@ -128,21 +128,21 @@ export default function CategoryFilter({ categories }: CategoryFilterProps) {
           </div>
           
           {/* Subcategories section */}
-          {category.hasSubcategories && expandedCategories[category.id] && (
+          {category?.hasSubcategories && expandedCategories[category?.id || ''] && (
             <div className="pl-6 space-y-1 mt-1 ml-1 border-l border-border/50">
-              {category.subcategories?.map((subcategory) => (
-                <div key={subcategory.id} className="flex items-center space-x-2">
+              {category?.subcategories?.map((subcategory) => (
+                <div key={subcategory?.id || `subcategory-${subcategory?.name}`} className="flex items-center space-x-2">
                   <Checkbox
-                    id={`subcategory-${subcategory.id}`}
-                    checked={checkedCategories[subcategory.id] || false}
-                    onCheckedChange={() => handleCategoryChange(subcategory.id)}
+                    id={`subcategory-${subcategory?.id || subcategory?.name}`}
+                    checked={checkedCategories[subcategory?.id || ''] || false}
+                    onCheckedChange={() => subcategory?.id && handleCategoryChange(subcategory.id)}
                   />
                   <label
-                    htmlFor={`subcategory-${subcategory.id}`}
+                    htmlFor={`subcategory-${subcategory?.id || subcategory?.name}`}
                     className="text-sm flex items-center justify-between w-full cursor-pointer"
                   >
-                    <span className="capitalize">{subcategory.name}</span>
-                    <span className="text-muted-foreground text-xs">({subcategory.count})</span>
+                    <span className="capitalize">{subcategory?.name || 'Unknown Subcategory'}</span>
+                    <span className="text-muted-foreground text-xs">({subcategory?.count || 0})</span>
                   </label>
                 </div>
               ))}

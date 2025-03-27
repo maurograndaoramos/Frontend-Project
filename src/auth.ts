@@ -20,8 +20,8 @@ declare module "next-auth" {
   interface Session {
     user: {
       id: string;
-      name?: string | null;
-      email?: string | null;
+      name: string | null;
+      email: string | null;
       image?: string | null;
     };
   }
@@ -30,6 +30,10 @@ declare module "next-auth" {
 declare module "@auth/core/jwt" {
   interface JWT {
     id: string;
+    email: string | null;
+    name: string | null;
+    accessToken?: string;
+    provider?: string;
   }
 }
 
@@ -89,36 +93,50 @@ export const authConfig = {
     }),
   ],
   callbacks: {
-    authorized({ auth, request: { nextUrl } }) {
-      const isLoggedIn = !!auth?.user;
-      const isOnDashboard = nextUrl.pathname.startsWith('/dashboard');
-      const isOnAdmin = nextUrl.pathname.startsWith('/admin');
-      const isOnCheckout = nextUrl.pathname.startsWith('/checkout');
-      
-      if (isOnAdmin) {
-        // Only admin users can access admin pages - you'll need to implement
-        // a check on the user role when you have that field in your schema
-        return isLoggedIn; // For now just checks if logged in
+    async jwt({ token, user, account, trigger }) {
+      if (trigger === "signIn" && user) {
+        token.id = user.id as string;
+        token.email = user.email as string;
+        token.name = user.name as string;
       }
+      if (account) {
+        token.accessToken = account.access_token;
+        token.provider = account.provider;
+      }
+      return token;
+    },
+    async session({ session, token }) {
+      if (token && session.user) {
+        session.user.id = token.id;
+        session.user.email = token.email;
+        session.user.name = token.name;
+      }
+      return session;
+    },
+    async redirect({ url, baseUrl }) {
+      // Handle relative URLs
+      if (url.startsWith("/")) {
+        return `${baseUrl}${url}`;
+      }
+      // Handle absolute URLs on the same origin
+      else if (new URL(url).origin === baseUrl) {
+        return url;
+      }
+      // Default to base URL
+      return baseUrl;
+    },
+    async authorized({ auth, request: { nextUrl } }) {
+      const isLoggedIn = !!auth?.user;
+      const isProtectedRoute = nextUrl.pathname.startsWith('/dashboard') || 
+                             nextUrl.pathname.startsWith('/admin') ||
+                             nextUrl.pathname.startsWith('/checkout');
       
-      if (isOnDashboard || isOnCheckout) {
+      if (isProtectedRoute) {
         return isLoggedIn;
       }
 
       return true;
-    },
-    jwt({ token, user }) {
-      if (user) {
-        token.id = user.id as string;
-      }
-      return token;
-    },
-    session({ session, token }) {
-      if (token && session.user) {
-        session.user.id = token.id as string;
-      }
-      return session;
-    },
+    }
   },
   pages: {
     signIn: "/login",
@@ -127,10 +145,11 @@ export const authConfig = {
   session: {
     strategy: "jwt",
     maxAge: 30 * 24 * 60 * 60, // 30 days
+    updateAge: 24 * 60 * 60, // 24 hours
   },
   cookies: {
     sessionToken: {
-      name: `next-auth.session-token`,
+      name: "next-auth.session-token",
       options: {
         httpOnly: true,
         sameSite: "lax",

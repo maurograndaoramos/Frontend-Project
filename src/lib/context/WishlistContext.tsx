@@ -109,7 +109,7 @@ export const WishlistProvider: React.FC<{ children: React.ReactNode }> = ({
             const data = await response.json();
             
             // Transform API data to match our WishlistItem format
-            const apiItems: WishlistItem[] = data.wishlist.map((item: any) => ({
+            const apiItems: WishlistItem[] = data.map((item: any) => ({
               id: item.productId,
               name: item.product.name,
               price: item.product.price,

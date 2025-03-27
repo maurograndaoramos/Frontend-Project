@@ -73,17 +73,24 @@ export default function LoginForm() {
           // Get callback URL from search params or default to dashboard
           const callbackUrl = searchParams.get("callbackUrl") || "/dashboard";
           
-          // Use direct redirect for better performance and reliability
-          // This approach skips the client-side state management which can be problematic
-          await signIn("credentials", {
+          const result = await signIn("credentials", {
             email: values.email,
             password: values.password,
             callbackUrl,
-            redirect: true,
+            redirect: false,
             remember: values.rememberMe,
           });
-          
-          // We won't reach this point if redirect is true
+
+          if (result?.error) {
+            toast({
+              variant: "destructive",
+              title: "Authentication failed",
+              description: "Invalid email or password.",
+            });
+          } else {
+            // Successful login
+            router.push(callbackUrl);
+          }
         } catch (error) {
           console.error("Login error:", error);
           toast({
@@ -91,9 +98,10 @@ export default function LoginForm() {
             title: "Something went wrong",
             description: "Please try again later.",
           });
+        } finally {
           setIsLoading(false);
         }
-      }
+    }
 
     // OAuth sign in functions
     const signInWithGoogle = async () => {
