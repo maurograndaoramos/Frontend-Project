@@ -6,6 +6,7 @@ import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import { Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { useSearchSuggestions } from "@/lib/api/searchApi";
 
 export default function SearchBar() {
   const router = useRouter();
@@ -15,6 +16,12 @@ export default function SearchBar() {
   const [searchQuery, setSearchQuery] = useState(
     searchParams.get("search") || ""
   );
+  
+  // Use React Query for search suggestions (will help with caching between page navigations)
+  const { 
+    data: suggestionsData, 
+    isLoading 
+  } = useSearchSuggestions(searchQuery, 5);
   
   // Update search query when URL changes
   useEffect(() => {

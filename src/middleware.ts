@@ -19,7 +19,13 @@ export async function middleware(request: NextRequest) {
   const authRoutes = ['/login', '/register', '/forgot-password'];
   
   // Protected routes that require authentication
-  const protectedRoutes = ['/dashboard', '/checkout', '/account'];
+  const protectedRoutes = [
+    '/dashboard', 
+    '/checkout',
+    '/dashboard/[username]/orders',
+    '/dashboard/[username]/wishlist',
+    '/dashboard/[username]/profile'
+  ];
   
   // Check if the pathname starts with any protected route
   const isProtectedRoute = protectedRoutes.some(route => 
@@ -58,7 +64,6 @@ export const config = {
     // Match all protected routes
     '/dashboard/:path*',
     '/checkout/:path*',
-    '/account/:path*',
     
     // Match auth routes only for redirect-to-dashboard logic (when already logged in)
     '/login',

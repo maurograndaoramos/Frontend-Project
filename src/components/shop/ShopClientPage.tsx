@@ -1,16 +1,16 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import ProductGrid from "@/components/shop/shop-components/ProductGrid";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Product } from "@/types/product";
-import { getProducts } from "@/lib/services/productService";
 import { useToast } from "@/lib/hooks/useToast";
 import RecentlyViewedProducts from "@/components/shop/shop-components/RecentlyViewedProducts";
 import { motion, AnimatePresence } from "framer-motion";
 import { getViewingHistory } from "@/lib/services/recommendationService";
+import { useProducts } from "@/lib/api/productApi";
 
 interface ShopClientPageProps {
   category?: string;
@@ -36,81 +36,63 @@ export default function ShopClientPage({
   isRecommended,
 }: ShopClientPageProps) {
   const { toast } = useToast();
-  const [products, setProducts] = useState<Product[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [pagination, setPagination] = useState({
+  const router = useRouter();
+
+  // Create query filters based on props
+  const getQueryFilters = () => {
+    if (isRecentlyViewed) {
+      const recentProductIds = getViewingHistory();
+      return {
+        ids: recentProductIds.length > 0 ? recentProductIds : undefined,
+        page,
+        limit: 12,
+        sort: recentProductIds.length > 0 ? sort : 'featured',
+      };
+    } 
+    
+    if (isRecommended) {
+      return {
+        category,
+        page,
+        limit: 12,
+        sort: 'featured',
+      };
+    } 
+    
+    return {
+      category,
+      search,
+      sort,
+      page,
+      limit: 12,
+      minPrice,
+      maxPrice,
+      inStock,
+    };
+  };
+
+  // Use React Query hook
+  const { data, isLoading, isError } = useProducts(getQueryFilters());
+  
+  // Extract data from query result
+  const products = data?.data || [];
+  const pagination = data?.pagination || {
     total: 0,
     page: 1,
     limit: 12,
     pages: 0,
-  });
+  };
 
-  useEffect(() => {
-    async function loadProducts() {
-      setLoading(true);
-      try {
-        console.log('Loading products with filters:', { category, search, sort, page, minPrice, maxPrice, inStock, isRecentlyViewed, isRecommended });
-        
-        let result;
-        
-        if (isRecentlyViewed) {
-          // Get recently viewed products IDs from local storage
-          const recentProductIds = getViewingHistory();
-          if (recentProductIds.length > 0) {
-            // Fetch products by IDs
-            result = await getProducts({
-              ids: recentProductIds,
-              page,
-              limit: 12,
-              sort
-            });
-          } else {
-            // If no recent products, show featured products instead
-            result = await getProducts({
-              sort: 'featured',
-              page,
-              limit: 12
-            });
-          }
-        } else if (isRecommended) {
-          // Get recommended products
-          result = await getProducts({
-            category,
-            page,
-            limit: 12,
-            sort: 'featured' // Recommended products usually sorted by featured
-          });
-        } else {
-          // Normal search/filter
-          result = await getProducts({
-            category,
-            search,
-            sort,
-            page,
-            limit: 12,
-            minPrice,
-            maxPrice,
-            inStock,
-          });
-        }
-        
-        setProducts(result.data);
-        setPagination(result.pagination);
-      } catch (error) {
-        toast({
-          variant: "destructive",
-          title: "Error loading products",
-          description: "Please try again later",
-        });
-      } finally {
-        setLoading(false);
-      }
-    }
-    
-    loadProducts();
-  }, [category, search, sort, page, minPrice, maxPrice, inStock, isRecentlyViewed, isRecommended, toast]);
+  // Show error toast if query fails
+  if (isError) {
+    toast({
+      variant: "destructive",
+      title: "Error loading products",
+      description: "Please try again later",
+    });
+  }
 
-  if (loading) {
+  if (isLoading) {
     return (
       <motion.div
         initial={{ opacity: 0 }}
@@ -196,16 +178,7 @@ export default function ShopClientPage({
         />
         
         {/* Only show recently viewed section if not already viewing recently viewed products */}
-        {!isRecentlyViewed && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.2 }}
-            className="mt-12"
-          >
-            <RecentlyViewedProducts maxItems={4} />
-          </motion.div>
-        )}
+        {!isRecentlyViewed && <RecentlyViewedProducts />}
       </motion.div>
     </AnimatePresence>
   );

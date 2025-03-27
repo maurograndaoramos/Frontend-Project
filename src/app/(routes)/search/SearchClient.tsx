@@ -1,16 +1,13 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
-import { getProducts } from "@/lib/services/productService";
 import ProductCard from "@/components/shop/shop-components/ProductCard";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Product } from "@/types/product";
+import { useProducts } from "@/lib/api/productApi";
+import { motion } from "framer-motion";
 
 export default function SearchClient() {
   const searchParams = useSearchParams();
-  const [products, setProducts] = useState<Product[]>([]);
-  const [loading, setLoading] = useState(true);
 
   // Extract search parameters
   const query = searchParams.get("q") || undefined;
@@ -21,35 +18,27 @@ export default function SearchClient() {
   const maxPrice = searchParams.get("max_price") ? parseFloat(searchParams.get("max_price") as string) : undefined;
   const inStock = searchParams.get("in_stock") === "true";
 
-  useEffect(() => {
-    async function loadProducts() {
-      setLoading(true);
-      try {
-        const result = await getProducts({
-          category,
-          search: query,
-          sort,
-          page,
-          limit: 12,
-          minPrice,
-          maxPrice,
-          inStock,
-        });
-        
-        setProducts(result.data);
-      } catch (error) {
-        console.error("Error loading products:", error);
-      } finally {
-        setLoading(false);
-      }
-    }
-    
-    loadProducts();
-  }, [query, category, sort, page, minPrice, maxPrice, inStock]);
+  // Use React Query hook to fetch products
+  const { data, isLoading, isError } = useProducts({
+    category,
+    search: query,
+    sort,
+    page,
+    limit: 12,
+    minPrice,
+    maxPrice,
+    inStock,
+  });
+  
+  const products = data?.data || [];
 
-  if (loading) {
+  if (isLoading) {
     return (
-      <div className="container mx-auto px-4 py-8">
+      <motion.div 
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        className="container mx-auto px-4 py-8"
+      >
         <div className="mb-6">
           <Skeleton className="h-8 w-64 mb-2" />
           <Skeleton className="h-4 w-96" />
@@ -64,23 +53,44 @@ export default function SearchClient() {
             </div>
           ))}
         </div>
+      </motion.div>
+    );
+  }
+
+  if (isError) {
+    return (
+      <div className="container mx-auto px-4 py-8">
+        <h1 className="text-3xl font-bold mb-4">Error</h1>
+        <p className="text-muted-foreground mb-6">
+          There was an error loading the search results. Please try again.
+        </p>
       </div>
     );
   }
 
   if (products.length === 0) {
     return (
-      <div className="container mx-auto px-4 py-8">
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.3 }}
+        className="container mx-auto px-4 py-8"
+      >
         <h1 className="text-3xl font-bold mb-4">No Results Found</h1>
         <p className="text-muted-foreground mb-6">
           We couldn't find any products matching "{query}".
         </p>
-      </div>
+      </motion.div>
     );
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.3 }}
+      className="container mx-auto px-4 py-8"
+    >
       <h1 className="text-3xl font-bold mb-2">
         {query ? `Search Results for "${query}"` : "Search Results"}
       </h1>
@@ -90,11 +100,16 @@ export default function SearchClient() {
       
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
         {products.map((product) => (
-          <div key={product.id}>
+          <motion.div 
+            key={product.id}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3 }}
+          >
             <ProductCard product={product} view="grid" />
-          </div>
+          </motion.div>
         ))}
       </div>
-    </div>
+    </motion.div>
   );
 } 

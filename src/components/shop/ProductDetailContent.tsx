@@ -20,51 +20,44 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Product } from "@/types/product";
-import { useCart } from "@/lib/context/CartContext";
-import { useWishlist } from "@/lib/context/WishlistContext";
 import { addToViewingHistory } from "@/lib/services/recommendationService";
-import { getProduct } from "@/lib/services/productService";
 import ProductRecommendations from "@/components/shop/shop-components/ProductRecommendations";
 import RecentlyViewedProducts from "@/components/shop/shop-components/RecentlyViewedProducts";
 import { Skeleton } from "@/components/ui/skeleton";
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from "sonner";
+import { useProduct } from "@/lib/api/productApi";
+import { useCart } from "@/lib/api/cartApi";
+import { useWishlist } from "@/lib/api/wishlistApi";
 
 export default function ProductDetailContent() {
   const params = useParams();
-  const [product, setProduct] = useState<Product | null>(null);
-  const [loading, setLoading] = useState(true);
+  const productId = params?.id as string;
   const [quantity, setQuantity] = useState(1);
   const [selectedImage, setSelectedImage] = useState(0);
-  const [isAddingToCart, setIsAddingToCart] = useState(false);
-  const { addItem } = useCart();
-  const { addToWishlist, removeFromWishlist, isInWishlist } = useWishlist();
+  
+  // Use React Query for cart and wishlist operations
+  const { addItem, isAddingItem } = useCart();
+  const { 
+    isInWishlist, 
+    addToWishlist, 
+    removeFromWishlist, 
+    isAddingToWishlist, 
+    isRemovingFromWishlist 
+  } = useWishlist();
+  
+  // Use React Query to fetch product data
+  const { data: product, isLoading, isError } = useProduct(productId);
   
   const isWishlisted = product ? isInWishlist(product.id) : false;
+  const isWishlistPending = isAddingToWishlist || isRemovingFromWishlist;
 
+  // Add to viewing history when product data is available
   useEffect(() => {
-    async function loadProduct() {
-      setLoading(true);
-      try {
-        const productId = params.id as string;
-        const productData = await getProduct(productId);
-        setProduct(productData);
-        
-        if (productData) {
-          addToViewingHistory(productData.id);
-        }
-      } catch (error) {
-        console.error('Error loading product:', error);
-        toast.error("Failed to load product details");
-      } finally {
-        setLoading(false);
-      }
+    if (product) {
+      addToViewingHistory(product.id);
     }
-
-    if (params.id) {
-      loadProduct();
-    }
-  }, [params.id]);
+  }, [product]);
 
   const incrementQuantity = () => {
     setQuantity(prev => prev + 1);
@@ -77,31 +70,32 @@ export default function ProductDetailContent() {
   const addToCart = async () => {
     if (!product) return;
     
-    setIsAddingToCart(true);
     try {
       await addItem(product, quantity);
       toast.success("Added to cart successfully!");
     } catch (error) {
       toast.error("Failed to add item to cart");
-    } finally {
-      setIsAddingToCart(false);
     }
   };
 
-  const toggleWishlist = () => {
+  const toggleWishlist = async () => {
     if (!product) return;
     
-    if (isWishlisted) {
-      removeFromWishlist(product.id);
-      toast.success("Removed from wishlist");
-    } else {
-      addToWishlist(product);
-      toast.success("Added to wishlist");
+    try {
+      if (isWishlisted) {
+        await removeFromWishlist(product.id);
+        toast.success("Removed from wishlist");
+      } else {
+        await addToWishlist(product);
+        toast.success("Added to wishlist");
+      }
+    } catch (error) {
+      toast.error("Failed to update wishlist");
     }
   };
 
   // Loading state
-  if (loading) {
+  if (isLoading) {
     return (
       <motion.div 
         initial={{ opacity: 0 }}
@@ -148,7 +142,7 @@ export default function ProductDetailContent() {
   }
 
   // Error state or product not found
-  if (!product) {
+  if (isError || !product) {
     return (
       <motion.div 
         initial={{ opacity: 0, y: 20 }}
@@ -360,9 +354,9 @@ export default function ProductDetailContent() {
                 size="lg"
                 className="flex-1"
                 onClick={addToCart}
-                disabled={!product.inStock || isAddingToCart}
+                disabled={!product.inStock || isAddingItem}
               >
-                {isAddingToCart ? (
+                {isAddingItem ? (
                   <motion.div
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
