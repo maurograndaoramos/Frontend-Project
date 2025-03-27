@@ -10,7 +10,6 @@ export async function GET(request: Request) {
   // Check if response is in cache
   const cachedData = categoryCache.get(cacheKey);
   if (cachedData) {
-    console.log(`Using cached categories`);
     return NextResponse.json(cachedData);
   }
   

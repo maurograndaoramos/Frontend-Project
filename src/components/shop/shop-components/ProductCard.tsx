@@ -43,8 +43,6 @@ export default function ProductCard({ product, view }: ProductCardProps) {
     ? imageArray[0].trim() // Trim whitespace from path
     : "/images/products/default-product.jpg";
 
-  console.log(`Product: ${product.name}, Primary image:`, primaryImage);
-
   const addToCart = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();

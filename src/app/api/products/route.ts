@@ -55,7 +55,7 @@ export async function GET(request: Request) {
   // Check if response is in cache
   const cachedData = productCache.get(cacheKey);
   if (cachedData) {
-    console.log(`Using cached products for query: ${cacheKey}`);
+
     return NextResponse.json(cachedData);
   }
   

@@ -304,13 +304,13 @@ export default function DashboardPage() {
                     animate={{ opacity: 1, x: 0 }}
                     exit={{ opacity: 0, x: 20 }}
                     transition={{ delay: index * 0.1 }}
-                    className="flex items-center justify-between border-b pb-4 transition-all duration-300 hover:bg-muted/50 rounded-lg p-4 group"
+                    className="flex flex-col sm:flex-row sm:items-center justify-between border-b pb-4 transition-all duration-300 hover:bg-muted/50 rounded-lg p-4 group gap-4 sm:gap-2"
                   >
-                    <div>
-                      <p className="font-medium">{order.id}</p>
+                    <div className="min-w-0">
+                      <p className="font-medium truncate">{order.id}</p>
                       <p className="text-sm text-muted-foreground">{order.date}</p>
                     </div>
-                    <div className="flex items-center gap-4">
+                    <div className="flex flex-wrap items-center gap-2 sm:gap-4">
                       <Badge 
                         variant={
                           order.status === "Delivered" ? "default" : 

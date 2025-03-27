@@ -10,8 +10,7 @@ export async function GET(req: Request) {
     // Clean and process the token to handle URL encoding and newlines
     const token = rawToken?.replace(/\r?\n|\r/g, '')?.trim();
     
-    console.log('Raw token:', rawToken);
-    console.log('Processed token:', token);
+
 
     if (!token) {
       return NextResponse.json(

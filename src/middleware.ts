@@ -15,7 +15,6 @@ export async function middleware(request: NextRequest) {
 
     // Debug token (remove in production)
     if (process.env.NODE_ENV !== "production") {
-      console.log("Token in middleware:", !!token);
     }
 
     const isAuthenticated = !!token;

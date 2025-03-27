@@ -27,7 +27,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from "sonner";
 import { useProduct } from "@/lib/api/productApi";
-import { useCart } from "@/lib/api/cartApi";
+import { useCart } from "@/lib/context/CartContext";
 import { useWishlist } from "@/lib/api/wishlistApi";
 
 export default function ProductDetailContent() {
@@ -288,18 +288,18 @@ export default function ProductDetailContent() {
           {/* Add to cart & wishlist buttons */}
           <div className="flex flex-col sm:flex-row gap-3">
             <Button
-              className="flex-1"
-              size="lg"
+              className="flex-1 h-14 text-lg font-medium shadow-sm hover:shadow-md transition-all duration-300 bg-primary hover:bg-primary/90"
               disabled={!product.inStock}
               onClick={addToCart}
             >
-              <ShoppingCart className="mr-2 h-5 w-5" />
+              <ShoppingCart className="mr-2 h-6 w-6" />
               {product.inStock ? 'Add to Cart' : 'Out of Stock'}
             </Button>
             <Button
               variant={isWishlisted ? "default" : "outline"}
               size="lg"
               onClick={toggleWishlist}
+              className="h-14"
             >
               <Heart className={`mr-2 h-5 w-5 ${isWishlisted ? "fill-current" : ""}`} />
               {isWishlisted ? 'Remove from Wishlist' : 'Add to Wishlist'}

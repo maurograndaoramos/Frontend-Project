@@ -324,102 +324,99 @@ export default function OrdersPage() {
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   exit={{ opacity: 0 }}
-                  className="overflow-x-auto"
+                  className="space-y-4"
                 >
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Order ID</TableHead>
-                        <TableHead>Date</TableHead>
-                        <TableHead>Status</TableHead>
-                        <TableHead>Total</TableHead>
-                        <TableHead className="text-right">Actions</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      <AnimatePresence>
-                        {filteredOrders.map((order, index) => (
-                          <React.Fragment key={order.id}>
-                            <motion.tr
-                              initial={{ opacity: 0, y: 20 }}
-                              animate={{ opacity: 1, y: 0 }}
-                              exit={{ opacity: 0, y: -20 }}
-                              transition={{ delay: index * 0.1 }}
-                              className="cursor-pointer transition-all duration-300 hover:bg-muted/50"
-                              onClick={() => toggleOrderDetails(order.id)}
-                            >
-                              <TableCell className="font-medium">{order.id}</TableCell>
-                              <TableCell>{order.date}</TableCell>
-                              <TableCell>
-                                <Badge 
-                                  variant={getStatusInfo(order.status).variant}
-                                  className="flex items-center gap-1 transition-colors"
-                                >
-                                  {React.createElement(getStatusInfo(order.status).icon, {
-                                    className: "h-3 w-3"
-                                  })}
-                                  {order.status}
-                                </Badge>
-                              </TableCell>
-                              <TableCell>{order.total}</TableCell>
-                              <TableCell className="text-right">
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  className="transition-all duration-300 hover:bg-primary hover:text-primary-foreground"
-                                >
-                                  <Eye className="h-4 w-4" />
-                                </Button>
-                              </TableCell>
-                            </motion.tr>
-                            <AnimatePresence>
-                              {expandedOrder === order.id && (
-                                <motion.tr
-                                  initial={{ opacity: 0, height: 0 }}
-                                  animate={{ opacity: 1, height: "auto" }}
-                                  exit={{ opacity: 0, height: 0 }}
-                                  transition={{ duration: 0.2 }}
-                                >
-                                  <TableCell colSpan={5} className="p-0">
-                                    <motion.div
-                                      initial={{ opacity: 0 }}
-                                      animate={{ opacity: 1 }}
-                                      exit={{ opacity: 0 }}
-                                      className="bg-muted/30 p-4"
-                                    >
-                                      <div className="space-y-4">
-                                        <div>
-                                          <h4 className="font-medium mb-2">Order Items</h4>
-                                          <div className="space-y-2">
-                                            {order.items.map((item, i) => (
-                                              <div key={i} className="flex justify-between text-sm">
-                                                <span>x {item.quantity} {item.name}</span>
-                                                <span>{item.price}</span>
-                                              </div>
-                                            ))}
+                  <AnimatePresence>
+                    {filteredOrders.map((order, index) => (
+                      <motion.div
+                        key={order.id}
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -20 }}
+                        transition={{ delay: index * 0.1 }}
+                      >
+                        <Card className="overflow-hidden transition-all duration-300 hover:shadow-md">
+                          <div 
+                            className="cursor-pointer"
+                            onClick={() => toggleOrderDetails(order.id)}
+                          >
+                            <CardContent className="p-4">
+                              <div className="flex flex-col space-y-4">
+                                {/* Order Header */}
+                                <div className="flex items-center justify-between">
+                                  <div className="min-w-0 flex-1">
+                                    <p className="text-sm font-medium truncate">{order.id}</p>
+                                    <p className="text-sm text-muted-foreground">{order.date}</p>
+                                  </div>
+                                  <Badge 
+                                    variant={getStatusInfo(order.status).variant}
+                                    className="ml-2 flex items-center gap-1"
+                                  >
+                                    {React.createElement(getStatusInfo(order.status).icon, {
+                                      className: "h-3 w-3"
+                                    })}
+                                    {order.status}
+                                  </Badge>
+                                </div>
+                                
+                                {/* Order Total */}
+                                <div className="flex items-center justify-between">
+                                  <p className="text-sm font-medium">Total</p>
+                                  <p className="text-sm font-bold">{order.total}</p>
+                                </div>
+                              </div>
+                            </CardContent>
+                          </div>
+
+                          {/* Expandable Details */}
+                          <AnimatePresence>
+                            {expandedOrder === order.id && (
+                              <motion.div
+                                initial={{ height: 0, opacity: 0 }}
+                                animate={{ height: "auto", opacity: 1 }}
+                                exit={{ height: 0, opacity: 0 }}
+                                transition={{ duration: 0.2 }}
+                                className="border-t"
+                              >
+                                <CardContent className="p-4 bg-muted/30">
+                                  <div className="space-y-4">
+                                    {/* Order Items */}
+                                    <div>
+                                      <h4 className="text-sm font-medium mb-2">Order Items</h4>
+                                      <div className="space-y-2">
+                                        {order.items.map((item, i) => (
+                                          <div key={i} className="flex justify-between text-sm">
+                                            <span className="text-muted-foreground">
+                                              {item.quantity}x {item.name}
+                                            </span>
+                                            <span className="font-medium">{item.price}</span>
                                           </div>
-                                        </div>
-                                        <div>
-                                          <h4 className="font-medium mb-2">Shipping Address</h4>
-                                          <p className="text-sm text-muted-foreground">{order.address}</p>
-                                        </div>
-                                        {order.trackingNumber && (
-                                          <div>
-                                            <h4 className="font-medium mb-2">Tracking Number</h4>
-                                            <p className="text-sm text-muted-foreground">{order.trackingNumber}</p>
-                                          </div>
-                                        )}
+                                        ))}
                                       </div>
-                                    </motion.div>
-                                  </TableCell>
-                                </motion.tr>
-                              )}
-                            </AnimatePresence>
-                          </React.Fragment>
-                        ))}
-                      </AnimatePresence>
-                    </TableBody>
-                  </Table>
+                                    </div>
+
+                                    {/* Shipping Address */}
+                                    <div>
+                                      <h4 className="text-sm font-medium mb-2">Shipping Address</h4>
+                                      <p className="text-sm text-muted-foreground">{order.address}</p>
+                                    </div>
+
+                                    {/* Tracking Number */}
+                                    {order.trackingNumber && (
+                                      <div>
+                                        <h4 className="text-sm font-medium mb-2">Tracking Number</h4>
+                                        <p className="text-sm text-muted-foreground">{order.trackingNumber}</p>
+                                      </div>
+                                    )}
+                                  </div>
+                                </CardContent>
+                              </motion.div>
+                            )}
+                          </AnimatePresence>
+                        </Card>
+                      </motion.div>
+                    ))}
+                  </AnimatePresence>
                 </motion.div>
               )}
             </AnimatePresence>

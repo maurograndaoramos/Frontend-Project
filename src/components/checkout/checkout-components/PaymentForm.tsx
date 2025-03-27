@@ -4,7 +4,7 @@ import { useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm, Path } from "react-hook-form";
 import * as z from "zod";
-import { ArrowLeft, ArrowRight, CreditCard, Wallet } from "lucide-react";
+import { ArrowLeft, ArrowRight, CreditCard, Smartphone } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Form,
@@ -231,7 +231,7 @@ export default function PaymentForm({
                     onValueChange={handleMethodChange}
                     defaultValue={field.value}
                     value={paymentMethod}
-                    className="flex flex-col space-y-1"
+                    className="flex flex-col space-y-3"
                   >
                     <div className="flex items-center space-x-3 space-y-0 rounded-md border p-4">
                       <RadioGroupItem value="credit-card" id="credit-card" />
@@ -240,36 +240,28 @@ export default function PaymentForm({
                           htmlFor="credit-card"
                           className="font-medium text-sm cursor-pointer flex items-center"
                         >
-                          <CreditCard className="h-4 w-4 mr-2" />
+                          <CreditCard className="h-5 w-5 mr-2 text-primary" />
                           Credit or Debit Card
                         </label>
                         <p className="text-xs text-muted-foreground mt-1">
                           Pay with your credit or debit card
                         </p>
                       </div>
-                      <div className="flex space-x-1">
-                        <div className="h-6 w-10 rounded border flex items-center justify-center bg-white">
+                      <div className="flex space-x-2">
+                        <div className="h-8 w-12 rounded border flex items-center justify-center bg-white">
                           <Image
-                            src="/api/placeholder/40/25"
-                            width={28}
-                            height={18}
+                            src="/visa.svg"
+                            width={32}
+                            height={20}
                             alt="Visa"
                           />
                         </div>
-                        <div className="h-6 w-10 rounded border flex items-center justify-center bg-white">
+                        <div className="h-8 w-12 rounded border flex items-center justify-center bg-white">
                           <Image
-                            src="/api/placeholder/40/25"
-                            width={28}
-                            height={18}
+                            src="/mastercard.svg"
+                            width={32}
+                            height={20}
                             alt="Mastercard"
-                          />
-                        </div>
-                        <div className="h-6 w-10 rounded border flex items-center justify-center bg-white">
-                          <Image
-                            src="/api/placeholder/40/25"
-                            width={28}
-                            height={18}
-                            alt="Amex"
                           />
                         </div>
                       </div>
@@ -282,16 +274,16 @@ export default function PaymentForm({
                           htmlFor="mbway"
                           className="font-medium text-sm cursor-pointer flex items-center"
                         >
-                          <Wallet className="h-4 w-4 mr-2" />
+                          <Smartphone className="h-5 w-5 mr-2 text-primary" />
                           MBWay
                         </label>
                         <p className="text-xs text-muted-foreground mt-1">
                           Pay with your MBWay account
                         </p>
                       </div>
-                      <div className="h-6 w-16 rounded border flex items-center justify-center bg-white">
+                      <div className="h-8 w-16 rounded border flex items-center justify-center bg-white">
                         <Image
-                          src="/api/placeholder/64/40"
+                          src="/mbway.svg"
                           width={48}
                           height={30}
                           alt="MBWay"
@@ -390,15 +382,6 @@ export default function PaymentForm({
           {paymentMethod === "mbway" && (
             <div className="bg-muted/50 p-4 rounded-md space-y-4">
               <div className="flex items-center gap-3">
-                <div className="h-10 w-10 rounded flex items-center justify-center bg-[#f16e22]">
-                  <Image
-                    src="/api/placeholder/64/40"
-                    width={36}
-                    height={36}
-                    alt="MBWay"
-                    className="h-8 w-auto"
-                  />
-                </div>
                 <div>
                   <h3 className="font-medium text-sm">MBWay Payment</h3>
                   <p className="text-xs text-muted-foreground">Fast, secure mobile payments</p>
@@ -437,17 +420,25 @@ export default function PaymentForm({
             </div>
           )}
 
-          <div className="flex justify-between">
-            <Button type="button" variant="outline" onClick={onBack}>
-              <ArrowLeft className="mr-2 h-4 w-4" /> Back to Shipping
-            </Button>
+          <div className="sticky bottom-0 left-0 right-0 py-4 bg-background border-t mt-8 -mx-6 px-6">
+            <div className="flex flex-col md:flex-row gap-3 w-full">
+              <Button 
+                type="button" 
+                variant="outline" 
+                onClick={onBack}
+                className="w-full md:w-auto order-2 md:order-1"
+              >
+                <ArrowLeft className="mr-2 h-4 w-4" /> Back to Shipping
+              </Button>
 
-            <Button 
-              type="button"
-              onClick={handleContinueClick}
-            >
-              Continue to Review <ArrowRight className="ml-2 h-4 w-4" />
-            </Button>
+              <Button 
+                type="button"
+                onClick={handleContinueClick}
+                className="w-full md:w-auto order-1 md:order-2"
+              >
+                Continue to Review <ArrowRight className="ml-2 h-4 w-4" />
+              </Button>
+            </div>
           </div>
         </form>
       </Form>
