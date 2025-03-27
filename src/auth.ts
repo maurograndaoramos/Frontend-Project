@@ -7,6 +7,10 @@ import FacebookProvider from "next-auth/providers/facebook";
 import bcrypt from "bcrypt";
 import { CustomPrismaAdapter } from "@/lib/auth-adapter";
 import { prisma } from "@/lib/prisma";
+import { PrismaAdapter } from '@auth/prisma-adapter';
+import { compare } from 'bcrypt';
+import { z } from 'zod';
+import { getUserByEmail } from '@/lib/services/userService';
 
 // Define the shape of your session
 declare module "next-auth" {
@@ -26,12 +30,22 @@ declare module "@auth/core/jwt" {
   }
 }
 
+// Define the shape of your user
+export type User = {
+  id: string;
+  name: string;
+  email: string;
+  image?: string;
+  role: string;
+};
+
+// Set up NextAuth configuration
 export const authConfig = {
-  adapter: CustomPrismaAdapter(),
+  adapter: CustomPrismaAdapter(prisma),
   providers: [
     GoogleProvider({
-      clientId: process.env.GOOGLE_CLIENT_ID ?? "",
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET ?? "",
+      clientId: process.env.GOOGLE_CLIENT_ID || '',
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET || '',
     }),
     FacebookProvider({
       clientId: process.env.FACEBOOK_CLIENT_ID ?? "",
@@ -40,7 +54,7 @@ export const authConfig = {
     CredentialsProvider({
       name: "credentials",
       credentials: {
-        email: { label: "Email", type: "text" },
+        email: { label: "Email", type: "email" },
         password: { label: "Password", type: "password" },
       },
       async authorize(credentials) {
@@ -112,8 +126,10 @@ export const authConfig = {
     maxAge: 30 * 24 * 60 * 60, // 30 days
   },
   secret: process.env.NEXTAUTH_SECRET,
+  trustHost: true,
 } satisfies NextAuthConfig;
 
+// Export NextAuth handlers and helpers
 export const { 
   handlers: { GET, POST },
   auth,

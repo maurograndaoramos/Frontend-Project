@@ -16,9 +16,8 @@ const nextConfig = {
       bodySizeLimit: '2mb',
     },
   },
-  // Remove invalid settings
-  // unstable_allowDynamic has been removed as it's no longer necessary
-  // with proper 'use client' directives and dynamic exports
+  // Auth.js is configured with trustHost: true in src/auth.ts
+  // This allows it to work correctly in both development and production environments
 };
 
 export default nextConfig; 
