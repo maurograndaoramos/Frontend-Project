@@ -152,7 +152,7 @@ export default function ProductCard({ product, view }: ProductCardProps) {
               </Link>
             </div>
             <div className="flex items-center mt-auto">
-              <div className="flex flex-col">
+              <div className="flex items-center gap-2">
                 <span className="font-semibold text-lg">{formatPrice(product.price)}</span>
                 {product.hasDiscount && product.originalPrice && (
                   <span className="text-sm text-muted-foreground line-through">
@@ -268,7 +268,7 @@ export default function ProductCard({ product, view }: ProductCardProps) {
                 </p>
               </div>
               <div className="flex items-center justify-between pt-2">
-                <div className="flex flex-col">
+                <div className="flex items-center gap-2">
                   <span className="font-semibold text-lg">{formatPrice(product.price)}</span>
                   {product.hasDiscount && product.originalPrice && (
                     <span className="text-sm text-muted-foreground line-through">
