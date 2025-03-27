@@ -1,13 +1,12 @@
 import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth/next";
-import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import { auth } from "@/auth";
 import { updateNotificationPreferences } from "@/lib/services/userService";
 
 // PUT /api/users/notifications - Update notification preferences
 export async function PUT(req: Request) {
   try {
     // Check if user is authenticated
-    const session = await getServerSession(authOptions);
+    const session = await auth();
     
     if (!session?.user) {
       return NextResponse.json(

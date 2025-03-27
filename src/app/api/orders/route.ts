@@ -1,14 +1,13 @@
 // src/app/api/orders/route.ts
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
+import { auth } from "@/auth";
 import { createOrder, getUserOrders } from "@/lib/services/orderService";
 
 // POST /api/orders - Create a new order
 export async function POST(req: Request) {
   try {
-    const session = await getServerSession(authOptions);
+    const session = await auth();
     
     if (!session?.user?.email) {
       return NextResponse.json(
@@ -62,7 +61,7 @@ export async function POST(req: Request) {
 export async function GET(req: Request) {
   try {
     // Check if user is authenticated
-    const session = await getServerSession(authOptions);
+    const session = await auth();
     
     if (!session?.user) {
       return NextResponse.json(

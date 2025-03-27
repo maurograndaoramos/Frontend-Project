@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useSearchParams } from "next/navigation";
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import ProductGrid from "@/components/shop/shop-components/ProductGrid";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -12,9 +12,29 @@ import RecentlyViewedProducts from "@/components/shop/shop-components/RecentlyVi
 import { motion, AnimatePresence } from "framer-motion";
 import { getViewingHistory } from "@/lib/services/recommendationService";
 
-// Create a client component specifically for search params
-function ShopContentWithParams() {
-  const searchParams = useSearchParams();
+interface ShopClientPageProps {
+  category?: string;
+  search?: string;
+  sort: string;
+  page: number;
+  minPrice?: number;
+  maxPrice?: number;
+  inStock: boolean;
+  isRecentlyViewed: boolean;
+  isRecommended: boolean;
+}
+
+export default function ShopClientPage({
+  category,
+  search,
+  sort,
+  page,
+  minPrice,
+  maxPrice,
+  inStock,
+  isRecentlyViewed,
+  isRecommended,
+}: ShopClientPageProps) {
   const { toast } = useToast();
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
@@ -24,19 +44,6 @@ function ShopContentWithParams() {
     limit: 12,
     pages: 0,
   });
-
-  // Extract filter values from URL params
-  const category = searchParams.get('category') || undefined;
-  const search = searchParams.get('search') || undefined;
-  const sort = searchParams.get('sort') || 'featured';
-  const page = parseInt(searchParams.get('page') || '1');
-  const minPrice = searchParams.get('minPrice') ? parseFloat(searchParams.get('minPrice') || '0') : undefined;
-  const maxPrice = searchParams.get('maxPrice') ? parseFloat(searchParams.get('maxPrice') || '500') : undefined;
-  const inStock = searchParams.get('inStock') === 'true';
-  
-  // New parameters
-  const isRecentlyViewed = searchParams.get('recent') === 'true';
-  const isRecommended = searchParams.get('recommended') === 'true';
 
   useEffect(() => {
     async function loadProducts() {
@@ -67,8 +74,6 @@ function ShopContentWithParams() {
           }
         } else if (isRecommended) {
           // Get recommended products
-          // Since we don't have a specific product context here, 
-          // we'll get recommendations based on category if available
           result = await getProducts({
             category,
             page,
@@ -186,6 +191,8 @@ function ShopContentWithParams() {
                 : ""
           } products (${pagination.total} products)`}
           pagination={pagination}
+          currentSort={sort}
+          currentPage={page}
         />
         
         {/* Only show recently viewed section if not already viewing recently viewed products */}
@@ -202,9 +209,4 @@ function ShopContentWithParams() {
       </motion.div>
     </AnimatePresence>
   );
-}
-
-// Main export wrapped with Suspense
-export default function ShopPageContent() {
-  return <ShopContentWithParams />;
-}
+} 

@@ -1,10 +1,11 @@
 "use client";
 
+import { Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { redirect } from 'next/navigation';
 import OrderConfirmationPageContent from '@/components/checkout/ConfirmationContent';
 
-export default function OrderConfirmationPage() {
+function ConfirmationContent() {
   const searchParams = useSearchParams();
   const orderId = searchParams.get('orderId');
   
@@ -13,4 +14,12 @@ export default function OrderConfirmationPage() {
   }
   
   return <OrderConfirmationPageContent orderId={orderId} />;
+}
+
+export default function OrderConfirmationPage() {
+  return (
+    <Suspense fallback={<div>Loading order details...</div>}>
+      <ConfirmationContent />
+    </Suspense>
+  );
 } 

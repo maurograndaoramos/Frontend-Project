@@ -1,36 +1,80 @@
 // src/app/api/wishlist/route.ts
 import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth/next";
-import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import { auth } from "@/auth";
+import { prisma } from "@/lib/prisma";
 import { 
   getUserWishlist, 
   clearWishlist 
 } from "@/lib/services/wishlistService";
 
-// GET /api/wishlist - Get user's wishlist
-export async function GET(req: Request) {
+/**
+ * GET /api/wishlist - Get user's wishlist items
+ */
+export async function GET() {
   try {
-    // Check if user is authenticated
-    const session = await getServerSession(authOptions);
+    const session = await auth();
     
-    if (!session?.user) {
-      return NextResponse.json(
-        { error: "Unauthorized" },
-        { status: 401 }
-      );
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const wishlistItems = await prisma.wishlistItem.findMany({
+      where: {
+        userId: session.user.id,
+      },
+      include: {
+        product: true,
+      },
+    });
+
+    return NextResponse.json(wishlistItems);
+  } catch (error) {
+    console.error("[WISHLIST_GET]", error);
+    return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
+  }
+}
+
+/**
+ * POST /api/wishlist - Add item to wishlist
+ */
+export async function POST(request: Request) {
+  try {
+    const session = await auth();
+    
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
     
-    // Get user's wishlist
-    const wishlist = await getUserWishlist(session.user.id);
+    const { productId } = await request.json();
     
-    return NextResponse.json({ wishlist });
+    if (!productId) {
+      return NextResponse.json({ error: "Product ID is required" }, { status: 400 });
+    }
+    
+    // Check if item already exists in wishlist
+    const existingItem = await prisma.wishlistItem.findFirst({
+      where: {
+        userId: session.user.id,
+        productId,
+      },
+    });
+    
+    if (existingItem) {
+      return NextResponse.json({ error: "Item already in wishlist" }, { status: 409 });
+    }
+    
+    // Add item to wishlist
+    const wishlistItem = await prisma.wishlistItem.create({
+      data: {
+        userId: session.user.id,
+        productId,
+      },
+    });
+    
+    return NextResponse.json(wishlistItem);
   } catch (error) {
-    console.error("Error fetching wishlist:", error);
-    
-    return NextResponse.json(
-      { error: "Failed to fetch wishlist" },
-      { status: 500 }
-    );
+    console.error("[WISHLIST_POST]", error);
+    return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
   }
 }
 
@@ -38,7 +82,7 @@ export async function GET(req: Request) {
 export async function DELETE(req: Request) {
   try {
     // Check if user is authenticated
-    const session = await getServerSession(authOptions);
+    const session = await auth();
     
     if (!session?.user) {
       return NextResponse.json(

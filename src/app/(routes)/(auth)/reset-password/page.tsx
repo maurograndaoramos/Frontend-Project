@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -31,7 +31,7 @@ const formSchema = z.object({
   path: ["confirmPassword"],
 });
 
-export default function ResetPasswordPage() {
+function ResetPasswordContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const rawToken = searchParams.get("token");
@@ -266,5 +266,20 @@ export default function ResetPasswordPage() {
         </form>
       </Form>
     </div>
+  );
+}
+
+export default function ResetPasswordPage() {
+  return (
+    <Suspense fallback={<div className="w-full text-center">
+      <div className="inline-block animate-spin mb-4">
+        <Key className="h-8 w-8 text-primary" />
+      </div>
+      <h1 className="text-xl font-semibold tracking-tight mb-3">
+        Loading...
+      </h1>
+    </div>}>
+      <ResetPasswordContent />
+    </Suspense>
   );
 }

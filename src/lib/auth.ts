@@ -1,59 +1,13 @@
-import { NextAuthOptions } from "next-auth";
-import CredentialsProvider from "next-auth/providers/credentials";
-import { PrismaAdapter } from "@next-auth/prisma-adapter";
-import { prisma } from "@/lib/prisma";
-import bcrypt from "bcrypt";
+/**
+ * @deprecated Use the new auth.ts file in the src root instead.
+ * This file is kept for backwards compatibility but will be removed in a future update.
+ * 
+ * The new auth module can be imported with:
+ * import { auth, signIn, signOut } from "@/auth";
+ */
 
-export const authOptions: NextAuthOptions = {
-  adapter: PrismaAdapter(prisma),
-  providers: [
-    CredentialsProvider({
-      name: "credentials",
-      credentials: {
-        email: { label: "Email", type: "email" },
-        password: { label: "Password", type: "password" }
-      },
-      async authorize(credentials) {
-        if (!credentials?.email || !credentials?.password) {
-          return null;
-        }
+// This is a placeholder to prevent imports from breaking
+// The real implementation is now in /src/auth.ts
+export const authOptions = {};
 
-        const user = await prisma.user.findUnique({
-          where: {
-            email: credentials.email
-          }
-        });
-
-        if (!user || !user.hashedPassword) {
-          return null;
-        }
-
-        const isCorrectPassword = await bcrypt.compare(
-          credentials.password,
-          user.hashedPassword
-        );
-
-        if (!isCorrectPassword) {
-          return null;
-        }
-
-        return user;
-      }
-    })
-  ],
-  pages: {
-    signIn: "/login",
-  },
-  session: {
-    strategy: "jwt",
-  },
-  callbacks: {
-    async session({ session, token }) {
-      if (session.user && token.sub) {
-        session.user.id = token.sub;
-      }
-      return session;
-    }
-  },
-  secret: process.env.NEXTAUTH_SECRET,
-}; 
+console.warn('src/lib/auth.ts is deprecated. Use src/auth.ts instead.'); 

@@ -1,14 +1,13 @@
 // src/app/api/promotions/route.ts
 import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth/next";
-import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import { auth } from "@/auth";
 import { sendPromotionalEmail } from "@/lib/services/orderService";
 
 // POST /api/promotions - Send promotional emails
 export async function POST(req: Request) {
   try {
     // Check if user is authenticated and is an admin
-    const session = await getServerSession(authOptions);
+    const session = await auth();
     
     if (!session?.user) {
       return NextResponse.json(

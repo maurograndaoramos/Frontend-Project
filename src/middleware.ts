@@ -2,8 +2,10 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { getToken } from "next-auth/jwt";
 
+// Middleware for handling authentication checks
 export async function middleware(request: NextRequest) {
-  const token = await getToken({ req: request, secret: process.env.NEXTAUTH_SECRET });
+  // Get token from NextAuth
+  const token = await getToken({ req: request });
   const isAuthenticated = !!token;
   
   // Get the pathname of the request
@@ -34,7 +36,7 @@ export async function middleware(request: NextRequest) {
   if (isProtectedRoute && !isAuthenticated) {
     const loginUrl = new URL("/login", request.url);
     // Store the current URL to redirect back after login
-    loginUrl.searchParams.set("callbackUrl", pathname);
+    loginUrl.searchParams.set("callbackUrl", encodeURIComponent(pathname));
     return NextResponse.redirect(loginUrl);
   }
   

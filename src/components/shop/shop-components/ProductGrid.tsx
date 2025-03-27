@@ -2,7 +2,7 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter, usePathname, useSearchParams } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import ProductCard from "./ProductCard";
 import { Grid, List } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -34,25 +34,27 @@ interface ProductGridProps {
     limit: number;
     pages: number;
   };
+  currentSort?: string;
+  currentPage?: number;
 }
 
 export default function ProductGrid({ 
   products, 
   title, 
   description,
-  pagination
+  pagination,
+  currentSort = 'featured',
+  currentPage = 1
 }: ProductGridProps) {
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const router = useRouter();
   const pathname = usePathname();
-  const searchParams = useSearchParams();
   
-  const currentSort = searchParams.get('sort') || 'featured';
-  const currentPage = parseInt(searchParams.get('page') || '1');
-
   // Function to update URL with new parameters
   const updateParams = (key: string, value: string) => {
-    const params = new URLSearchParams(searchParams.toString());
+    // Create a URLSearchParams object from the current URL
+    const url = new URL(window.location.href);
+    const params = new URLSearchParams(url.search);
     
     if (value) {
       params.set(key, value);

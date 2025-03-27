@@ -1,11 +1,14 @@
-"use client";
-
-import OrderConfirmationPageContent from '@/components/checkout/ConfirmationContent';
+import { Suspense } from 'react';
+import ClientOrderConfirmation from './client-confirmation';
 
 export default function OrderConfirmationByIdPage({
   params,
 }: {
-  params: { orderId: string }
+  params: { orderId: string };
 }) {
-  return <OrderConfirmationPageContent orderId={params.orderId} />;
+  return (
+    <Suspense fallback={<div>Loading order details...</div>}>
+      <ClientOrderConfirmation orderId={params.orderId} />
+    </Suspense>
+  );
 } 

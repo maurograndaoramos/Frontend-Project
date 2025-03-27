@@ -1,7 +1,6 @@
 // src/app/api/wishlist/[id]/route.ts
 import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth/next";
-import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import { auth } from "@/auth";
 import { 
   addToWishlist,
   removeFromWishlist,
@@ -15,7 +14,7 @@ export async function GET(
 ) {
   try {
     // Check if user is authenticated
-    const session = await getServerSession(authOptions);
+    const session = await auth();
     
     if (!session?.user) {
       return NextResponse.json(
@@ -47,7 +46,7 @@ export async function PUT(
 ) {
   try {
     // Check if user is authenticated
-    const session = await getServerSession(authOptions);
+    const session = await auth();
     
     if (!session?.user) {
       return NextResponse.json(
@@ -88,7 +87,7 @@ export async function DELETE(
 ) {
   try {
     // Check if user is authenticated
-    const session = await getServerSession(authOptions);
+    const session = await auth();
     
     if (!session?.user) {
       return NextResponse.json(
