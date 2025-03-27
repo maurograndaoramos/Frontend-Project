@@ -32,19 +32,19 @@ import { useWishlist } from "@/lib/api/wishlistApi";
 
 export default function ProductDetailContent() {
   const params = useParams();
-  const productId = params?.id?.toString() || '';
+  const productIdentifier = params?.identifier?.toString() || '';
   const [quantity, setQuantity] = useState(1);
   const [selectedImage, setSelectedImage] = useState(0);
   
   // Fetch product with related items in a single API call to reduce database load
-  const { data: product, isLoading, error } = useProduct(productId, true);
+  const { data: product, isLoading, error } = useProduct(productIdentifier, true);
   
   // Get cart and wishlist hooks
   const { addItem } = useCart();
   const { addToWishlist, removeFromWishlist, isInWishlist } = useWishlist();
   
   // Check if the product is in the wishlist
-  const isWishlisted = isInWishlist(productId);
+  const isWishlisted = product ? isInWishlist(product.id) : false;
   
   // Add to viewing history when product loads
   useEffect(() => {
@@ -377,7 +377,7 @@ export default function ProductDetailContent() {
         className="mt-12"
       >
         <ProductRecommendations 
-          currentProductId={productId} 
+          currentProductId={productIdentifier} 
           category={product.category} 
         />
       </motion.div>

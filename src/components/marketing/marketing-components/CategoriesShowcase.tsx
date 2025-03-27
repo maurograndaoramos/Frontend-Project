@@ -157,7 +157,7 @@ export default function CategoriesShowcase() {
                       className="object-cover transition-transform duration-700 group-hover:scale-110"
                       priority={index === 0}
                     />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent md:opacity-0 md:group-hover:opacity-100 transition-opacity duration-500" />
                   </AspectRatio>
                   <div className="absolute bottom-0 left-0 right-0 p-6 text-white">
                     <motion.div
@@ -167,6 +167,7 @@ export default function CategoriesShowcase() {
                         opacity: hoveredCategory === category.id ? 1 : 0
                       }}
                       transition={{ duration: 0.3 }}
+                      className="hidden md:block"
                     >
                       <h3 className="text-2xl font-semibold mb-2">{category.name}</h3>
                       <p className="text-white/80 mb-4">
@@ -177,6 +178,16 @@ export default function CategoriesShowcase() {
                         <ArrowRight className="ml-2 h-4 w-4 transform group-hover:translate-x-1 transition-transform duration-300" />
                       </div>
                     </motion.div>
+                    <div className="md:hidden">
+                      <h3 className="text-2xl font-semibold mb-2">{category.name}</h3>
+                      <p className="text-white/80 mb-4">
+                        {category.count} {category.count === 1 ? 'product' : 'products'}
+                      </p>
+                      <div className="flex items-center text-white/90 text-sm font-medium">
+                        Shop Now 
+                        <ArrowRight className="ml-2 h-4 w-4" />
+                      </div>
+                    </div>
                   </div>
                 </div>
               </Link>

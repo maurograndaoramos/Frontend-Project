@@ -85,33 +85,43 @@ export default function WishlistPage() {
       
       const data = await response.json();
       
+      // If data is directly an array, use it as wishlist
+      const wishlistData = Array.isArray(data) ? data : data.wishlist;
+      
+      if (!Array.isArray(wishlistData)) {
+        console.error('Invalid wishlist data structure:', data);
+        setItems([]);
+        setIsLoading(false);
+        return;
+      }
+      
       // Transform the API response to match our WishlistItem interface
-      const formattedItems: WishlistItem[] = data.wishlist.map((item: any) => ({
+      const formattedItems: WishlistItem[] = wishlistData.map((item: any) => ({
         id: item.id,
         productId: item.productId,
-        name: item.product.name,
+        name: item.product?.name || 'Unknown Product',
         price: new Intl.NumberFormat('en-US', {
           style: 'currency',
           currency: 'EUR'
-        }).format(item.product.price),
-        originalPrice: item.product.originalPrice 
+        }).format(item.product?.price || 0),
+        originalPrice: item.product?.originalPrice 
           ? new Intl.NumberFormat('en-US', {
               style: 'currency',
               currency: 'EUR'
             }).format(item.product.originalPrice)
           : null,
-        image: item.product.images && item.product.images.length > 0 
+        image: item.product?.images && item.product.images.length > 0 
           ? item.product.images[0] 
           : '/api/placeholder/400/320',
-        inStock: item.product.inStock,
-        category: item.product.category,
+        inStock: item.product?.inStock ?? false,
+        category: item.product?.category || 'Uncategorized',
         addedDate: new Date(item.addedAt).toLocaleDateString('en-US', {
           month: 'long',
           day: 'numeric',
           year: 'numeric'
         }),
-        isNew: item.product.isNew || false,
-        hasDiscount: item.product.hasDiscount || false
+        isNew: item.product?.isNew || false,
+        hasDiscount: item.product?.hasDiscount || false
       }));
       
       setItems(formattedItems);
@@ -119,6 +129,7 @@ export default function WishlistPage() {
     } catch (error) {
       console.error('Error fetching wishlist:', error);
       toast.error("Could not load wishlist");
+      setItems([]);
       setIsLoading(false);
     }
   };

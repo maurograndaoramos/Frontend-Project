@@ -47,6 +47,7 @@ export default function ProductGrid({
   currentPage = 1
 }: ProductGridProps) {
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
+  const [selectedSort, setSelectedSort] = useState(currentSort);
   const router = useRouter();
   const pathname = usePathname();
   
@@ -65,6 +66,7 @@ export default function ProductGrid({
     // Reset to page 1 when changing sort
     if (key === 'sort') {
       params.set('page', '1');
+      setSelectedSort(value);
     }
     
     router.push(`${pathname}?${params.toString()}`);
@@ -101,11 +103,17 @@ export default function ProductGrid({
 
         <div className="flex items-center gap-4">
           <Select 
-            value={currentSort} 
+            value={selectedSort}
             onValueChange={(value) => updateParams('sort', value)}
           >
             <SelectTrigger className="w-[180px] transition-colors duration-200 hover:border-primary/50">
-              <SelectValue placeholder="Sort by" />
+              <SelectValue placeholder={
+                selectedSort === 'featured' ? "Featured" :
+                selectedSort === 'newest' ? "Newest" :
+                selectedSort === 'price-low' ? "Price: Low to High" :
+                selectedSort === 'price-high' ? "Price: High to Low" :
+                "Sort by"
+              } />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="featured">Featured</SelectItem>

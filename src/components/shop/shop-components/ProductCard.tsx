@@ -78,7 +78,7 @@ export default function ProductCard({ product, view }: ProductCardProps) {
       >
         <Card className="overflow-hidden h-full flex flex-col group hover:shadow-xl transition-all duration-500 ease-in-out border-border/50">
           <div className="relative">
-            <Link href={`/shop/product/${product.id}`} className="block">
+            <Link href={`/shop/product/${product.slug || product.id}`} className="block">
               <div className="relative aspect-[4/5] overflow-hidden bg-muted/50">
                 <Image
                   src={primaryImage}
@@ -121,7 +121,7 @@ export default function ProductCard({ product, view }: ProductCardProps) {
           <CardContent className="flex flex-col flex-grow p-4 space-y-3">
             <div className="space-y-2">
               <div className="flex justify-between items-center">
-                <Badge variant="secondary" className="bg-accent/40 hover:bg-accent/60 transition-colors duration-300">
+                <Badge variant="secondary" className="bg-primary/10 text-primary hover:bg-primary/20 transition-colors duration-300">
                   {product.category}
                 </Badge>
                 <motion.div
@@ -145,7 +145,7 @@ export default function ProductCard({ product, view }: ProductCardProps) {
                 </motion.div>
               </div>
               <Link 
-                href={`/shop/product/${product.id}`} 
+                href={`/shop/product/${product.slug || product.id}`} 
                 className="block group-hover:text-primary transition-colors duration-300"
               >
                 <h3 className="font-medium line-clamp-2">{product.name}</h3>
@@ -196,7 +196,7 @@ export default function ProductCard({ product, view }: ProductCardProps) {
       <Card className="overflow-hidden group hover:shadow-xl transition-all duration-500 ease-in-out border-border/50">
         <div className="flex flex-col sm:flex-row">
           <div className="relative sm:w-48">
-            <Link href={`/shop/product/${product.id}`} className="block">
+            <Link href={`/shop/product/${product.slug || product.id}`} className="block">
               <div className="relative aspect-[4/5] sm:aspect-square overflow-hidden bg-muted/50">
                 <Image
                   src={primaryImage}
@@ -254,11 +254,11 @@ export default function ProductCard({ product, view }: ProductCardProps) {
           <CardContent className="flex-1 p-6">
             <div className="flex flex-col h-full justify-between space-y-4">
               <div className="space-y-3">
-                <Badge variant="secondary" className="bg-accent/40 hover:bg-accent/60 transition-colors duration-300">
+                <Badge variant="secondary" className="bg-primary/10 text-primary hover:bg-primary/20 transition-colors duration-300">
                   {product.category}
                 </Badge>
                 <Link 
-                  href={`/shop/product/${product.id}`} 
+                  href={`/shop/product/${product.slug || product.id}`} 
                   className="block group-hover:text-primary transition-colors duration-300"
                 >
                   <h3 className="font-medium text-lg">{product.name}</h3>

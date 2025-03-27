@@ -18,6 +18,7 @@ interface ShippingAddress {
   country: string;
   email: string;
   phone: string;
+  [key: string]: string; // Add index signature to satisfy Prisma's JSON type
 }
 
 interface OrderData {
@@ -38,7 +39,7 @@ export async function createOrder(orderData: OrderData) {
         userId: orderData.userId,
         total: orderData.total,
         status: orderData.status || 'pending',
-        shippingAddress: orderData.shippingAddress,
+        shippingAddress: orderData.shippingAddress as any, // Type assertion to handle JSON field
         paymentIntent: orderData.paymentIntent,
         items: {
           create: orderData.items.map(item => ({
@@ -69,13 +70,13 @@ export async function createOrder(orderData: OrderData) {
       },
       {
         orderId: order.id,
-        items: order.items.map(item => ({
+        items: (order as any).items.map(item => ({
           name: item.product.name,
           quantity: item.quantity,
           price: item.price
         })),
         total: order.total,
-        shippingAddress: order.shippingAddress,
+        shippingAddress: order.shippingAddress as ShippingAddress,
         estimatedDelivery: estimatedDelivery.toLocaleDateString()
       }
     );

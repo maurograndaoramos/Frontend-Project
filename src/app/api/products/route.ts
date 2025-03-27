@@ -119,7 +119,10 @@ export async function GET(request: Request) {
         orderBy = { price: "desc" };
         break;
       case "newest":
-        orderBy = { createdAt: "desc" };
+        orderBy = [
+          { isNew: "desc" },
+          { createdAt: "desc" }
+        ];
         break;
       case "featured":
       default:

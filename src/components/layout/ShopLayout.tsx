@@ -12,7 +12,8 @@ import {
   ChevronRightSquare,
   PanelLeftClose,
   PanelLeftOpen,
-  Home
+  Home,
+  Filter
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
@@ -139,7 +140,7 @@ export default function ShopLayout({
           <Sheet>
             <SheetTrigger asChild>
               <Button variant="outline" size="sm" className="flex items-center">
-                <FilterIcon className="h-4 w-4 mr-2" />
+                <Filter className="h-4 w-4 mr-2" />
                 Filters
                 {activeFiltersCount > 0 && (
                   <span className="ml-2 bg-primary text-primary-foreground text-xs rounded-full w-5 h-5 flex items-center justify-center">
@@ -229,12 +230,6 @@ export default function ShopLayout({
               </div>
             </SheetContent>
           </Sheet>
-
-          {/* Sort dropdown for mobile */}
-          <Button variant="outline" size="sm" className="flex items-center">
-            <SlidersHorizontal className="h-4 w-4 mr-2" />
-            Sort
-          </Button>
         </div>
 
         {/* Desktop sidebar filters */}

@@ -148,7 +148,7 @@ export async function getProducts(filters: ProductFilters = {}): Promise<Paginat
   }
 }
 
-export async function getProduct(id: string, includeRelated = false): Promise<Product | null> {
+export async function getProduct(identifier: string, includeRelated = false): Promise<Product | null> {
   // Build query params
   const queryParams = new URLSearchParams();
   if (includeRelated) {
@@ -157,27 +157,27 @@ export async function getProduct(id: string, includeRelated = false): Promise<Pr
   }
   
   // Create cache key
-  const cacheKey = `${id}-${includeRelated}`;
+  const cacheKey = `${identifier}-${includeRelated}`;
   const now = Date.now();
   
   // Check cache first
   const cachedProduct = productDetailCache.get(cacheKey);
   if (cachedProduct && (now - cachedProduct.timestamp < DETAIL_CACHE_TTL)) {
-    console.log(`Using cached product for ID: ${id}`);
+    console.log(`Using cached product for identifier: ${identifier}`);
     return cachedProduct.data;
   }
   
   try {
-    console.log(`Attempting to fetch product with ID: ${id}`, { includeRelated });
+    console.log(`Attempting to fetch product with identifier: ${identifier}`, { includeRelated });
     const url = includeRelated
-      ? `/api/products/${id}?${queryParams.toString()}`
-      : `/api/products/${id}`;
+      ? `/api/products/${identifier}?${queryParams.toString()}`
+      : `/api/products/${identifier}`;
       
     const response = await fetch(url);
     
     if (!response.ok) {
       const errorData = await response.json();
-      console.error(`Failed to fetch product ${id}, status: ${response.status}`);
+      console.error(`Failed to fetch product ${identifier}, status: ${response.status}`);
       
       // Check for Prisma connection errors and return cached data if available
       if (errorData?.details?.includes('concurrent connections limit exceeded') && cachedProduct) {
@@ -195,11 +195,11 @@ export async function getProduct(id: string, includeRelated = false): Promise<Pr
     
     return product;
   } catch (error) {
-    console.error(`Error fetching product with ID ${id}:`, error);
+    console.error(`Error fetching product with identifier ${identifier}:`, error);
     
     // Try to return cached data even if it's expired
     if (cachedProduct) {
-      console.log('Returning stale cached product due to error');
+      console.log('Returning stale cached data due to error');
       return cachedProduct.data;
     }
     

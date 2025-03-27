@@ -198,10 +198,10 @@ export default function FeaturedProductsCarousel() {
                 </CarouselItem>
               ))}
             </CarouselContent>
-            <CarouselPrevious className="absolute -left-12 top-1/2 -translate-y-1/2 bg-primary hover:bg-primary/90 text-primary-foreground shadow-md hover:scale-110 transition-transform">
+            <CarouselPrevious className="bg-background/80 hover:bg-background/90 backdrop-blur-sm border-0 md:bg-primary md:hover:bg-primary/90 md:text-primary-foreground md:shadow-md md:hover:scale-110 transition-all">
               <ChevronLeft className="h-6 w-6" />
             </CarouselPrevious>
-            <CarouselNext className="absolute -right-12 top-1/2 -translate-y-1/2 bg-primary hover:bg-primary/90 text-primary-foreground shadow-md hover:scale-110 transition-transform">
+            <CarouselNext className="bg-background/80 hover:bg-background/90 backdrop-blur-sm border-0 md:bg-primary md:hover:bg-primary/90 md:text-primary-foreground md:shadow-md md:hover:scale-110 transition-all">
               <ChevronRight className="h-6 w-6" />
             </CarouselNext>
           </Carousel>

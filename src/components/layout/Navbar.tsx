@@ -9,7 +9,7 @@ import { Search, ShoppingCart, Menu, User, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Loader2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { Sheet, SheetContent, SheetTrigger, SheetTitle } from "@/components/ui/sheet";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -23,6 +23,8 @@ import { useCart } from "@/lib/context/CartContext";
 
 const Navbar: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState("");
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [searchSheetOpen, setSearchSheetOpen] = useState(false);
   const router = useRouter();
   const { data: session, status } = useSession();
   const isLoading = status === "loading";
@@ -36,6 +38,7 @@ const Navbar: React.FC = () => {
     if (searchQuery.trim()) {
       router.push(`/shop?search=${encodeURIComponent(searchQuery.trim())}&page=1`);
       setSearchQuery(""); // Clear the search input after searching
+      setSearchSheetOpen(false); // Close the search sheet after searching
     }
   };
 
@@ -46,21 +49,34 @@ const Navbar: React.FC = () => {
   return (
     <header className="w-full py-4 px-6 flex items-center justify-between border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-50 transition-all duration-300 shadow-sm">
       {/* Mobile menu */}
-      <Sheet>
+      <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
         <SheetTrigger asChild className="md:hidden">
           <Button variant="ghost" size="icon" aria-label="Menu" className="hover:bg-accent/50 transition-colors duration-200">
             <Menu className="h-5 w-5" />
           </Button>
         </SheetTrigger>
         <SheetContent side="left" className="w-[240px] sm:w-[300px]">
+          <SheetTitle>Navigation Menu</SheetTitle>
           <nav className="flex flex-col space-y-6 mt-8">
-            <Link href="/" className="hover:text-primary transition-colors text-lg font-medium hover:translate-x-1 duration-200">
+            <Link 
+              href="/" 
+              className="hover:text-primary transition-colors text-lg font-medium hover:translate-x-1 duration-200"
+              onClick={() => setMobileMenuOpen(false)}
+            >
               Home
             </Link>
-            <Link href="/shop" className="hover:text-primary transition-colors text-lg font-medium hover:translate-x-1 duration-200">
+            <Link 
+              href="/shop" 
+              className="hover:text-primary transition-colors text-lg font-medium hover:translate-x-1 duration-200"
+              onClick={() => setMobileMenuOpen(false)}
+            >
               Shop
             </Link>
-            <Link href="/collections" className="hover:text-primary transition-colors text-lg font-medium hover:translate-x-1 duration-200">
+            <Link 
+              href="/collections" 
+              className="hover:text-primary transition-colors text-lg font-medium hover:translate-x-1 duration-200"
+              onClick={() => setMobileMenuOpen(false)}
+            >
               Collections
             </Link>
           </nav>
@@ -121,13 +137,14 @@ const Navbar: React.FC = () => {
       {/* Cart and Auth */}
       <div className="flex items-center space-x-4">
         {/* Mobile Search */}
-        <Sheet>
+        <Sheet open={searchSheetOpen} onOpenChange={setSearchSheetOpen}>
           <SheetTrigger asChild className="md:hidden">
             <Button variant="ghost" size="icon" aria-label="Search" className="hover:bg-accent/50 transition-colors duration-200">
               <Search className="h-5 w-5" />
             </Button>
           </SheetTrigger>
           <SheetContent side="top">
+            <SheetTitle>Search Products</SheetTitle>
             <form onSubmit={handleSearch} className="mt-6">
               <Input
                 type="search"
