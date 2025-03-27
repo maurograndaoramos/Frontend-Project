@@ -70,15 +70,21 @@ export default function LoginForm() {
         setIsLoading(true);
       
         try {
+          // Get callback URL from search params or default to dashboard
+          const callbackUrl = searchParams.get("callbackUrl") || "/dashboard";
+          console.log("Login attempt with callbackUrl:", callbackUrl);
+      
           // Pass the remember me value to NextAuth
           const result = await signIn("credentials", {
             email: values.email,
             password: values.password,
             redirect: false,
-            callbackUrl: "/dashboard",
+            callbackUrl,
             // This is the key parameter for "remember me" functionality
             remember: values.rememberMe,
           });
+      
+          console.log("Sign in result:", result);
       
           if (result?.error) {
             let errorMessage = "Please try again later.";
@@ -102,12 +108,15 @@ export default function LoginForm() {
             description: "Welcome back to Blooming Delights!",
           });
       
-          // Redirect to dashboard with a small delay for the toast to be visible
+          // Redirect to the callback URL or dashboard
           setTimeout(() => {
-            router.push("/dashboard");
+            // Use router.replace instead of push to avoid issues with history
+            router.replace(callbackUrl);
+            // Force a refresh to ensure the session is fully updated
             router.refresh();
           }, 1000);
         } catch (error) {
+          console.error("Login error:", error);
           toast({
             variant: "destructive",
             title: "Something went wrong",
@@ -121,8 +130,13 @@ export default function LoginForm() {
     const signInWithGoogle = async () => {
         setIsLoading(true);
         try {
-            await signIn("google", { callbackUrl: "/dashboard" });
+            // Get callback URL from search params or default to dashboard
+            const callbackUrl = searchParams.get("callbackUrl") || "/dashboard";
+            console.log("Google login attempt with callbackUrl:", callbackUrl);
+            
+            await signIn("google", { callbackUrl });
         } catch (error) {
+            console.error("Google login error:", error);
             toast({
                 variant: "destructive",
                 title: "Something went wrong",
@@ -135,8 +149,13 @@ export default function LoginForm() {
     const signInWithFacebook = async () => {
         setIsLoading(true);
         try {
-            await signIn("facebook", { callbackUrl: "/dashboard" });
+            // Get callback URL from search params or default to dashboard
+            const callbackUrl = searchParams.get("callbackUrl") || "/dashboard";
+            console.log("Facebook login attempt with callbackUrl:", callbackUrl);
+            
+            await signIn("facebook", { callbackUrl });
         } catch (error) {
+            console.error("Facebook login error:", error);
             toast({
                 variant: "destructive",
                 title: "Something went wrong",

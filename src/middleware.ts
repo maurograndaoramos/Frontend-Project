@@ -4,11 +4,14 @@ import { getToken } from "next-auth/jwt";
 
 // Middleware for handling authentication checks
 export async function middleware(request: NextRequest) {
-  // Get token from NextAuth
+  // Get token from NextAuth with more explicit options
   const token = await getToken({ 
     req: request,
-    secret: process.env.NEXTAUTH_SECRET 
+    secret: process.env.NEXTAUTH_SECRET,
+    secureCookie: process.env.NODE_ENV === "production",
   });
+  
+  console.log("Token in middleware:", !!token); // Log token presence for debugging
   
   const isAuthenticated = !!token;
   
@@ -19,13 +22,7 @@ export async function middleware(request: NextRequest) {
   const authRoutes = ['/login', '/register', '/forgot-password'];
   
   // Protected routes that require authentication
-  const protectedRoutes = [
-    '/dashboard', 
-    '/checkout',
-    '/dashboard/[username]/orders',
-    '/dashboard/[username]/wishlist',
-    '/dashboard/[username]/profile'
-  ];
+  const protectedRoutes = ['/dashboard', '/checkout']; 
   
   // Check if the pathname starts with any protected route
   const isProtectedRoute = protectedRoutes.some(route => 
@@ -36,6 +33,8 @@ export async function middleware(request: NextRequest) {
   const isAuthRoute = authRoutes.some(route => 
     pathname === route || pathname.startsWith(`${route}/`)
   );
+  
+  console.log("Route info:", { pathname, isProtectedRoute, isAuthRoute, isAuthenticated });
   
   // If user is on an auth page and is already authenticated, redirect to dashboard
   if (isAuthRoute && isAuthenticated) {
