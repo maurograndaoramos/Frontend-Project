@@ -16,6 +16,8 @@ const nextConfig = {
       bodySizeLimit: '2mb',
     },
   },
+  // Output configuration for Vercel
+  output: 'standalone',
   // Auth.js is configured with trustHost: true in src/auth.ts
   // This allows it to work correctly in both development and production environments
 };

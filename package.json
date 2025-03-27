@@ -6,6 +6,7 @@
     "dev": "next dev",
     "build": "next build",
     "build:prod": "node build-prod.js",
+    "vercel:build": "node vercel-build.js",
     "start": "next start",
     "lint": "next lint",
     "generate": "prisma generate",

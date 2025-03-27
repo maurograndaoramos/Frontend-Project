@@ -3,6 +3,7 @@ import { PrismaAdapter } from "@auth/prisma-adapter";
 import { prisma } from "./prisma";
 
 // This adapter extends the PrismaAdapter to work with our existing Prisma schema
+// No need to pass prisma as a parameter since we import it directly
 export function CustomPrismaAdapter(): Adapter {
   const baseAdapter = PrismaAdapter(prisma);
   

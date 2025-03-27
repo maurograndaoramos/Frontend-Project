@@ -7,10 +7,6 @@ import FacebookProvider from "next-auth/providers/facebook";
 import bcrypt from "bcrypt";
 import { CustomPrismaAdapter } from "@/lib/auth-adapter";
 import { prisma } from "@/lib/prisma";
-import { PrismaAdapter } from '@auth/prisma-adapter';
-import { compare } from 'bcrypt';
-import { z } from 'zod';
-import { getUserByEmail } from '@/lib/services/userService';
 
 // Define the shape of your session
 declare module "next-auth" {
@@ -41,7 +37,7 @@ export type User = {
 
 // Set up NextAuth configuration
 export const authConfig = {
-  adapter: CustomPrismaAdapter(prisma),
+  adapter: CustomPrismaAdapter(),
   providers: [
     GoogleProvider({
       clientId: process.env.GOOGLE_CLIENT_ID || '',
