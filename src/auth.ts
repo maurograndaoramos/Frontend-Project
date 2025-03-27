@@ -8,44 +8,11 @@ import bcrypt from "bcrypt";
 import { CustomPrismaAdapter } from "@/lib/auth-adapter";
 import { prisma } from "@/lib/prisma";
 
-// Helper for determining the correct cookie domain
+// Helper for determining the correct cookie domain - simplified for performance
 const getCookieDomain = () => {
-  // In development, we don't need a domain specified (defaults to current domain)
-  if (process.env.NODE_ENV !== "production") {
-    return undefined;
-  }
-  
-  // In production, let's check for the app URL
-  const appUrl = process.env.NEXTAUTH_URL || process.env.NEXT_PUBLIC_APP_URL;
-  if (!appUrl) {
-    return undefined;
-  }
-  
-  try {
-    // Extract the domain from the URL
-    const url = new URL(appUrl);
-    const hostname = url.hostname;
-    
-    // Check if this is a vercel.app domain
-    if (hostname.endsWith('vercel.app')) {
-      return '.vercel.app';
-    }
-    
-    // For custom domains, you can add more logic here
-    // For example: if (hostname.endsWith('yourdomain.com')) return 'yourdomain.com';
-    
-    // By default, return the hostname without subdomain
-    const parts = hostname.split('.');
-    if (parts.length > 2) {
-      // This handles subdomains by returning only the main domain
-      return parts.slice(-2).join('.');
-    }
-    
-    return hostname;
-  } catch (error) {
-    console.error('Error parsing app URL for cookie domain:', error);
-    return undefined;
-  }
+  // For simplicity and to avoid timeouts, don't use domain-specific cookies
+  // This allows the browser to handle cookies normally for the current domain
+  return undefined;
 };
 
 // Define the shape of your session
@@ -168,28 +135,7 @@ export const authConfig = {
         httpOnly: true,
         sameSite: "lax",
         path: "/",
-        secure: process.env.NODE_ENV === "production",
-        domain: getCookieDomain(),
-      },
-    },
-    callbackUrl: {
-      name: `next-auth.callback-url`,
-      options: {
-        httpOnly: true,
-        sameSite: "lax",
-        path: "/",
-        secure: process.env.NODE_ENV === "production",
-        domain: getCookieDomain(),
-      },
-    },
-    csrfToken: {
-      name: `next-auth.csrf-token`,
-      options: {
-        httpOnly: true,
-        sameSite: "lax",
-        path: "/",
-        secure: process.env.NODE_ENV === "production",
-        domain: getCookieDomain(),
+        secure: process.env.NODE_ENV === "production"
       },
     },
   },

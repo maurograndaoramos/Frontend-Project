@@ -72,55 +72,18 @@ export default function LoginForm() {
         try {
           // Get callback URL from search params or default to dashboard
           const callbackUrl = searchParams.get("callbackUrl") || "/dashboard";
-          console.log("Login attempt with callbackUrl:", callbackUrl);
-      
-          // Pass the remember me value to NextAuth
-          const result = await signIn("credentials", {
+          
+          // Use direct redirect for better performance and reliability
+          // This approach skips the client-side state management which can be problematic
+          await signIn("credentials", {
             email: values.email,
             password: values.password,
-            redirect: false,
             callbackUrl,
-            // This is the key parameter for "remember me" functionality
+            redirect: true,
             remember: values.rememberMe,
           });
-      
-          console.log("Sign in result:", result);
-      
-          if (result?.error) {
-            let errorMessage = "Please try again later.";
-            
-            // Custom error message based on error code
-            if (result.error === "CredentialsSignin") {
-              errorMessage = "Invalid email or password. Please try again.";
-            }
-            
-            toast({
-              variant: "destructive",
-              title: "Login failed",
-              description: errorMessage,
-            });
-            setIsLoading(false);
-            return;
-          }
-      
-          toast({
-            title: "Login successful",
-            description: "Welcome back to Blooming Delights!",
-          });
-      
-          // Redirect to the callback URL or dashboard after a short delay
-          // to allow NextAuth to complete the session setup
-          setTimeout(() => {
-            // For production, sometimes a full page load is more reliable
-            if (process.env.NODE_ENV === "production") {
-              window.location.href = callbackUrl;
-            } else {
-              // Use router.replace instead of push to avoid issues with history
-              router.replace(callbackUrl);
-              // Force a refresh to ensure the session is fully updated
-              router.refresh();
-            }
-          }, 1000);
+          
+          // We won't reach this point if redirect is true
         } catch (error) {
           console.error("Login error:", error);
           toast({
@@ -138,16 +101,14 @@ export default function LoginForm() {
         try {
             // Get callback URL from search params or default to dashboard
             const callbackUrl = searchParams.get("callbackUrl") || "/dashboard";
-            console.log("Google login attempt with callbackUrl:", callbackUrl);
             
-            await signIn("google", { callbackUrl });
+            // Direct redirect for better performance
+            await signIn("google", { 
+                callbackUrl,
+                redirect: true 
+            });
         } catch (error) {
             console.error("Google login error:", error);
-            toast({
-                variant: "destructive",
-                title: "Something went wrong",
-                description: "Please try again later.",
-            });
             setIsLoading(false);
         }
     };
@@ -157,16 +118,14 @@ export default function LoginForm() {
         try {
             // Get callback URL from search params or default to dashboard
             const callbackUrl = searchParams.get("callbackUrl") || "/dashboard";
-            console.log("Facebook login attempt with callbackUrl:", callbackUrl);
             
-            await signIn("facebook", { callbackUrl });
+            // Direct redirect for better performance
+            await signIn("facebook", { 
+                callbackUrl,
+                redirect: true 
+            });
         } catch (error) {
             console.error("Facebook login error:", error);
-            toast({
-                variant: "destructive",
-                title: "Something went wrong",
-                description: "Please try again later.",
-            });
             setIsLoading(false);
         }
     };
