@@ -11,6 +11,8 @@ type ProductFilters = {
   limit?: number;
   inStock?: boolean;
   ids?: string[];
+  includeRelated?: boolean;
+  includeFullData?: boolean;
 };
 
 type PaginatedResponse<T> = {
@@ -22,6 +24,12 @@ type PaginatedResponse<T> = {
     pages: number;
   };
 };
+
+// Cache management
+const productCache = new Map<string, { data: PaginatedResponse<Product>, timestamp: number }>();
+const productDetailCache = new Map<string, { data: Product, timestamp: number }>();
+const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+const DETAIL_CACHE_TTL = 10 * 60 * 1000; // 10 minutes
 
 export async function getProducts(filters: ProductFilters = {}): Promise<PaginatedResponse<Product>> {
   const queryParams = new URLSearchParams();
@@ -35,7 +43,19 @@ export async function getProducts(filters: ProductFilters = {}): Promise<Paginat
   if (filters.page) queryParams.set('page', filters.page.toString());
   if (filters.limit) queryParams.set('limit', filters.limit.toString());
   if (filters.inStock) queryParams.set('inStock', 'true');
+  if (filters.includeRelated) queryParams.set('includeRelated', 'true');
+  if (filters.includeFullData) queryParams.set('includeFullData', 'true');
   if (filters.ids && filters.ids.length > 0) queryParams.set('ids', filters.ids.join(','));
+  
+  const cacheKey = queryParams.toString();
+  const now = Date.now();
+  
+  // Check cache first
+  const cachedData = productCache.get(cacheKey);
+  if (cachedData && (now - cachedData.timestamp < CACHE_TTL)) {
+    console.log(`Using cached products for params: ${cacheKey}`);
+    return cachedData.data;
+  }
   
   try {
     console.log(`Fetching products with params: ${queryParams.toString()}`);
@@ -44,16 +64,26 @@ export async function getProducts(filters: ProductFilters = {}): Promise<Paginat
       headers: {
         'Content-Type': 'application/json',
       },
+      cache: 'no-store',
     });
     
     const responseData = await response.json();
     
     if (!response.ok) {
       console.error('API error:', responseData);
+      
+      // Check for Prisma connection errors
+      if (responseData?.details?.includes('concurrent connections limit exceeded')) {
+        console.log('Database connection limit exceeded, using cached data if available');
+        if (cachedData) {
+          return cachedData.data;
+        }
+      }
+      
       throw new Error(responseData.error || `API returned status ${response.status}`);
     }
     
-    return {
+    const result = {
       data: responseData.products || [],
       pagination: responseData.pagination || {
         total: 0,
@@ -62,8 +92,20 @@ export async function getProducts(filters: ProductFilters = {}): Promise<Paginat
         pages: 0,
       },
     };
+    
+    // Store in cache
+    productCache.set(cacheKey, { data: result, timestamp: now });
+    
+    return result;
   } catch (error) {
     console.error('Error fetching products:', error);
+    
+    // Try to return cached data even if it's expired
+    if (cachedData) {
+      console.log('Returning stale cached data due to error');
+      return cachedData.data;
+    }
+    
     // Return empty data on error
     return {
       data: [],
@@ -77,20 +119,61 @@ export async function getProducts(filters: ProductFilters = {}): Promise<Paginat
   }
 }
 
-export async function getProduct(id: string): Promise<Product | null> {
+export async function getProduct(id: string, includeRelated = false): Promise<Product | null> {
+  // Build query params
+  const queryParams = new URLSearchParams();
+  if (includeRelated) {
+    queryParams.set('includeRelated', 'true');
+    queryParams.set('similarCount', '4');
+  }
+  
+  // Create cache key
+  const cacheKey = `${id}-${includeRelated}`;
+  const now = Date.now();
+  
+  // Check cache first
+  const cachedProduct = productDetailCache.get(cacheKey);
+  if (cachedProduct && (now - cachedProduct.timestamp < DETAIL_CACHE_TTL)) {
+    console.log(`Using cached product for ID: ${id}`);
+    return cachedProduct.data;
+  }
+  
   try {
-    console.log(`Attempting to fetch product with ID: ${id}`);
-    const response = await fetch(`/api/products/${id}`);
+    console.log(`Attempting to fetch product with ID: ${id}`, { includeRelated });
+    const url = includeRelated
+      ? `/api/products/${id}?${queryParams.toString()}`
+      : `/api/products/${id}`;
+      
+    const response = await fetch(url);
     
     if (!response.ok) {
       const errorData = await response.json();
       console.error(`Failed to fetch product ${id}, status: ${response.status}`);
+      
+      // Check for Prisma connection errors and return cached data if available
+      if (errorData?.details?.includes('concurrent connections limit exceeded') && cachedProduct) {
+        console.log('Using cached product data due to connection limits');
+        return cachedProduct.data;
+      }
+      
       return null; // Return null instead of throwing to prevent unhandled rejections
     }
     
-    return await response.json();
+    const product = await response.json();
+    
+    // Store in cache
+    productDetailCache.set(cacheKey, { data: product, timestamp: now });
+    
+    return product;
   } catch (error) {
     console.error(`Error fetching product with ID ${id}:`, error);
+    
+    // Try to return cached data even if it's expired
+    if (cachedProduct) {
+      console.log('Returning stale cached product due to error');
+      return cachedProduct.data;
+    }
+    
     return null;
   }
 }

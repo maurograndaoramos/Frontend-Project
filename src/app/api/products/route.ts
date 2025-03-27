@@ -1,6 +1,25 @@
 // src/app/api/products/route.ts
 import { NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
+import { prismaRead } from "@/lib/prisma";
+import { retryOnConnectionError, handleApiError, productCache } from "@/lib/db-utils";
+
+// Define fields to select for list views to reduce payload size
+const defaultProductSelect = {
+  id: true,
+  name: true,
+  price: true,
+  discount: true,
+  description: true,
+  images: true,
+  category: true,
+  inStock: true,
+  isFeatured: true,
+  // Omit these heavy fields unless specifically requested
+  details: false,
+  specifications: false,
+  colorOptions: false,
+  sizeOptions: false,
+};
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
@@ -15,6 +34,18 @@ export async function GET(request: Request) {
   const maxPrice = searchParams.get("maxPrice") ? parseFloat(searchParams.get("maxPrice")!) : undefined;
   const inStock = searchParams.get("inStock") === "true";
   const ids = searchParams.get("ids")?.split(',');
+  const includeRelated = searchParams.get("includeRelated") === "true";
+  const includeFullData = searchParams.get("includeFullData") === "true";
+  
+  // Create a cache key from the query parameters
+  const cacheKey = searchParams.toString();
+  
+  // Check if response is in cache
+  const cachedData = productCache.get(cacheKey);
+  if (cachedData) {
+    console.log(`Using cached products for query: ${cacheKey}`);
+    return NextResponse.json(cachedData);
+  }
   
   try {
     console.log("Fetching products with params:", { category, search, sort, page, limit, minPrice, maxPrice, inStock, ids });
@@ -86,15 +117,39 @@ export async function GET(request: Request) {
     
     console.log("Query where clause:", JSON.stringify(where, null, 2));
     
-    // Execute query with count
+    // Execute query with count using retry utility for handling connection issues
+    // Use READ client to reduce connection pressure
     const [products, total] = await Promise.all([
-      prisma.product.findMany({
-        where,
-        orderBy,
-        skip,
-        take: limit,
-      }),
-      prisma.product.count({ where }),
+      retryOnConnectionError(() => 
+        prismaRead.product.findMany({
+          where,
+          orderBy,
+          skip,
+          take: limit,
+          select: includeFullData ? undefined : {
+            ...defaultProductSelect,
+            // Only include these relations if specifically requested
+            ...(includeRelated ? {
+              productType: {
+                select: {
+                  id: true,
+                  name: true,
+                }
+              },
+              collections: {
+                select: {
+                  id: true,
+                  name: true,
+                  slug: true,
+                }
+              }
+            } : {})
+          },
+        })
+      ),
+      retryOnConnectionError(() => 
+        prismaRead.product.count({ where })
+      ),
     ]);
     
     console.log(`Found ${products.length} products out of ${total} total`);
@@ -102,7 +157,8 @@ export async function GET(request: Request) {
     // Calculate pagination
     const pages = Math.ceil(total / limit);
     
-    return NextResponse.json({
+    // Create response data
+    const responseData = {
       products,
       pagination: {
         total,
@@ -110,16 +166,17 @@ export async function GET(request: Request) {
         limit,
         pages,
       },
-    });
+    };
+    
+    // Store in cache
+    productCache.set(cacheKey, responseData);
+    
+    return NextResponse.json(responseData);
   } catch (error) {
     console.error("Error fetching products:", error);
-    return NextResponse.json(
-      { 
-        error: "Failed to fetch products",
-        details: error instanceof Error ? error.message : "Unknown error",
-        stack: error instanceof Error ? error.stack : undefined
-      },
-      { status: 500 }
-    );
+    
+    // Use our standardized error handler
+    const { status, body } = handleApiError(error);
+    return NextResponse.json(body, { status });
   }
 }

@@ -18,7 +18,7 @@ export default function SearchClient() {
   const maxPrice = searchParams.get("max_price") ? parseFloat(searchParams.get("max_price") as string) : undefined;
   const inStock = searchParams.get("in_stock") === "true";
 
-  // Use React Query hook to fetch products
+  // Use React Query hook to fetch products with optimized parameters
   const { data, isLoading, isError } = useProducts({
     category,
     search: query,
@@ -28,6 +28,9 @@ export default function SearchClient() {
     minPrice,
     maxPrice,
     inStock,
+    // Only load basic data for search results to reduce database load
+    includeRelated: false,
+    includeFullData: false
   });
   
   const products = data?.data || [];

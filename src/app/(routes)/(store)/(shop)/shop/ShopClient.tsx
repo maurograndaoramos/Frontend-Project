@@ -21,7 +21,7 @@ export default function ShopClient() {
   const isRecentlyViewed = searchParams.get("recently_viewed") === "true";
   const isRecommended = searchParams.get("recommended") === "true";
 
-  // Create query filters based on parameters
+  // Create query filters based on parameters with optimized data loading
   const getQueryFilters = () => {
     if (isRecentlyViewed) {
       const recentProductIds = getViewingHistory();
@@ -30,6 +30,10 @@ export default function ShopClient() {
         page,
         limit: 12,
         sort: recentProductIds.length > 0 ? sort : 'featured',
+        // For recently viewed products, we don't need related items
+        includeRelated: false,
+        // Basic data is sufficient for the grid view
+        includeFullData: false,
       };
     } 
     
@@ -39,6 +43,10 @@ export default function ShopClient() {
         page,
         limit: 12,
         sort: 'featured',
+        // For recommended products, we don't need related items
+        includeRelated: false,
+        // Basic data is sufficient for the grid view
+        includeFullData: false,
       };
     } 
     
@@ -51,10 +59,14 @@ export default function ShopClient() {
       minPrice,
       maxPrice,
       inStock,
+      // For regular browsing, we don't need related items in the list view
+      includeRelated: false,
+      // Basic data is sufficient for the grid view
+      includeFullData: false,
     };
   };
 
-  // Use React Query hook
+  // Use React Query hook with optimized data loading
   const { data, isLoading, isError } = useProducts(getQueryFilters());
   
   const products = data?.data || [];
