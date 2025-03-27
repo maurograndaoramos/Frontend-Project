@@ -5,7 +5,11 @@ import { getToken } from "next-auth/jwt";
 // Middleware for handling authentication checks
 export async function middleware(request: NextRequest) {
   // Get token from NextAuth
-  const token = await getToken({ req: request });
+  const token = await getToken({ 
+    req: request,
+    secret: process.env.NEXTAUTH_SECRET 
+  });
+  
   const isAuthenticated = !!token;
   
   // Get the pathname of the request
@@ -34,9 +38,15 @@ export async function middleware(request: NextRequest) {
   
   // If user is not authenticated and tries to access protected route, redirect to login
   if (isProtectedRoute && !isAuthenticated) {
+    // Create login URL with the proper base URL
     const loginUrl = new URL("/login", request.url);
+    
+    // Only add callback URL if it's not redirecting to login itself (to prevent loops)
     // Store the current URL to redirect back after login
-    loginUrl.searchParams.set("callbackUrl", encodeURIComponent(pathname));
+    if (!pathname.startsWith('/login')) {
+      loginUrl.searchParams.set("callbackUrl", pathname);
+    }
+    
     return NextResponse.redirect(loginUrl);
   }
   
@@ -45,13 +55,14 @@ export async function middleware(request: NextRequest) {
 
 export const config = {
   matcher: [
-    // Match all auth routes
-    '/login',
-    '/register',
-    '/forgot-password',
     // Match all protected routes
     '/dashboard/:path*',
     '/checkout/:path*',
     '/account/:path*',
+    
+    // Match auth routes only for redirect-to-dashboard logic (when already logged in)
+    '/login',
+    '/register',
+    '/forgot-password',
   ],
 };
