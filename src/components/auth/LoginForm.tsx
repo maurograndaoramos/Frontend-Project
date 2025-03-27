@@ -108,12 +108,18 @@ export default function LoginForm() {
             description: "Welcome back to Blooming Delights!",
           });
       
-          // Redirect to the callback URL or dashboard
+          // Redirect to the callback URL or dashboard after a short delay
+          // to allow NextAuth to complete the session setup
           setTimeout(() => {
-            // Use router.replace instead of push to avoid issues with history
-            router.replace(callbackUrl);
-            // Force a refresh to ensure the session is fully updated
-            router.refresh();
+            // For production, sometimes a full page load is more reliable
+            if (process.env.NODE_ENV === "production") {
+              window.location.href = callbackUrl;
+            } else {
+              // Use router.replace instead of push to avoid issues with history
+              router.replace(callbackUrl);
+              // Force a refresh to ensure the session is fully updated
+              router.refresh();
+            }
           }, 1000);
         } catch (error) {
           console.error("Login error:", error);
