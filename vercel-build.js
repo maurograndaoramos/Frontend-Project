@@ -7,12 +7,19 @@ console.log('Starting Vercel build process...');
 process.env.NODE_ENV = 'production';
 
 try {
+  // Generate Prisma client first
+  console.log('Generating Prisma client...');
+  execSync('npx prisma generate', { 
+    stdio: 'inherit' 
+  });
+  
   // Run the NextJS build command
   console.log('Running Next.js build with production settings...');
-  execSync('NODE_ENV=production next build', { 
+  execSync('next build', { 
     stdio: 'inherit',
     env: {
       ...process.env,
+      NODE_ENV: 'production',
       NEXT_TELEMETRY_DISABLED: '1', // Disable telemetry for faster builds
     }
   });

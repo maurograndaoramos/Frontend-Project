@@ -1,7 +1,8 @@
 {
   "build": {
     "env": {
-      "NODE_OPTIONS": "--max-old-space-size=4096"
+      "NODE_OPTIONS": "--max-old-space-size=4096",
+      "PRISMA_GENERATE_DURING_BUILD": "true"
     }
   },
   "builds": [
