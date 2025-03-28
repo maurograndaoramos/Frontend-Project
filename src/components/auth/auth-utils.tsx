@@ -44,7 +44,6 @@ export async function login(
     
     return result;
   } catch (error) {
-    console.error("Login error:", error);
     return { error: "Failed to sign in", ok: false };
   }
 }
@@ -56,7 +55,7 @@ export async function logout(callbackUrl: string = "/") {
   try {
     await signOut({ callbackUrl, redirect: true });
   } catch (error) {
-    console.error("Logout error:", error);
+    // Silent fail for logout errors
   }
 }
 
@@ -67,6 +66,6 @@ export async function oauthLogin(provider: "google" | "facebook", callbackUrl: s
   try {
     await signIn(provider, { callbackUrl });
   } catch (error) {
-    console.error(`${provider} login error:`, error);
+    // Silent fail for OAuth errors
   }
 } 

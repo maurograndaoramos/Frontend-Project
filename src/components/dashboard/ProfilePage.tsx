@@ -13,6 +13,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
 import { Switch } from "@/components/ui/switch";
 import { useSession } from "next-auth/react";
+import { z } from "zod";
 
 // Define interfaces for our data structure
 interface UserProfile {
@@ -53,57 +54,42 @@ export default function ProfilePage() {
 
   // Fetch user data
   useEffect(() => {
-    if (status === "loading") return;
-    
-    if (!session) {
-      router.push("/login");
-      return;
-    }
-
-    console.log("Session data:", session);
-
-    const fetchUserProfile = async () => {
+    const fetchProfile = async () => {
       try {
         const response = await fetch('/api/users/profile');
-        
         if (!response.ok) {
           throw new Error('Failed to fetch profile');
         }
-        
         const data = await response.json();
-        console.log("API Response:", data);
-        
         setUser({
           name: data.name || "",
           email: data.email || "",
           phone: data.phone || "",
           address: data.address || "",
         });
-        
         setFormData({
           name: data.name || "",
           email: data.email || "",
           phone: data.phone || "",
           address: data.address || "",
         });
-        
         if (data.notifications) {
           setNotifications({
             email: data.notifications.email ?? true,
             sms: data.notifications.sms ?? false,
           });
         }
-        
         setIsLoading(false);
       } catch (error) {
-        console.error('Error fetching profile:', error);
-        toast.error("Could not load profile data");
+        toast.error("Failed to load profile data");
         setIsLoading(false);
       }
     };
 
-    fetchUserProfile();
-  }, [session, status, router]);
+    if (session?.user) {
+      fetchProfile();
+    }
+  }, [session, toast]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -127,8 +113,7 @@ export default function ProfilePage() {
       });
       
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Failed to update profile');
+        throw new Error('Failed to update profile');
       }
       
       const updatedUser = await response.json();
@@ -142,8 +127,7 @@ export default function ProfilePage() {
       setIsEditing(false);
       toast.success("Profile updated successfully");
     } catch (error) {
-      console.error('Error updating profile:', error);
-      toast.error(error instanceof Error ? error.message : "Failed to update profile");
+      toast.error("Failed to update profile. Please try again.");
     } finally {
       setIsSaving(false);
     }

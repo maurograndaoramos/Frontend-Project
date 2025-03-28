@@ -42,8 +42,6 @@ function ShopContentWithParams() {
     async function loadProducts() {
       setLoading(true);
       try {
-        console.log('Loading products with filters:', { category, search, sort, page, minPrice, maxPrice, inStock, isRecentlyViewed, isRecommended });
-        
         let result;
         
         if (isRecentlyViewed) {

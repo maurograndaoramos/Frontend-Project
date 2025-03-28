@@ -13,10 +13,6 @@ export async function middleware(request: NextRequest) {
       cookieName: "next-auth.session-token",
     });
 
-    // Debug token (remove in production)
-    if (process.env.NODE_ENV !== "production") {
-    }
-
     const isAuthenticated = !!token;
     const { pathname } = request.nextUrl;
     
@@ -29,16 +25,6 @@ export async function middleware(request: NextRequest) {
     // Check route types
     const isProtectedRoute = protectedRoutes.some(route => pathname.startsWith(route));
     const isAuthRoute = authRoutes.some(route => pathname === route || pathname.startsWith(`${route}/`));
-    
-    // Debug route info (remove in production)
-    if (process.env.NODE_ENV !== "production") {
-      console.log({
-        pathname,
-        isAuthenticated,
-        isProtectedRoute,
-        isAuthRoute
-      });
-    }
 
     // If user is on an auth page and is already authenticated, redirect to dashboard
     if (isAuthRoute && isAuthenticated) {
@@ -54,7 +40,6 @@ export async function middleware(request: NextRequest) {
     
     return NextResponse.next();
   } catch (error) {
-    console.error("Middleware error:", error);
     // On error, allow the request to proceed but log the error
     return NextResponse.next();
   }

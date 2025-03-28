@@ -48,26 +48,31 @@ export default function HeroSection() {
       onMouseLeave={() => setIsHovered(false)}
     >
       {/* Hero background with carousel */}
-      <AnimatePresence mode="wait">
-        <motion.div
-          key={currentImageIndex}
-          initial={{ opacity: 0, scale: 1.1 }}
-          animate={{ opacity: 1, scale: 1 }}
-          exit={{ opacity: 0, scale: 0.9 }}
-          transition={{ duration: 0.5 }}
-          className="absolute inset-0 z-0"
-        >
-          <Image
-            src={heroImages[currentImageIndex].src}
-            alt={heroImages[currentImageIndex].alt}
-            width={1600}
-            height={800}
-            className="w-full h-full object-cover brightness-[0.85]"
-            priority
-          />
-          <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-black/50 to-transparent" />
-        </motion.div>
-      </AnimatePresence>
+      <div className="absolute inset-0 z-0">
+        <AnimatePresence>
+          <motion.div
+            key={currentImageIndex}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ 
+              duration: 1.2,
+              ease: "easeInOut"
+            }}
+            className="absolute inset-0"
+          >
+            <Image
+              src={heroImages[currentImageIndex].src}
+              alt={heroImages[currentImageIndex].alt}
+              width={1600}
+              height={800}
+              className="w-full h-full object-cover brightness-[0.85]"
+              priority
+            />
+            <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-black/50 to-transparent" />
+          </motion.div>
+        </AnimatePresence>
+      </div>
 
       {/* Hero content */}
       <div className="container mx-auto px-4 relative z-10">
@@ -88,8 +93,10 @@ export default function HeroSection() {
           </motion.div>
 
           <motion.h1 
+            key={`title-${currentImageIndex}`}
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
             transition={{ duration: 0.8, delay: 0.3 }}
             className="text-5xl md:text-6xl lg:text-7xl font-bold text-white mb-6 leading-tight"
           >
@@ -97,8 +104,10 @@ export default function HeroSection() {
           </motion.h1>
           
           <motion.p 
+            key={`subtitle-${currentImageIndex}`}
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
             transition={{ duration: 0.8, delay: 0.4 }}
             className="text-xl md:text-2xl text-white/90 mb-10 leading-relaxed"
           >

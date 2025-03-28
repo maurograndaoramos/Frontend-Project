@@ -42,7 +42,6 @@ export default function CollectionDetailContent() {
         const allCollectionsData = await allCollectionsResponse.json();
         setAllCollections(allCollectionsData);
       } catch (error) {
-        console.error('Error fetching collection:', error);
         setError(error instanceof Error ? error.message : 'An unknown error occurred');
         toast.error('Failed to load collection');
         setCollection(null);

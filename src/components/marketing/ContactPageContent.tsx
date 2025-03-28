@@ -241,33 +241,6 @@ export default function ContactPageContent() {
           </div>
         </div>
       </section>
-
-      {/* Map Section */}
-      <section className="py-20 bg-muted/20">
-        <div className="container mx-auto px-4">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.6 }}
-            className="text-center mb-12"
-          >
-            <Badge variant="secondary" className="mb-4">Visit Us</Badge>
-            <h2 className="text-3xl font-bold">Serving the Algarve Since 1990</h2>
-          </motion.div>
-          <div className="aspect-video rounded-xl overflow-hidden shadow-lg">
-            <iframe
-              src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d405342.31432931227!2d-8.671549467968073!3d37.17525232271542!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0xd0554ee55d1cfef%3A0x80e2652e12191ce1!2sAlgarve%2C%20Portugal!5e0!3m2!1sen!2s!4v1700580963852!5m2!1sen!2s"
-              width="100%"
-              height="100%"
-              style={{ border: 0 }}
-              allowFullScreen
-              loading="lazy"
-              referrerPolicy="no-referrer-when-downgrade"
-            />
-          </div>
-        </div>
-      </section>
     </div>
   );
 }

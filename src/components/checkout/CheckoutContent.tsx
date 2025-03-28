@@ -16,6 +16,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Package, CreditCard, CheckCircle2, ArrowLeft, Gift, User } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useSession } from "next-auth/react";
+import { useToast } from "@/components/ui/use-toast";
 
 // Add "recipient" to the checkout steps
 type CheckoutStep = "recipient" | "shipping" | "payment" | "review";
@@ -44,6 +45,7 @@ export default function CheckoutPageContent() {
   const router = useRouter();
   const { data: session, status } = useSession();
   const { cart, getCartTotal, clearCart } = useCart();
+  const { toast } = useToast();
   
   // Change initial step to "recipient"
   const [currentStep, setCurrentStep] = useState<CheckoutStep>("recipient");
@@ -113,7 +115,11 @@ export default function CheckoutPageContent() {
       const data = await response.json();
       setUserProfile(data);
     } catch (error) {
-      console.error('Error fetching profile:', error);
+      toast({
+        title: "Failed to load profile data",
+        description: "Please try again later.",
+        variant: "destructive"
+      });
     } finally {
       setIsLoadingProfile(false);
     }
@@ -215,14 +221,22 @@ export default function CheckoutPageContent() {
     // Regular form submission - perform validation
     // Check if the selected municipality is in Algarve
     if (!ALGARVE_MUNICIPALITIES.includes(data.municipality)) {
-      alert("We apologize, but our flower delivery is currently limited to the Algarve region in Portugal.");
+      toast({
+        title: "Delivery Limitation",
+        description: "We apologize, but our flower delivery is currently limited to the Algarve region in Portugal.",
+        variant: "destructive"
+      });
       return;
     }
     
     // Validate Portuguese postal code format (4 digits - 3 digits)
     const postalCodePattern = /^\d{4}-\d{3}$/;
     if (!postalCodePattern.test(data.postalCode)) {
-      alert("Please enter a valid Portuguese postal code in the format 0000-000");
+      toast({
+        title: "Invalid Postal Code",
+        description: "Please enter a valid Portuguese postal code in the format 0000-000",
+        variant: "destructive"
+      });
       return;
     }
 
@@ -271,69 +285,28 @@ export default function CheckoutPageContent() {
   };
 
   const placeOrder = async () => {
-    // In a real implementation, this would call an API to create the order
-    console.log("Placing order:", orderData);
-    
-    // Calculate final shipping cost and total
-    const isToday = orderData.shipping.deliveryDate && 
-                   orderData.shipping.deliveryDate.getDate() === new Date().getDate() &&
-                   orderData.shipping.deliveryDate.getMonth() === new Date().getMonth() &&
-                   orderData.shipping.deliveryDate.getFullYear() === new Date().getFullYear();
-                   
-    const sameDayAvailable = isBeforeCutoff();
-    const shippingCost = (isToday && sameDayAvailable) ? 29.99 : 19.99;
-    const finalTotal = orderData.subtotal + shippingCost;
-    
     try {
-      // Create the order via API
       const response = await fetch('/api/orders', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          items: cart.items.map(item => ({
-            id: item.id,
-            quantity: item.quantity,
-            price: item.price
-          })),
-          total: finalTotal,
-          shippingCost: shippingCost,
-          tax: orderData.tax,
-          shippingAddress: {
-            firstName: orderData.shipping.firstName,
-            lastName: orderData.shipping.lastName,
-            address: orderData.shipping.address,
-            city: orderData.shipping.city,
-            municipality: orderData.shipping.municipality,
-            postalCode: orderData.shipping.postalCode,
-            phone: orderData.shipping.phone,
-            email: orderData.shipping.email,
-            deliveryNotes: orderData.shipping.deliveryNotes,
-            shippingMethod: orderData.shipping.shippingMethod,
-            deliveryDate: orderData.shipping.deliveryDate,
-            coordinates: orderData.shipping.coordinates
-          }
-        }),
+        body: JSON.stringify(orderData),
       });
-      
+
       if (!response.ok) {
-        throw new Error('Failed to create order');
+        throw new Error('Failed to place order');
       }
-      
-      const { orderId } = await response.json();
-      
-      // Set a flag in localStorage that the cart should be cleared
-      localStorage.setItem('orderCompleted', 'true');
-      
-      // Clear the cart immediately
+
+      const result = await response.json();
       clearCart();
-      
-      // Navigate to the confirmation page
-      window.location.href = `/checkout/confirmation?orderId=${orderId}`;
+      router.push(`/order-confirmation/${result.orderId}`);
     } catch (error) {
-      console.error('Error creating order:', error);
-      // Handle error (show message to user)
+      toast({
+        title: "Failed to place order",
+        description: "Please try again.",
+        variant: "destructive"
+      });
     }
   };
 

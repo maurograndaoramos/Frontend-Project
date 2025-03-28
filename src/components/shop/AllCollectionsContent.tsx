@@ -24,7 +24,6 @@ export default function AllCollectionsContent() {
         const data = await response.json();
         setCollections(data);
       } catch (error) {
-        console.error("Error fetching collections:", error);
         toast.error("Failed to load collections");
       } finally {
         setLoading(false);

@@ -55,16 +55,10 @@ export async function GET(request: Request) {
   // Check if response is in cache
   const cachedData = productCache.get(cacheKey);
   if (cachedData) {
-
     return NextResponse.json(cachedData);
   }
   
   try {
-    console.log("Fetching products with params:", { 
-      category, search, sort, page, limit, minPrice, maxPrice, inStock, ids,
-      includeRelated, includeFullData
-    });
-    
     // Build where clause for filtering
     const where: any = {};
     
@@ -79,11 +73,6 @@ export async function GET(request: Request) {
         .split(' ')
         .map(word => word.charAt(0).toUpperCase() + word.slice(1))
         .join(' ');
-      
-      console.log("Processing category filter:", {
-        originalCategory: category,
-        readableCategory
-      });
       
       where.category = {
         equals: readableCategory,
@@ -133,8 +122,6 @@ export async function GET(request: Request) {
     // Pagination
     const skip = (page - 1) * limit;
     
-    console.log("Query where clause:", JSON.stringify(where, null, 2));
-    
     // Prepare the select object based on includeFullData and includeRelated
     let selectObject: any = undefined;
     if (!includeFullData) {
@@ -161,8 +148,6 @@ export async function GET(request: Request) {
       }
     }
     
-    console.log("Using select object:", JSON.stringify(selectObject, null, 2));
-    
     // Execute query with count using retry utility for handling connection issues
     // Use READ client to reduce connection pressure
     try {
@@ -180,8 +165,6 @@ export async function GET(request: Request) {
           prismaRead.product.count({ where })
         ),
       ]);
-      
-      console.log(`Found ${products.length} products out of ${total} total`);
       
       // Calculate pagination
       const pages = Math.ceil(total / limit);
@@ -202,50 +185,10 @@ export async function GET(request: Request) {
       
       return NextResponse.json(responseData);
     } catch (prismaError) {
-      console.error("Prisma query error:", prismaError);
-      
-      // Fall back to a simpler query without select if there's a schema mismatch
-      console.log("Attempting fallback query without select...");
-      const [products, total] = await Promise.all([
-        retryOnConnectionError(() => 
-          prismaRead.product.findMany({
-            where,
-            orderBy,
-            skip,
-            take: limit,
-          })
-        ),
-        retryOnConnectionError(() => 
-          prismaRead.product.count({ where })
-        ),
-      ]);
-      
-      console.log(`Fallback query found ${products.length} products out of ${total} total`);
-      
-      // Calculate pagination
-      const pages = Math.ceil(total / limit);
-      
-      // Create response data
-      const responseData = {
-        data: products,
-        pagination: {
-          total,
-          page,
-          limit,
-          pages,
-        },
-      };
-      
-      // Store in cache
-      productCache.set(cacheKey, responseData);
-      
-      return NextResponse.json(responseData);
+      // Handle Prisma-specific errors
+      return handleApiError(prismaError);
     }
   } catch (error) {
-    console.error("Error fetching products:", error);
-    
-    // Use our standardized error handler
-    const { status, body } = handleApiError(error);
-    return NextResponse.json(body, { status });
+    return handleApiError(error);
   }
 }

@@ -27,6 +27,7 @@ export default function ProductRecommendations({
   const [recommendations, setRecommendations] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [scrollPosition, setScrollPosition] = useState(0);
+  const [isDragging, setIsDragging] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const { scrollXProgress } = useScroll({
     container: containerRef,
@@ -51,6 +52,19 @@ export default function ProductRecommendations({
 
     loadRecommendations();
   }, [currentProductId, category]);
+
+  // Track scrolling position for responsive UI updates
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+
+    const handleScroll = () => {
+      setScrollPosition(container.scrollLeft);
+    };
+
+    container.addEventListener('scroll', handleScroll);
+    return () => container.removeEventListener('scroll', handleScroll);
+  }, []);
 
   const scroll = (direction: 'left' | 'right') => {
     const container = containerRef.current;
@@ -131,7 +145,7 @@ export default function ProductRecommendations({
           </motion.div>
           <h2 className="text-2xl font-semibold">{title}</h2>
         </div>
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-4 md:flex hidden">
           <div className="flex gap-2">
             <Button
               variant="outline"
@@ -167,11 +181,11 @@ export default function ProductRecommendations({
       </div>
       <div 
         ref={containerRef}
-        className="relative overflow-hidden"
+        className="relative overflow-x-auto hide-scrollbar pb-4 -mx-4 px-4 snap-x snap-mandatory"
+        style={{ WebkitOverflowScrolling: 'touch' }}
       >
         <motion.div 
-          className="flex gap-6 transition-transform duration-300 ease-out"
-          style={{ transform: `translateX(-${scrollPosition}px)` }}
+          className="flex gap-6"
         >
           <AnimatePresence mode="wait">
             {recommendations.map((product, index) => (
@@ -186,7 +200,7 @@ export default function ProductRecommendations({
                   ease: "easeOut"
                 }}
                 whileHover={{ y: -5 }}
-                className="flex-none w-[250px]"
+                className="flex-none w-[250px] md:w-[250px] sm:w-[200px] snap-start"
               >
                 <ProductCard product={product} view="grid" />
               </motion.div>
@@ -194,7 +208,7 @@ export default function ProductRecommendations({
           </AnimatePresence>
         </motion.div>
         <motion.div 
-          className="absolute inset-0 pointer-events-none"
+          className="absolute inset-0 pointer-events-none md:block hidden"
           style={{ opacity }}
         >
           <div className="absolute inset-y-0 left-0 w-20 bg-gradient-to-r from-background to-transparent" />

@@ -169,10 +169,14 @@ export default function AboutPage() {
             </p>
           </motion.div>
           <div className="aspect-video rounded-xl overflow-hidden shadow-lg">
-            <img 
-              src="https://maps.googleapis.com/maps/api/staticmap?center=Algarve,Portugal&zoom=9&size=1200x600&maptype=roadmap&path=color:0xDA0A0A66|weight:3|fillcolor:0xDA0A0A33|37.3406,-8.8034|37.1880,-8.5961|37.1377,-8.4515|37.1006,-8.2711|37.0135,-7.9347|37.1258,-7.6494|37.1983,-7.3992|37.4174,-7.5275|37.3508,-7.9825|37.3041,-8.1001|37.3053,-8.5527|37.3175,-8.8034&key=AIzaSyBFw0Qbyq9zTFTd-tUY6dZWTgaQzuU17R8" 
-              alt="Map of Algarve region" 
-              className="w-full h-auto"
+            <iframe
+              src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d405342.31432931227!2d-8.671549467968073!3d37.17525232271542!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0xd0554ee55d1cfef%3A0x80e2652e12191ce1!2sAlgarve%2C%20Portugal!5e0!3m2!1sen!2s!4v1700580963852!5m2!1sen!2s"
+              width="100%"
+              height="100%"
+              style={{ border: 0 }}
+              allowFullScreen
+              loading="lazy"
+              referrerPolicy="no-referrer-when-downgrade"
             />
           </div>
         </div>

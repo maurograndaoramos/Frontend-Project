@@ -92,7 +92,6 @@ export default function LoginForm() {
             router.push(callbackUrl);
           }
         } catch (error) {
-          console.error("Login error:", error);
           toast({
             variant: "destructive",
             title: "Something went wrong",
@@ -116,7 +115,6 @@ export default function LoginForm() {
                 redirect: true 
             });
         } catch (error) {
-            console.error("Google login error:", error);
             setIsLoading(false);
         }
     };
@@ -133,7 +131,6 @@ export default function LoginForm() {
                 redirect: true 
             });
         } catch (error) {
-            console.error("Facebook login error:", error);
             setIsLoading(false);
         }
     };

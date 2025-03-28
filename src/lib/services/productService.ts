@@ -53,12 +53,10 @@ export async function getProducts(filters: ProductFilters = {}): Promise<Paginat
   // Check cache first
   const cachedData = productCache.get(cacheKey);
   if (cachedData && (now - cachedData.timestamp < CACHE_TTL)) {
-    console.log(`Using cached products for params: ${cacheKey}`);
     return cachedData.data;
   }
   
   try {
-    console.log(`Fetching products with params: ${queryParams.toString()}`);
     const response = await fetch(`/api/products?${queryParams.toString()}`, {
       method: 'GET',
       headers: {
@@ -70,11 +68,8 @@ export async function getProducts(filters: ProductFilters = {}): Promise<Paginat
     const responseData = await response.json();
     
     if (!response.ok) {
-      console.error('API error:', responseData);
-      
       // Check for Prisma connection errors
       if (responseData?.details?.includes('concurrent connections limit exceeded')) {
-        console.log('Database connection limit exceeded, using cached data if available');
         if (cachedData) {
           return cachedData.data;
         }
@@ -110,7 +105,6 @@ export async function getProducts(filters: ProductFilters = {}): Promise<Paginat
       };
     } else {
       // Fallback for unexpected format
-      console.error('Unexpected API response format:', responseData);
       result = {
         data: Array.isArray(responseData) ? responseData : [],
         pagination: {
@@ -127,11 +121,8 @@ export async function getProducts(filters: ProductFilters = {}): Promise<Paginat
     
     return result;
   } catch (error) {
-    console.error('Error fetching products:', error);
-    
     // Try to return cached data even if it's expired
     if (cachedData) {
-      console.log('Returning stale cached data due to error');
       return cachedData.data;
     }
     
@@ -163,12 +154,10 @@ export async function getProduct(identifier: string, includeRelated = false): Pr
   // Check cache first
   const cachedProduct = productDetailCache.get(cacheKey);
   if (cachedProduct && (now - cachedProduct.timestamp < DETAIL_CACHE_TTL)) {
-    console.log(`Using cached product for identifier: ${identifier}`);
     return cachedProduct.data;
   }
   
   try {
-    console.log(`Attempting to fetch product with identifier: ${identifier}`, { includeRelated });
     const url = includeRelated
       ? `/api/products/${identifier}?${queryParams.toString()}`
       : `/api/products/${identifier}`;
@@ -177,11 +166,9 @@ export async function getProduct(identifier: string, includeRelated = false): Pr
     
     if (!response.ok) {
       const errorData = await response.json();
-      console.error(`Failed to fetch product ${identifier}, status: ${response.status}`);
       
       // Check for Prisma connection errors and return cached data if available
       if (errorData?.details?.includes('concurrent connections limit exceeded') && cachedProduct) {
-        console.log('Using cached product data due to connection limits');
         return cachedProduct.data;
       }
       
@@ -195,11 +182,8 @@ export async function getProduct(identifier: string, includeRelated = false): Pr
     
     return product;
   } catch (error) {
-    console.error(`Error fetching product with identifier ${identifier}:`, error);
-    
     // Try to return cached data even if it's expired
     if (cachedProduct) {
-      console.log('Returning stale cached data due to error');
       return cachedProduct.data;
     }
     
