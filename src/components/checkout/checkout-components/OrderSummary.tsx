@@ -74,19 +74,15 @@ export default function OrderSummary({
 
         <div className="space-y-1.5">
           <div className="flex items-center justify-between text-sm">
-            <span>Subtotal</span>
+            <div>
+              <span>Subtotal</span>
+              <div className="text-xs text-muted-foreground mt-0.5">VAT (23%) included</div>
+            </div>
             <span>{formatPrice(subtotal)}</span>
           </div>
           <div className="flex items-center justify-between text-sm">
             <span>Shipping</span>
             <span>{formatPrice(shippingCost)}</span>
-          </div>
-          <div className="flex items-start justify-between text-sm">
-            <div>
-              <span>VAT (23%)</span>
-              <div className="text-xs text-muted-foreground mt-0.5">Already included in product price</div>
-            </div>
-            <span>{formatPrice(tax)}</span>
           </div>
         </div>
 

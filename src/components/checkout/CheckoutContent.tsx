@@ -286,6 +286,11 @@ export default function CheckoutPageContent() {
 
   const placeOrder = async () => {
     try {
+      // Set a flag in localStorage to indicate we're creating an order
+      localStorage.setItem('creatingOrder', 'true');
+      
+      console.log("Sending order data:", JSON.stringify(orderData));
+      
       const response = await fetch('/api/orders', {
         method: 'POST',
         headers: {
@@ -295,13 +300,39 @@ export default function CheckoutPageContent() {
       });
 
       if (!response.ok) {
-        throw new Error('Failed to place order');
+        const errorData = await response.json().catch(() => ({}));
+        console.error("Server error response:", errorData);
+        throw new Error(`Failed to place order: ${response.status} ${response.statusText}`);
       }
 
       const result = await response.json();
+      console.log("Order created successfully:", result);
+      
+      // Save a flag that order was completed successfully
+      localStorage.setItem('orderCompleted', 'true');
+      
+      // Clear the cart before redirecting
       clearCart();
-      router.push(`/order-confirmation/${result.orderId}`);
+      
+      // Mark that we're no longer creating an order
+      localStorage.removeItem('creatingOrder');
+      
+      // Hardcode the path that we know works in production based on your logs
+      if (result && result.orderId) {
+        // This is the exact path that was shown working in your logs
+        console.log(`Redirecting to /confirmation/${result.orderId}`);
+        window.location.href = `/confirmation/${result.orderId}`;
+      } else {
+        console.error("Missing orderId in response", result);
+        toast({
+          title: "Order created but redirect failed",
+          description: "Your order was placed successfully, but we couldn't redirect you to the confirmation page.",
+          variant: "destructive"
+        });
+      }
     } catch (error) {
+      console.error("Error during order placement:", error);
+      localStorage.removeItem('creatingOrder');
       toast({
         title: "Failed to place order",
         description: "Please try again.",

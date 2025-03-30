@@ -57,7 +57,7 @@ export default function CategoryFilter({ categories }: CategoryFilterProps) {
       
       // If a subcategory is selected, also check its parent category visually
       const parentCategory = categories.find(category => 
-        activeCategory.startsWith(`${category.id}-`)
+        category.subcategories?.some(sub => sub.id === activeCategory)
       );
       
       if (parentCategory) {
@@ -75,21 +75,21 @@ export default function CategoryFilter({ categories }: CategoryFilterProps) {
     }));
   };
   
-  const handleCategoryChange = (categoryId: string) => {
+  const handleCategoryChange = (categoryId: string, checked: boolean) => {
+    // Update the URL parameters
     const params = new URLSearchParams(searchParams.toString());
     
-    if (categoryId === activeCategory) {
-      // If clicking the active category, remove the filter
-      params.delete("category");
-    } else {
-      // Otherwise set the category
+    if (checked) {
       params.set("category", categoryId);
+    } else {
+      params.delete("category");
     }
     
     // Reset to page 1 when changing category
     params.set("page", "1");
     
-    router.push(`${pathname}?${params.toString()}`);
+    // Use window.location.href for navigation
+    window.location.href = `${pathname}?${params.toString()}`;
   };
   
   return (
@@ -101,7 +101,7 @@ export default function CategoryFilter({ categories }: CategoryFilterProps) {
               <Checkbox
                 id={`category-${category?.id || category?.name}`}
                 checked={checkedCategories[category?.id || ''] || false}
-                onCheckedChange={() => category?.id && handleCategoryChange(category.id)}
+                onCheckedChange={(checked) => category?.id && handleCategoryChange(category.id, checked === true)}
               />
               <label
                 htmlFor={`category-${category?.id || category?.name}`}
@@ -135,7 +135,7 @@ export default function CategoryFilter({ categories }: CategoryFilterProps) {
                   <Checkbox
                     id={`subcategory-${subcategory?.id || subcategory?.name}`}
                     checked={checkedCategories[subcategory?.id || ''] || false}
-                    onCheckedChange={() => subcategory?.id && handleCategoryChange(subcategory.id)}
+                    onCheckedChange={(checked) => subcategory?.id && handleCategoryChange(subcategory.id, checked === true)}
                   />
                   <label
                     htmlFor={`subcategory-${subcategory?.id || subcategory?.name}`}

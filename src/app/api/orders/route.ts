@@ -27,27 +27,38 @@ export async function POST(req: Request) {
       );
     }
 
-    const body = await req.json();
-    const { items, shippingAddress, total } = body;
+    const orderData = await req.json();
+    console.log("Received order data:", JSON.stringify(orderData));
     
-    // Create the order
-    const order = await prisma.order.create({
-      data: {
-        userId: user.id,
-        status: "pending",
-        total,
-        shippingAddress,
-        items: {
-          create: items.map((item: any) => ({
-            quantity: item.quantity,
-            price: item.price,
-            productId: item.id,
-          })),
-        },
-      },
-    });
-
-    return NextResponse.json({ orderId: order.id }, { status: 201 });
+    // Transform the orderData from frontend format to the format expected by our service
+    const transformedOrderData = {
+      userId: user.id,
+      items: orderData.items.map((item: any) => ({
+        productId: item.id,
+        quantity: item.quantity,
+        price: item.price
+      })),
+      total: orderData.total,
+      shippingAddress: orderData.shipping,
+      status: 'pending',
+      paymentMethod: orderData.payment.method
+    };
+    
+    console.log("Transformed order data:", JSON.stringify(transformedOrderData));
+    
+    try {
+      // Create the order using orderService
+      const order = await createOrder(transformedOrderData);
+      console.log("Order created:", order.id);
+      
+      return NextResponse.json({ orderId: order.id }, { status: 201 });
+    } catch (orderError) {
+      console.error("Order creation error:", orderError);
+      return NextResponse.json(
+        { error: "Failed to create order in database" },
+        { status: 500 }
+      );
+    }
   } catch (error) {
     console.error("Error creating order:", error);
     return NextResponse.json(

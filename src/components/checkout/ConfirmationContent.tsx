@@ -209,16 +209,15 @@ export default function OrderConfirmationPageContent({ orderId }: { orderId: str
               className="bg-muted/20 rounded-lg p-4"
             >
               <div className="flex justify-between text-sm mb-2">
-                <span>Subtotal</span>
+                <div>
+                  <span>Subtotal</span>
+                  <div className="text-xs text-muted-foreground text-left">VAT (23%) included</div>
+                </div>
                 <span>{formatPrice(order.subtotal)}</span>
               </div>
               <div className="flex justify-between text-sm mb-2">
                 <span>Shipping</span>
                 <span>{order.shipping === 0 ? "Free" : formatPrice(order.shipping)}</span>
-              </div>
-              <div className="flex justify-between text-sm mb-2">
-                <span>Tax</span>
-                <span>{formatPrice(order.tax)}</span>
               </div>
               <Separator className="my-2" />
               <div className="flex justify-between font-medium">
